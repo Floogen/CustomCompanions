@@ -1,0 +1,18 @@
+﻿{
+  "Name": "Example Pack",
+  "Author": "ExampleAuthor",
+  "Version": "1.0.0",
+  "Description": "Example pack for the Custom Companions framework.",
+  "UniqueID": "ExampleAuthor.ExamplePack",
+  "UpdateKeys": [],
+  "Dependencies": [
+    {
+      "UniqueID": "spacechase0.JsonAssets",
+      "IsRequired": true
+    }
+  ],
+  "ContentPackFor": {
+    "UniqueID": "PeacefulEnd.CustomCompanions",
+    "MinimumVersion": "1.0.0"
+  }
+}

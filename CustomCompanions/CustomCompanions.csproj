@@ -59,10 +59,18 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleCompanion\companion.json" />
+    <None Include="Examples\[CC] Example Pack\manifest.json" />
+    <None Include="Examples\[CC] Example Pack\Objects\ExampleRing\object.json" />
     <None Include="manifest.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Examples\[CC] Example Pack\Companions\ExampleCompanion\companion.png" />
+    <Content Include="Examples\[CC] Example Pack\Objects\ExampleRing\object.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="packages\Pathoschild.Stardew.ModBuildConfig.3.3.0\build\Pathoschild.Stardew.ModBuildConfig.targets" Condition="Exists('packages\Pathoschild.Stardew.ModBuildConfig.3.3.0\build\Pathoschild.Stardew.ModBuildConfig.targets')" />
