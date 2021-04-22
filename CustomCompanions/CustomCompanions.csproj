@@ -99,7 +99,8 @@ powershell Remove-Item -Path '$(SolutionDir)releases\latest\$(SolutionName)\$(Pr
 xcopy /s /y /i "$(TargetDir)" "$(SolutionDir)releases\latest\$(SolutionName)"
 7z a -tzip "$(SolutionDir)releases\$(SolutionName)-@(VersionNumber).zip" "$(SolutionDir)releases\latest\$(SolutionName)"
 
-xcopy /s /y /i "$(SolutionDir)releases\latest\$(SolutionName)" "$(GameModsPath)\$(SolutionName)"</PostBuildEvent>
+xcopy /s /y /i "$(SolutionDir)releases\latest\$(SolutionName)" "$(GameModsPath)\$(SolutionName)"
+xcopy /s /y /i "$(SolutionDir)Examples\*" "$(GameModsPath)\Custom Companions Examples"</PostBuildEvent>
   </PropertyGroup>
   <ProjectExtensions />
   <Target Name="CopyLinkedFiles" BeforeTargets="Build">
