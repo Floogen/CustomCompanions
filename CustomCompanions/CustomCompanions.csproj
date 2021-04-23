@@ -55,6 +55,11 @@
     <Compile Include="Framework\ApiManager.cs" />
     <Compile Include="Framework\Interfaces\IJsonAssetsApi.cs" />
     <Compile Include="Framework\Interfaces\IWearMoreRingsApi.cs" />
+    <Compile Include="Framework\Models\IdleAnimationModel.cs" />
+    <Compile Include="Framework\Models\CompanionModel.cs" />
+    <Compile Include="Framework\Models\AnimationModel.cs" />
+    <Compile Include="Framework\Models\LightModel.cs" />
+    <Compile Include="Framework\Models\SoundModel.cs" />
     <Compile Include="Framework\Patches\UtilityPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
