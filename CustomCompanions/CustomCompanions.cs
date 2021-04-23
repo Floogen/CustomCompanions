@@ -8,6 +8,7 @@ using Harmony;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewValley;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,7 +25,8 @@ namespace CustomCompanions
         internal static List<CompanionModel> companions;
         internal static List<RingModel> rings;
 
-        private IWearMoreRingsApi wearMoreRingsApi;
+        private IWearMoreRingsApi _wearMoreRingsApi;
+        private IJsonAssetsApi _jsonAssetsApi;
 
         public override void Entry(IModHelper helper)
         {
@@ -56,13 +58,16 @@ namespace CustomCompanions
         {
             if (Helper.ModRegistry.IsLoaded("bcmpinc.WearMoreRings") && ApiManager.HookIntoIWMR(Helper))
             {
-                wearMoreRingsApi = ApiManager.GetIWMRApi();
+                _wearMoreRingsApi = ApiManager.GetIWMRApi();
             }
 
             // Hook into the APIs we utilize
             if (Helper.ModRegistry.IsLoaded("spacechase0.JsonAssets") && ApiManager.HookIntoJsonAssets(Helper))
             {
-                var jsonAssetsApi = ApiManager.GetJsonAssetsApi();
+                _jsonAssetsApi = ApiManager.GetJsonAssetsApi();
+
+                // Hook into IdsAssigned
+                _jsonAssetsApi.IdsAssigned += this.IdsAssigned;
 
                 // Load any owned content packs
                 foreach (IContentPack contentPack in this.Helper.ContentPacks.GetOwned())
@@ -118,8 +123,23 @@ namespace CustomCompanions
                     });
 
                     // Load in the associated rings objects (via JA)
-                    jsonAssetsApi.LoadAssets(contentPack.DirectoryPath);
+                    _jsonAssetsApi.LoadAssets(contentPack.DirectoryPath);
                 }
+            }
+        }
+
+        private void IdsAssigned(object sender, EventArgs e)
+        {
+            // Get the ring IDs loaded in by JA from our owned content packs
+            foreach (var ring in rings)
+            {
+                int objectID = _jsonAssetsApi.GetObjectId(ring.Name);
+                if (objectID == -1)
+                {
+                    continue;
+                }
+
+                ring.ObjectID = objectID;
             }
         }
 
