@@ -104,6 +104,9 @@ powershell Remove-Item -Path '$(SolutionDir)releases\latest\$(SolutionName)\$(Pr
 xcopy /s /y /i "$(TargetDir)" "$(SolutionDir)releases\latest\$(SolutionName)"
 7z a -tzip "$(SolutionDir)releases\$(SolutionName)-@(VersionNumber).zip" "$(SolutionDir)releases\latest\$(SolutionName)"
 
+powershell Remove-Item -Path '$(GameModsPath)\$(SolutionName)' -Recurse -Force
+powershell Remove-Item -Path '$(GameModsPath)\Custom Companions Examples' -Recurse -Force
+
 xcopy /s /y /i "$(SolutionDir)releases\latest\$(SolutionName)" "$(GameModsPath)\$(SolutionName)"
 xcopy /s /y /i "$(SolutionDir)Examples\*" "$(GameModsPath)\Custom Companions Examples"</PostBuildEvent>
   </PropertyGroup>
