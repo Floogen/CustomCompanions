@@ -53,13 +53,16 @@
   <ItemGroup>
     <Compile Include="CustomCompanions.cs" />
     <Compile Include="Framework\ApiManager.cs" />
+    <Compile Include="Framework\Companions\WalkingCompanion.cs" />
     <Compile Include="Framework\Interfaces\IJsonAssetsApi.cs" />
     <Compile Include="Framework\Interfaces\IWearMoreRingsApi.cs" />
-    <Compile Include="Framework\Models\IdleAnimationModel.cs" />
-    <Compile Include="Framework\Models\CompanionModel.cs" />
-    <Compile Include="Framework\Models\AnimationModel.cs" />
-    <Compile Include="Framework\Models\LightModel.cs" />
-    <Compile Include="Framework\Models\SoundModel.cs" />
+    <Compile Include="Framework\Models\RingModel.cs" />
+    <Compile Include="Framework\Models\ContentPackModel.cs" />
+    <Compile Include="Framework\Models\Companion\IdleAnimationModel.cs" />
+    <Compile Include="Framework\Models\Companion\CompanionModel.cs" />
+    <Compile Include="Framework\Models\Companion\AnimationModel.cs" />
+    <Compile Include="Framework\Models\Companion\LightModel.cs" />
+    <Compile Include="Framework\Models\Companion\SoundModel.cs" />
     <Compile Include="Framework\Patches\UtilityPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

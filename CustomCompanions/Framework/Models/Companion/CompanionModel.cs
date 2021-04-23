@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.Xna.Framework.Graphics;
+using System.Collections.Generic;
 using System.Linq;
 
-namespace CustomCompanions.Framework.Models
+namespace CustomCompanions.Framework.Models.Companion
 {
     public class CompanionModel
     {
+        public string Owner { get; set; }
         public string Name { get; set; }
         public string Type { get; set; }
         public int TravelSpeed { get; set; }
@@ -26,7 +28,8 @@ namespace CustomCompanions.Framework.Models
         public override string ToString()
         {
             return $"\n[\n" +
-                $"\tName: {Name} | Type: {Type} | TravelSpeed: {TravelSpeed} | SpawnOffsetX: {SpawnOffsetX} | SpawnOffsetY: {SpawnOffsetY}\n" +
+                $"\tOwner: {Owner} | Name: {Name} | Type: {Type}\n" +
+                $"\tTravelSpeed: {TravelSpeed} | SpawnOffsetX: {SpawnOffsetX} | SpawnOffsetY: {SpawnOffsetY}\n" +
                 $"\tIdleBehavior: {IdleBehavior}\n" +
                 $"\tColors: {string.Join(",", Colors.Select(c => "[" + string.Join(",", c) + "]"))} | IsPrismatic: {IsPrismatic}\n" +
                 $"\tLight: {Light}\n" +

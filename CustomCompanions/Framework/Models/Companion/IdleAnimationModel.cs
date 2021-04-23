@@ -1,4 +1,4 @@
-﻿namespace CustomCompanions.Framework.Models
+﻿namespace CustomCompanions.Framework.Models.Companion
 {
     public class IdleAnimationModel
     {
