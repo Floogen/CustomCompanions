@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Objects;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -23,9 +24,7 @@ namespace CustomCompanions
         internal static IMonitor monitor;
         internal static IModHelper modHelper;
         internal static List<CompanionModel> companions;
-        internal static List<RingModel> rings;
 
-        private IWearMoreRingsApi _wearMoreRingsApi;
         private IJsonAssetsApi _jsonAssetsApi;
 
         public override void Entry(IModHelper helper)
@@ -35,13 +34,16 @@ namespace CustomCompanions
             modHelper = helper;
             companions = new List<CompanionModel>();
 
+            // Set up the ring manager
+            RingManager.rings = new List<RingModel>();
+
             // Load our Harmony patches
             try
             {
                 var harmony = HarmonyInstance.Create(this.ModManifest.UniqueID);
 
                 // Apply our patches
-                //new RingPatch(monitor).Apply(harmony);
+                new RingPatch(monitor).Apply(harmony);
                 new UtilityPatch(monitor).Apply(harmony);
             }
             catch (Exception e)
@@ -52,13 +54,14 @@ namespace CustomCompanions
 
             // Hook into GameLoop events
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
+            helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
         }
 
         private void OnGameLaunched(object sender, GameLaunchedEventArgs e)
         {
             if (Helper.ModRegistry.IsLoaded("bcmpinc.WearMoreRings") && ApiManager.HookIntoIWMR(Helper))
             {
-                _wearMoreRingsApi = ApiManager.GetIWMRApi();
+                RingManager.wearMoreRingsApi = ApiManager.GetIWMRApi();
             }
 
             // Hook into the APIs we utilize
@@ -108,7 +111,7 @@ namespace CustomCompanions
                         RingModel ring = contentPack.ReadJsonFile<RingModel>(json.FullName);
                         ring.ContentPackID = contentPack.Manifest.UniqueID;
 
-                        rings.Add(ring);
+                        RingManager.rings.Add(ring);
                     }
 
                     // Generate content.json for Json Assets
@@ -131,7 +134,7 @@ namespace CustomCompanions
         private void IdsAssigned(object sender, EventArgs e)
         {
             // Get the ring IDs loaded in by JA from our owned content packs
-            foreach (var ring in rings)
+            foreach (var ring in RingManager.rings)
             {
                 int objectID = _jsonAssetsApi.GetObjectId(ring.Name);
                 if (objectID == -1)
@@ -141,6 +144,11 @@ namespace CustomCompanions
 
                 ring.ObjectID = objectID;
             }
+        }
+
+        private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
+        {
+            RingManager.LoadWornRings();
         }
 
         internal static bool IsCustomCompanion(object follower)
