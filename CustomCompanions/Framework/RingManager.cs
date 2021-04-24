@@ -49,20 +49,24 @@ namespace CustomCompanions.Framework
             }
         }
 
-        internal static void UpdateRingEffects(Farmer who, GameLocation location)
-        {
-            foreach (Ring ring in GetWornRings(true))
-            {
-                //ring.Update(who, location);
-            }
-        }
-
         internal static void HandleEquip(Farmer who, GameLocation location, Ring ring)
         {
-            if (ring != null)
+            var summoningRing = rings.FirstOrDefault(r => r.ObjectID == ring.ParentSheetIndex);
+            if (summoningRing is null)
             {
-                //customRing.HandleEquip(who, location);
+                CustomCompanions.monitor.Log($"Failed to find a summoning ring match to [{ring.Name}]");
+                return;
             }
+
+            var companion = CustomCompanions.companions.FirstOrDefault(c => c.Name == summoningRing.CompanionName && c.Owner == summoningRing.Owner);
+            if (companion is null)
+            {
+                CustomCompanions.monitor.Log($"Failed to find a companion match to [{summoningRing.CompanionName}] for the summoning ring [{ring.Name}]");
+                return;
+            }
+
+            // Create a new Companion and add it to the player's location
+            CustomCompanions.monitor.Log($"Spawning [{summoningRing.CompanionName}] via the summoning ring [{ring.Name}]");
         }
 
         internal static void HandleUnequip(Farmer who, GameLocation location, Ring ring)

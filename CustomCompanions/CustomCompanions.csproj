@@ -63,7 +63,9 @@
     <Compile Include="Framework\Models\Companion\AnimationModel.cs" />
     <Compile Include="Framework\Models\Companion\LightModel.cs" />
     <Compile Include="Framework\Models\Companion\SoundModel.cs" />
+    <Compile Include="Framework\Patches\RingPatch.cs" />
     <Compile Include="Framework\Patches\UtilityPatch.cs" />
+    <Compile Include="Framework\RingManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

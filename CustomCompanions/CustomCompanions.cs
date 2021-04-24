@@ -80,6 +80,12 @@ namespace CustomCompanions
                     // Load in the companions
                     foreach (var companionFolder in new DirectoryInfo(Path.Combine(contentPack.DirectoryPath, "Companions")).GetDirectories())
                     {
+                        if (!File.Exists(Path.Combine(companionFolder.FullName, "companion.json")))
+                        {
+                            Monitor.Log($"Content pack {contentPack.Manifest.Name} is missing a companion.json under {companionFolder.Name}!", LogLevel.Warn);
+                            continue;
+                        }
+
                         CompanionModel companion = contentPack.ReadJsonFile<CompanionModel>(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.json"));
                         companion.Owner = contentPack.Manifest.UniqueID;
                         Monitor.Log(companion.ToString(), LogLevel.Trace);
@@ -106,10 +112,16 @@ namespace CustomCompanions
                         continue;
                     }
 
-                    foreach (var json in new DirectoryInfo(Path.Combine(contentPack.DirectoryPath, "Objects")).GetDirectories().Where(f => f.Name == "object.json"))
+                    foreach (var ringFolder in new DirectoryInfo(Path.Combine(contentPack.DirectoryPath, "Objects")).GetDirectories())
                     {
-                        RingModel ring = contentPack.ReadJsonFile<RingModel>(json.FullName);
-                        ring.ContentPackID = contentPack.Manifest.UniqueID;
+                        if (!File.Exists(Path.Combine(ringFolder.FullName, "object.json")))
+                        {
+                            Monitor.Log($"Content pack {contentPack.Manifest.Name} is missing a object.json under {ringFolder.Name}!", LogLevel.Warn);
+                            continue;
+                        }
+
+                        RingModel ring = contentPack.ReadJsonFile<RingModel>(Path.Combine(ringFolder.Parent.Name, ringFolder.Name, "object.json"));
+                        ring.Owner = contentPack.Manifest.UniqueID;
 
                         RingManager.rings.Add(ring);
                     }
