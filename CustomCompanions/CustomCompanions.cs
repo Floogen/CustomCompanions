@@ -6,6 +6,7 @@ using CustomCompanions.Framework.Models;
 using CustomCompanions.Framework.Models.Companion;
 using CustomCompanions.Framework.Patches;
 using Harmony;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -205,6 +206,23 @@ namespace CustomCompanions
             }
 
             return true;
+        }
+
+        internal static Color GetColorFromArray(int[] colorArray)
+        {
+            if (colorArray.Length < 3)
+            {
+                return Color.White;
+            }
+
+            // Verify alpha is given
+            int alpha = 255;
+            if (colorArray.Length >= 4)
+            {
+                alpha = colorArray[3];
+            }
+
+            return new Color(colorArray[0], colorArray[1], colorArray[2], alpha);
         }
     }
 }
