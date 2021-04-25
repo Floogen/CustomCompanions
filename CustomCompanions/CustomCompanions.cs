@@ -35,7 +35,7 @@ namespace CustomCompanions
 
             // Set up the CompanionManager
             CompanionManager.companionModels = new List<CompanionModel>();
-            CompanionManager.activeCompanions = new List<WalkingCompanion>();
+            CompanionManager.activeCompanions = new List<Companion>();
 
             // Set up the RingManager
             RingManager.rings = new List<RingModel>();

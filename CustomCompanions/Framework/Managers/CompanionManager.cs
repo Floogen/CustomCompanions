@@ -13,7 +13,7 @@ namespace CustomCompanions.Framework.Managers
     internal static class CompanionManager
     {
         internal static List<CompanionModel> companionModels;
-        internal static List<WalkingCompanion> activeCompanions;
+        internal static List<Companion> activeCompanions;
 
         internal static void SummonCompanion(CompanionModel model, Farmer who, GameLocation location)
         {
@@ -23,9 +23,9 @@ namespace CustomCompanions.Framework.Managers
                 return;
             }
 
-            WalkingCompanion walkingCompanion = new WalkingCompanion(model, who);
-            location.characters.Add(walkingCompanion);
-            activeCompanions.Add(walkingCompanion);
+            Companion companion = new Companion(model, who);
+            location.characters.Add(companion);
+            activeCompanions.Add(companion);
         }
 
         internal static void UpdateCompanions()
@@ -35,7 +35,7 @@ namespace CustomCompanions.Framework.Managers
 
         internal static bool IsCustomCompanion(Character follower)
         {
-            if (follower != null && follower is WalkingCompanion)
+            if (follower != null && follower is Companion)
             {
                 return true;
             }

@@ -53,7 +53,7 @@
   <ItemGroup>
     <Compile Include="CustomCompanions.cs" />
     <Compile Include="Framework\Managers\ApiManager.cs" />
-    <Compile Include="Framework\Companions\WalkingCompanion.cs" />
+    <Compile Include="Framework\Companions\Companion.cs" />
     <Compile Include="Framework\Interfaces\IJsonAssetsApi.cs" />
     <Compile Include="Framework\Interfaces\IWearMoreRingsApi.cs" />
     <Compile Include="Framework\Managers\CompanionManager.cs" />

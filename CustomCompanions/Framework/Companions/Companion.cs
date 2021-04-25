@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace CustomCompanions.Framework.Companions
 {
-    public class WalkingCompanion : NPC
+    public class Companion : NPC
     {
         private Farmer owner;
         private CompanionModel model;
@@ -27,7 +27,7 @@ namespace CustomCompanions.Framework.Companions
         private readonly NetVector2 motion = new NetVector2(Vector2.Zero);
         private new readonly NetRectangle nextPosition = new NetRectangle();
 
-        public WalkingCompanion(CompanionModel model, Farmer owner) : base(new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight), owner.getTileLocation() * 64f, 2, model.Name)
+        public Companion(CompanionModel model, Farmer owner) : base(new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight), owner.getTileLocation() * 64f, 2, model.Name)
         {
             base.Breather = false;
             base.speed = model.TravelSpeed;
@@ -102,13 +102,13 @@ namespace CustomCompanions.Framework.Companions
 
             this.nextPosition.Value = this.GetBoundingBox();
             this.nextPosition.X += (int)this.motion.X;
-            if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this))
+            if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
             {
                 base.position.X += (int)this.motion.X;
             }
             this.nextPosition.X -= (int)this.motion.X;
             this.nextPosition.Y += (int)this.motion.Y;
-            if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this))
+            if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
             {
                 base.position.Y += (int)this.motion.Y;
             }
@@ -183,6 +183,41 @@ namespace CustomCompanions.Framework.Companions
                     }
                 }
             }
+        }
+
+        public override bool shouldCollideWithBuildingLayer(GameLocation location)
+        {
+            if (IsFlying())
+            {
+                return false;
+            }
+
+            return base.shouldCollideWithBuildingLayer(location);
+        }
+
+        public override bool collideWith(StardewValley.Object o)
+        {
+            if (IsFlying())
+            {
+                return false;
+            }
+
+            return base.collideWith(o);
+        }
+
+        public override bool isColliding(GameLocation l, Vector2 tile)
+        {
+            if (IsFlying())
+            {
+                return false;
+            }
+
+            return base.isColliding(l, tile);
+        }
+
+        internal bool IsFlying()
+        {
+            return this.model.Type.ToUpper() == "FLYING";
         }
 
         internal void SetMoving(Vector2 motion)
