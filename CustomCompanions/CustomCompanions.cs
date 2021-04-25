@@ -1,6 +1,7 @@
 ﻿using CustomCompanions.Framework;
 using CustomCompanions.Framework.Companions;
 using CustomCompanions.Framework.Interfaces;
+using CustomCompanions.Framework.Managers;
 using CustomCompanions.Framework.Models;
 using CustomCompanions.Framework.Models.Companion;
 using CustomCompanions.Framework.Patches;
@@ -23,7 +24,6 @@ namespace CustomCompanions
     {
         internal static IMonitor monitor;
         internal static IModHelper modHelper;
-        internal static List<CompanionModel> companions;
 
         private IJsonAssetsApi _jsonAssetsApi;
 
@@ -32,9 +32,12 @@ namespace CustomCompanions
             // Set up the monitor and helper
             monitor = Monitor;
             modHelper = helper;
-            companions = new List<CompanionModel>();
 
-            // Set up the ring manager
+            // Set up the CompanionManager
+            CompanionManager.companionModels = new List<CompanionModel>();
+            CompanionManager.activeCompanions = new List<WalkingCompanion>();
+
+            // Set up the RingManager
             RingManager.rings = new List<RingModel>();
 
             // Load our Harmony patches
@@ -96,13 +99,13 @@ namespace CustomCompanions
                             Monitor.Log($"Unable to add companion {companion.Name} from {contentPack.Manifest.Name}: No associated companion.png or TileSheetPath given", LogLevel.Warn);
                             continue;
                         }
-                        else if (!String.IsNullOrEmpty(companion.TileSheetPath))
+                        else if (String.IsNullOrEmpty(companion.TileSheetPath))
                         {
-                            companion.TileSheetPath = Path.Combine(companionFolder.FullName, "companion.png");
+                            companion.TileSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.png"));
                         }
 
                         // Add the companion to our cache
-                        companions.Add(companion);
+                        CompanionManager.companionModels.Add(companion);
                     }
 
                     // Load in the rings that will be paired to a companion
@@ -163,14 +166,45 @@ namespace CustomCompanions
             RingManager.LoadWornRings();
         }
 
-        internal static bool IsCustomCompanion(object follower)
+        internal static bool IsSoundValid(string soundName, bool logFailure = false)
         {
-            if (follower != null && follower is WalkingCompanion)
+            try
             {
-                return true;
+                Game1.soundBank.GetCue(soundName);
+            }
+            catch (Exception)
+            {
+                if (logFailure)
+                {
+                    monitor.Log($"Attempted to get a sound that doesn't exist: {soundName}", LogLevel.Debug);
+                }
+
+                return false;
             }
 
-            return false;
+            return true;
+        }
+
+        internal static bool CompanionHasFullMovementSet(CompanionModel model)
+        {
+            if (model.UpAnimation is null)
+            {
+                return false;
+            }
+            if (model.RightAnimation is null)
+            {
+                return false;
+            }
+            if (model.DownAnimation is null)
+            {
+                return false;
+            }
+            if (model.LeftAnimation is null)
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

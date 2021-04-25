@@ -1,7 +1,7 @@
 ﻿using StardewModdingAPI;
 using CustomCompanions.Framework.Interfaces;
 
-namespace CustomCompanions.Framework
+namespace CustomCompanions.Framework.Managers
 {
     internal static class ApiManager
     {

@@ -1,4 +1,5 @@
-﻿using Harmony;
+﻿using CustomCompanions.Framework.Managers;
+using Harmony;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
@@ -29,7 +30,7 @@ namespace CustomCompanions.Framework.Patches
 
         private static void IsThereAFarmerOrCharacterWithinDistancePostfix(Utility __instance, ref Character __result, Vector2 tileLocation, int tilesAway, GameLocation environment)
         {
-            if (environment is Town && __result != null && CustomCompanions.IsCustomCompanion(__result))
+            if (environment is Town && __result != null && CompanionManager.IsCustomCompanion(__result))
             {
                 __result = null;
             }

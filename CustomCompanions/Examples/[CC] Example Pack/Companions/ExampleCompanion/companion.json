@@ -6,14 +6,14 @@
   "SpawnOffsetY": 0, // Y offset (from player) of where to spawn | Note: Negative values will spawn above player head, positive will spawn below player head
   "IdleBehavior": "Nothing", // Optional parameter, determines how the companion acts while idle | Options: [Nothing, Hover, Wander]
 
-  "Colors": [ // Optional parameter, Takes an array of colors (RGB values) to overlay on the sprite | NOTE: If multiple colors are given, then one will be chosen randomly on each spawn
-    [ 255, 255, 255 ]
+  "Colors": [ // Optional parameter, Takes an array of colors (RGBA values) to overlay on the sprite | NOTE: If multiple colors are given, then one will be chosen randomly on each spawn
+    [ 255, 255, 255, 255 ]
   ],
   "IsPrismatic": false, // Causes the companion's colors to change like a Prismatic Slime | NOTE: If Colors contains any values, then the companion will randomly be pick a color or prismatic
 
   // Optional parameter, handles if the companion gives off a light
   "Light": {
-    "Color": [ 255, 255, 255 ], // RGB value of the light
+    "Color": [ 255, 255, 255, 255 ], // RGBA value of the light
     "Radius": 0.5, // Radius of the light to give off
     "PulseInterval": 0.1, // Optional parameter, how much to offset the radius by
     "PulseSpeed": 1000 // Optional parameter, amount of time to iterate between Radius +- PulseInterval
@@ -29,7 +29,8 @@
     }
   ],
 
-  "FrameSize": 16, // Size of each frame / tile in pixels | Default is 16
+  "FrameSizeWidth": 16, // Width of each frame / tile in pixels | Default is 16
+  "FrameSizeHeight": 16, // Height of each frame / tile in pixels | Default is 16
   "TileSheetPath": "", // Optional parameter, but needed if creating a companion with an existing in-game sprite (e.g. Animals\\Rabbit)
 
   // UniformAnimation is the default moving animation played if none of the directional animations are provided (e.g. UpAnimation, LeftAnimation, etc.)
@@ -37,7 +38,7 @@
   "UniformAnimation": {
     "StartingFrame": 8, // The index of the first frame for this animation (e.g. 0 is the up most left tile in companion.png)
     "NumberOfFrames": 4, // Number of frames to play (including the StartingFrame) in sequential order 
-    "Duration": 100, // Duration of each frame in milliseconds
+    "Duration": 50, // Duration of each frame in milliseconds
 
     // This is the animation that plays when the companion is not moving
     "IdleAnimation": {
@@ -49,9 +50,9 @@
 
   // This plays when the companion travels upwards
   "UpAnimation": {
-    "StartingFrame": 0,
+    "StartingFrame": 4,
     "NumberOfFrames": 4,
-    "Duration": 100,
+    "Duration": 50,
 
     "IdleAnimation": {
       "StartingFrame": 20,
@@ -62,9 +63,9 @@
 
   // This plays when the companion travels downwards
   "DownAnimation": {
-    "StartingFrame": 4,
+    "StartingFrame": 0,
     "NumberOfFrames": 4,
-    "Duration": 100,
+    "Duration": 50,
 
     "IdleAnimation": {
       "StartingFrame": 18,
@@ -77,7 +78,7 @@
   "LeftAnimation": {
     "StartingFrame": 12,
     "NumberOfFrames": 4,
-    "Duration": 100,
+    "Duration": 50,
 
     "IdleAnimation": {
       "StartingFrame": 22,
@@ -90,7 +91,7 @@
   "RightAnimation": {
     "StartingFrame": 8,
     "NumberOfFrames": 4,
-    "Duration": 100,
+    "Duration": 50,
 
     "IdleAnimation": {
       "StartingFrame": 16,

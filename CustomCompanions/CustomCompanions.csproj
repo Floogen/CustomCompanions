@@ -52,10 +52,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CustomCompanions.cs" />
-    <Compile Include="Framework\ApiManager.cs" />
+    <Compile Include="Framework\Managers\ApiManager.cs" />
     <Compile Include="Framework\Companions\WalkingCompanion.cs" />
     <Compile Include="Framework\Interfaces\IJsonAssetsApi.cs" />
     <Compile Include="Framework\Interfaces\IWearMoreRingsApi.cs" />
+    <Compile Include="Framework\Managers\CompanionManager.cs" />
     <Compile Include="Framework\Models\RingModel.cs" />
     <Compile Include="Framework\Models\ContentPackModel.cs" />
     <Compile Include="Framework\Models\Companion\IdleAnimationModel.cs" />
@@ -65,7 +66,7 @@
     <Compile Include="Framework\Models\Companion\SoundModel.cs" />
     <Compile Include="Framework\Patches\RingPatch.cs" />
     <Compile Include="Framework\Patches\UtilityPatch.cs" />
-    <Compile Include="Framework\RingManager.cs" />
+    <Compile Include="Framework\Managers\RingManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

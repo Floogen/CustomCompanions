@@ -1,12 +1,9 @@
-﻿using Harmony;
+﻿using CustomCompanions.Framework.Managers;
+using Harmony;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Objects;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CustomCompanions.Framework.Patches
 {

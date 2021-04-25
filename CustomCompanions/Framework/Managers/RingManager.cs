@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CustomCompanions.Framework
+namespace CustomCompanions.Framework.Managers
 {
     internal static class RingManager
     {
@@ -58,7 +58,7 @@ namespace CustomCompanions.Framework
                 return;
             }
 
-            var companion = CustomCompanions.companions.FirstOrDefault(c => c.Name == summoningRing.CompanionName && c.Owner == summoningRing.Owner);
+            var companion = CompanionManager.companionModels.FirstOrDefault(c => c.Name == summoningRing.CompanionName && c.Owner == summoningRing.Owner);
             if (companion is null)
             {
                 CustomCompanions.monitor.Log($"Failed to find a companion match to [{summoningRing.CompanionName}] for the summoning ring [{ring.Name}]");
@@ -67,6 +67,7 @@ namespace CustomCompanions.Framework
 
             // Create a new Companion and add it to the player's location
             CustomCompanions.monitor.Log($"Spawning [{summoningRing.CompanionName}] via the summoning ring [{ring.Name}]");
+            CompanionManager.SummonCompanion(companion, who, location);
         }
 
         internal static void HandleUnequip(Farmer who, GameLocation location, Ring ring)

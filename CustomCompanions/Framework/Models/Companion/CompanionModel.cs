@@ -17,7 +17,8 @@ namespace CustomCompanions.Framework.Models.Companion
         public bool IsPrismatic { get; set; } = false;
         public LightModel Light { get; set; }
         public List<SoundModel> Sounds { get; set; }
-        public int FrameSize { get; set; }
+        public int FrameSizeWidth { get; set; }
+        public int FrameSizeHeight { get; set; }
         public string TileSheetPath { get; set; }
         public AnimationModel UniformAnimation { get; set; }
         public AnimationModel UpAnimation { get; set; }
@@ -34,7 +35,7 @@ namespace CustomCompanions.Framework.Models.Companion
                 $"\tColors: {string.Join(",", Colors.Select(c => "[" + string.Join(",", c) + "]"))} | IsPrismatic: {IsPrismatic}\n" +
                 $"\tLight: {Light}\n" +
                 $"\tSounds: {string.Join(",", Sounds)}\n" +
-                $"\tFrameSize: {FrameSize} | TileSheetPath: {TileSheetPath}\n" +
+                $"\tFrameSize: {FrameSizeWidth}x{FrameSizeHeight} | TileSheetPath: {TileSheetPath}\n" +
                 $"\tUniformAnimation: {UniformAnimation}\n" +
                 $"\tUpAnimation: {UpAnimation}\n" +
                 $"\tDownAnimation: {DownAnimation}\n" +
