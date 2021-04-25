@@ -58,16 +58,17 @@ namespace CustomCompanions.Framework.Managers
                 return;
             }
 
-            var companion = CompanionManager.companionModels.FirstOrDefault(c => c.Name == summoningRing.CompanionName && c.Owner == summoningRing.Owner);
+            var selectedCompanionData = summoningRing.Companions.ElementAt(Game1.random.Next(summoningRing.Companions.Count));
+            var companion = CompanionManager.companionModels.FirstOrDefault(c => c.Name == selectedCompanionData.Key && c.Owner == summoningRing.Owner);
             if (companion is null)
             {
-                CustomCompanions.monitor.Log($"Failed to find a companion match to [{summoningRing.CompanionName}] for the summoning ring [{ring.Name}]");
+                CustomCompanions.monitor.Log($"Failed to find a companion match to [{selectedCompanionData}] for the summoning ring [{ring.Name}]");
                 return;
             }
 
             // Create a new Companion and add it to the player's location
-            CustomCompanions.monitor.Log($"Spawning [{summoningRing.CompanionName}] x{summoningRing.NumberOfCompanionsToSummon} via the summoning ring [{ring.Name}]");
-            CompanionManager.SummonCompanion(companion, summoningRing.NumberOfCompanionsToSummon, who, location);
+            CustomCompanions.monitor.Log($"Spawning [{selectedCompanionData}] x{selectedCompanionData.Value.NumberToSummon} via the summoning ring [{ring.Name}]");
+            CompanionManager.SummonCompanion(companion, selectedCompanionData.Value.NumberToSummon, who, location);
         }
 
         internal static void HandleUnequip(Farmer who, GameLocation location, Ring ring)

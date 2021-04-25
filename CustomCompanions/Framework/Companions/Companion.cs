@@ -39,9 +39,21 @@ namespace CustomCompanions.Framework.Companions
             base.Breather = false;
             base.speed = model.TravelSpeed;
             base.forceUpdateTimer = 9999;
-            base.collidesWithOtherCharacters.Value = false;
+            base.collidesWithOtherCharacters.Value = true;
             base.farmerPassesThrough = true;
             base.HideShadow = true;
+
+            // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)
+            if (collidesWithOtherCharacters)
+            {
+                foreach (var character in owner.currentLocation.characters.Where(c => c != this))
+                {
+                    if (character.GetBoundingBox().Intersects(this.GetBoundingBox()))
+                    {
+                        base.Position = Utility.getRandomAdjacentOpenTile(owner.getTileLocation(), owner.currentLocation) * 64f;
+                    }
+                }
+            }
 
             this.owner = owner;
             this.model = model;
