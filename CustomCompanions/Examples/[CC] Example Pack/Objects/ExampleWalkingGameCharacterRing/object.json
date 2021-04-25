@@ -1,7 +1,10 @@
 {
-  "Name": "AuthorName.Rings.ExampleRing",
-  "CompanionName": "ExampleCompanion",
-  "NumberOfCompanionsToSummon": 1,
+  "Name": "AuthorName.Rings.ExampleWalkingGameCharacterRing",
+  "Companions": {
+    "ExampleWalkingGameCharacter": {
+      "NumberToSummon": 1
+    }
+  },
   "Description": "The gemstone faintly glows.",
   "Category": "Ring",
   "Recipe": null,
@@ -10,6 +13,6 @@
   "PurchaseFrom": "HatMouse",
   "PurchasePrice": 100,
   "NameLocalization": {
-    "en": "Example Ring"
+    "en": "Example Walking Game Character Ring"
   }
 }
