@@ -39,7 +39,7 @@ namespace CustomCompanions.Framework.Companions
             base.Breather = false;
             base.speed = model.TravelSpeed;
             base.forceUpdateTimer = 9999;
-            base.collidesWithOtherCharacters.Value = true;
+            base.collidesWithOtherCharacters.Value = (model.Type.ToUpper() == "FLYING" ? false : true);
             base.farmerPassesThrough = true;
             base.HideShadow = true;
 
