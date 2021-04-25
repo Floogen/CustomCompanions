@@ -69,13 +69,21 @@ namespace CustomCompanions.Framework.Companions
             if (f != null)
             {
                 movementTimer = !isMoving() && Vector2.Distance(base.Position, f.Position) > 256f ? movementTimer - time.ElapsedGameTime.Milliseconds : 1000;
-                if (Vector2.Distance(base.Position, f.Position) > 640f || movementTimer <= 0)
+
+                var targetDistance = Vector2.Distance(base.Position, f.Position);
+                if (targetDistance > 640f || movementTimer <= 0)
                 {
                     base.position.Value = f.position;
                     this.movementTimer = 1000;
                 }
-                else if (Vector2.Distance(base.Position, f.Position) > 64f)
+                else if (targetDistance > 64f)
                 {
+                    base.Speed = model.TravelSpeed;
+                    if (targetDistance > 128f)
+                    {
+                        base.Speed = model.TravelSpeed + (int)(targetDistance / 64f) - 1;
+                    }
+
                     if (this.motion.Equals(Vector2.Zero) && Game1.random.NextDouble() < 0.5 && soundMovingTimer <= 0)
                     {
 
