@@ -16,6 +16,8 @@ namespace CustomCompanions.Framework.Companions
         private Farmer owner;
         private CompanionModel model;
 
+        private float lightPulseTimer;
+
         private int? soundIdleTimer = null;
         private int? soundMovingTimer = null;
         private int? soundAlwaysTimer = null;
@@ -23,6 +25,8 @@ namespace CustomCompanions.Framework.Companions
         private SoundModel idleSound;
         private SoundModel movingSound;
         private SoundModel alwaysSound;
+
+        private LightSource light;
 
         private readonly NetInt specialNumber = new NetInt();
         private readonly NetBool isPrismatic = new NetBool();
@@ -44,6 +48,7 @@ namespace CustomCompanions.Framework.Companions
             this.specialNumber.Value = Game1.random.Next(100);
             this.nextPosition.Value = this.GetBoundingBox();
 
+            // Set up the sounds to play, if any
             idleSound = model.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "IDLE");
             if (idleSound != null && CustomCompanions.IsSoundValid(idleSound.SoundName, true))
             {
@@ -62,7 +67,7 @@ namespace CustomCompanions.Framework.Companions
                 this.soundAlwaysTimer = alwaysSound.TimeBetweenSound;
             }
 
-            // TODO: Pick a random color (Color.White if none give) or use prismatic if IsPrismatic is set
+            // Pick a random color (Color.White if none given) or use prismatic if IsPrismatic is true
             color.Value = Color.White;
             if (model.Colors.Count > 0)
             {
@@ -74,16 +79,17 @@ namespace CustomCompanions.Framework.Companions
                 }
                 else
                 {
-                    int[] selectedColor = model.Colors[randomColorIndex];
-
-                    // Verify alpha is given
-                    int alpha = 255;
-                    if (selectedColor.Length >= 4)
-                    {
-                        alpha = selectedColor[3];
-                    }
-                    color.Value = new Color(selectedColor[0], selectedColor[1], selectedColor[2], alpha);
+                    color.Value = CustomCompanions.GetColorFromArray(model.Colors[randomColorIndex]);
                 }
+            }
+
+            // Set up the light to give off, if any
+            if (model.Light != null)
+            {
+                this.lightPulseTimer = model.Light.PulseSpeed;
+
+                this.light = new LightSource(1, new Vector2(this.position.X + model.Light.OffsetX, this.position.Y + model.Light.OffsetY), model.Light.Radius, CustomCompanions.GetColorFromArray(model.Light.Color), this.id, LightSource.LightContext.None, 0L);
+                Game1.currentLightSources.Add(this.light);
             }
         }
 
@@ -93,11 +99,14 @@ namespace CustomCompanions.Framework.Companions
             base.update(time, location);
             base.forceUpdateTimer = 99999;
 
+            // Handle any movement
             this.AttemptMovement(time, location);
+
+            // Update light location, if applicable
+            this.UpdateLight(time);
 
             // Play any sound(s) that are required
             this.PlayRequiredSounds(time);
-
         }
 
         public override bool isMoving()
@@ -250,6 +259,20 @@ namespace CustomCompanions.Framework.Companions
                             break;
                     }
                 }
+            }
+        }
+
+        private void UpdateLight(GameTime time)
+        {
+            if (light != null)
+            {
+                if (this.model.Light.PulseSpeed != 0)
+                {
+                    this.light.radius.Value = this.model.Light.PulseMinRadius + (0.5f * (this.model.Light.Radius - this.model.Light.PulseMinRadius) * (1 + (float)Math.Sin(2 * Math.PI * lightPulseTimer)));//(this.model.Light.Radius / 2) * (1 + (float)Math.Sin(2 * Math.PI * lightPulseTimer));
+                    this.lightPulseTimer = (this.lightPulseTimer + (float)time.ElapsedGameTime.TotalMilliseconds / this.model.Light.PulseSpeed) % 1;
+                }
+
+                this.light.position.Value = new Vector2(this.position.X + this.model.Light.OffsetX, this.position.Y + this.model.Light.OffsetY);
             }
         }
 
