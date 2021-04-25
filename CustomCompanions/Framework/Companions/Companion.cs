@@ -15,10 +15,9 @@ namespace CustomCompanions.Framework.Companions
         private Farmer owner;
         private CompanionModel model;
 
-        private int movementTimer;
-        private int soundIdleTimer = -1;
-        private int soundMovingTimer = -1;
-        private int soundAlwaysTimer = -1;
+        private int? soundIdleTimer = null;
+        private int? soundMovingTimer = null;
+        private int? soundAlwaysTimer = null;
 
         private SoundModel idleSound;
         private SoundModel movingSound;
@@ -49,13 +48,13 @@ namespace CustomCompanions.Framework.Companions
             movingSound = model.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "MOVING");
             if (movingSound != null && CustomCompanions.IsSoundValid(movingSound.SoundName, true))
             {
-                this.soundIdleTimer = movingSound.TimeBetweenSound;
+                this.soundMovingTimer = movingSound.TimeBetweenSound;
             }
 
             alwaysSound = model.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "ALWAYS");
             if (alwaysSound != null && CustomCompanions.IsSoundValid(alwaysSound.SoundName, true))
             {
-                this.soundIdleTimer = alwaysSound.TimeBetweenSound;
+                this.soundAlwaysTimer = alwaysSound.TimeBetweenSound;
             }
         }
 
@@ -65,16 +64,59 @@ namespace CustomCompanions.Framework.Companions
             base.update(time, location);
             base.forceUpdateTimer = 99999;
 
+            this.AttemptMovement(time, location);
+
+            // Play any sound(s) that are required
+            this.PlayRequiredSounds(time);
+
+        }
+
+        public override bool isMoving()
+        {
+            return !this.motion.Equals(Vector2.Zero);
+        }
+
+
+        public override bool shouldCollideWithBuildingLayer(GameLocation location)
+        {
+            if (IsFlying())
+            {
+                return false;
+            }
+
+            return base.shouldCollideWithBuildingLayer(location);
+        }
+
+        public override bool collideWith(StardewValley.Object o)
+        {
+            if (IsFlying())
+            {
+                return false;
+            }
+
+            return base.collideWith(o);
+        }
+
+        public override bool isColliding(GameLocation l, Vector2 tile)
+        {
+            if (IsFlying())
+            {
+                return false;
+            }
+
+            return base.isColliding(l, tile);
+        }
+
+        private void AttemptMovement(GameTime time, GameLocation location)
+        {
+
             Farmer f = Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation);
             if (f != null)
             {
-                movementTimer = !isMoving() && Vector2.Distance(base.Position, f.Position) > 256f ? movementTimer - time.ElapsedGameTime.Milliseconds : 1000;
-
                 var targetDistance = Vector2.Distance(base.Position, f.Position);
-                if (targetDistance > 640f || movementTimer <= 0)
+                if (targetDistance > 640f)
                 {
                     base.position.Value = f.position;
-                    this.movementTimer = 1000;
                 }
                 else if (targetDistance > 64f)
                 {
@@ -84,15 +126,7 @@ namespace CustomCompanions.Framework.Companions
                         base.Speed = model.TravelSpeed + (int)(targetDistance / 64f) - 1;
                     }
 
-                    if (this.motion.Equals(Vector2.Zero) && Game1.random.NextDouble() < 0.5 && soundMovingTimer <= 0)
-                    {
-
-                    }
-                    if (Game1.random.NextDouble() < 0.007)
-                    {
-                        this.jumpWithoutSound(Game1.random.Next(6, 9));
-                    }
-                    this.SetMoving(Utility.getVelocityTowardPlayer(new Point((int)base.Position.X, (int)base.Position.Y), base.speed, f));
+                    this.SetMotion(Utility.getVelocityTowardPlayer(new Point((int)base.Position.X, (int)base.Position.Y), base.speed, f));
                 }
                 else
                 {
@@ -185,34 +219,37 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
-        public override bool shouldCollideWithBuildingLayer(GameLocation location)
+        private void PlayRequiredSounds(GameTime time)
         {
-            if (IsFlying())
+            if (this.soundAlwaysTimer != null)
             {
-                return false;
+                this.soundAlwaysTimer = Math.Max(0, (int)this.soundAlwaysTimer - time.ElapsedGameTime.Milliseconds);
+                if (soundAlwaysTimer <= 0 && Game1.random.NextDouble() <= alwaysSound.ChanceOfPlaying)
+                {
+                    Game1.playSound(alwaysSound.SoundName);
+                    soundAlwaysTimer = alwaysSound.TimeBetweenSound;
+                }
             }
 
-            return base.shouldCollideWithBuildingLayer(location);
-        }
-
-        public override bool collideWith(StardewValley.Object o)
-        {
-            if (IsFlying())
+            if (this.isMoving() && this.soundMovingTimer != null)
             {
-                return false;
+                this.soundMovingTimer = Math.Max(0, (int)this.soundMovingTimer - time.ElapsedGameTime.Milliseconds);
+                if (soundMovingTimer <= 0 && Game1.random.NextDouble() <= movingSound.ChanceOfPlaying)
+                {
+                    Game1.playSound(movingSound.SoundName);
+                    soundMovingTimer = movingSound.TimeBetweenSound;
+                }
             }
 
-            return base.collideWith(o);
-        }
-
-        public override bool isColliding(GameLocation l, Vector2 tile)
-        {
-            if (IsFlying())
+            if (!this.isMoving() && this.soundIdleTimer != null)
             {
-                return false;
+                this.soundIdleTimer = Math.Max(0, (int)this.soundIdleTimer - time.ElapsedGameTime.Milliseconds);
+                if (soundIdleTimer <= 0 && Game1.random.NextDouble() <= idleSound.ChanceOfPlaying)
+                {
+                    Game1.playSound(idleSound.SoundName);
+                    soundIdleTimer = idleSound.TimeBetweenSound;
+                }
             }
-
-            return base.isColliding(l, tile);
         }
 
         internal bool IsFlying()
@@ -220,7 +257,7 @@ namespace CustomCompanions.Framework.Companions
             return this.model.Type.ToUpper() == "FLYING";
         }
 
-        internal void SetMoving(Vector2 motion)
+        internal void SetMotion(Vector2 motion)
         {
             this.motion.Value = motion;
         }
