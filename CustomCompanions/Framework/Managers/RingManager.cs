@@ -66,8 +66,8 @@ namespace CustomCompanions.Framework.Managers
             }
 
             // Create a new Companion and add it to the player's location
-            CustomCompanions.monitor.Log($"Spawning [{summoningRing.CompanionName}] via the summoning ring [{ring.Name}]");
-            CompanionManager.SummonCompanion(companion, who, location);
+            CustomCompanions.monitor.Log($"Spawning [{summoningRing.CompanionName}] x{summoningRing.NumberOfCompanionsToSummon} via the summoning ring [{ring.Name}]");
+            CompanionManager.SummonCompanion(companion, summoningRing.NumberOfCompanionsToSummon, who, location);
         }
 
         internal static void HandleUnequip(Farmer who, GameLocation location, Ring ring)

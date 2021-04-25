@@ -15,7 +15,7 @@ namespace CustomCompanions.Framework.Managers
         internal static List<CompanionModel> companionModels;
         internal static List<Companion> activeCompanions;
 
-        internal static void SummonCompanion(CompanionModel model, Farmer who, GameLocation location)
+        internal static void SummonCompanion(CompanionModel model, int numberToSummon, Farmer who, GameLocation location)
         {
             if (location.characters is null)
             {
@@ -23,9 +23,12 @@ namespace CustomCompanions.Framework.Managers
                 return;
             }
 
-            Companion companion = new Companion(model, who);
-            location.characters.Add(companion);
-            activeCompanions.Add(companion);
+            for (int x = 0; x < numberToSummon; x++)
+            {
+                Companion companion = new Companion(model, who);
+                location.characters.Add(companion);
+                activeCompanions.Add(companion);
+            }
         }
 
         internal static void UpdateCompanions()

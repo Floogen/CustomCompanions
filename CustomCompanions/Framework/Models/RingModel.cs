@@ -12,6 +12,6 @@ namespace CustomCompanions.Framework.Models
         public int ObjectID { get; set; }
         public string Owner { get; set; }
         public string CompanionName { get; set; }
-        public string NumberOfCompanionsToSummon { get; set; }
+        public int NumberOfCompanionsToSummon { get; set; } = 1;
     }
 }
