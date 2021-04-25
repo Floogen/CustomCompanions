@@ -34,7 +34,7 @@ namespace CustomCompanions.Framework.Companions
         private readonly NetVector2 motion = new NetVector2(Vector2.Zero);
         private new readonly NetRectangle nextPosition = new NetRectangle();
 
-        public Companion(CompanionModel model, Farmer owner) : base(new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight), owner.getTileLocation() * 64f, 2, model.Name)
+        public Companion(CompanionModel model, Farmer owner) : base(new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight), owner.getTileLocation() * 64f + new Vector2(model.SpawnOffsetX, model.SpawnOffsetY), 2, model.Name)
         {
             base.Breather = false;
             base.speed = model.TravelSpeed;
@@ -169,7 +169,7 @@ namespace CustomCompanions.Framework.Companions
                         base.Speed = model.TravelSpeed + (int)(targetDistance / 64f) - 1;
                     }
 
-                    this.SetMotion(Utility.getVelocityTowardPlayer(new Point((int)base.Position.X, (int)base.Position.Y), base.speed, f));
+                    this.SetMotion(Utility.getVelocityTowardPlayer(new Point((int)base.Position.X + this.model.SpawnOffsetX, (int)base.Position.Y + this.model.SpawnOffsetY), base.speed, f));
                 }
                 else
                 {
