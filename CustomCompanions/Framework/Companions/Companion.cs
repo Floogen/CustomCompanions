@@ -1,5 +1,6 @@
 ﻿using CustomCompanions.Framework.Models.Companion;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewValley;
 using System;
@@ -23,6 +24,9 @@ namespace CustomCompanions.Framework.Companions
         private SoundModel movingSound;
         private SoundModel alwaysSound;
 
+        private readonly NetInt specialNumber = new NetInt();
+        private readonly NetBool isPrismatic = new NetBool();
+        private readonly NetColor color = new NetColor();
         private readonly NetVector2 motion = new NetVector2(Vector2.Zero);
         private new readonly NetRectangle nextPosition = new NetRectangle();
 
@@ -37,6 +41,7 @@ namespace CustomCompanions.Framework.Companions
 
             this.owner = owner;
             this.model = model;
+            this.specialNumber.Value = Game1.random.Next(100);
             this.nextPosition.Value = this.GetBoundingBox();
 
             idleSound = model.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "IDLE");
@@ -55,6 +60,30 @@ namespace CustomCompanions.Framework.Companions
             if (alwaysSound != null && CustomCompanions.IsSoundValid(alwaysSound.SoundName, true))
             {
                 this.soundAlwaysTimer = alwaysSound.TimeBetweenSound;
+            }
+
+            // TODO: Pick a random color (Color.White if none give) or use prismatic if IsPrismatic is set
+            color.Value = Color.White;
+            if (model.Colors.Count > 0)
+            {
+                int randomColorIndex = Game1.random.Next(model.Colors.Count + (model.IsPrismatic ? 1 : 0));
+                if (randomColorIndex > model.Colors.Count - 1)
+                {
+                    // Primsatic color has been selected
+                    isPrismatic.Value = true;
+                }
+                else
+                {
+                    int[] selectedColor = model.Colors[randomColorIndex];
+
+                    // Verify alpha is given
+                    int alpha = 255;
+                    if (selectedColor.Length >= 4)
+                    {
+                        alpha = selectedColor[3];
+                    }
+                    color.Value = new Color(selectedColor[0], selectedColor[1], selectedColor[2], alpha);
+                }
             }
         }
 
@@ -105,6 +134,11 @@ namespace CustomCompanions.Framework.Companions
             }
 
             return base.isColliding(l, tile);
+        }
+
+        public override void draw(SpriteBatch b, float alpha = 1f)
+        {
+            b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(this.GetSpriteWidthForPositioning() * 4 / 2, this.GetBoundingBox().Height / 2) + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), this.Sprite.SourceRect, this.isPrismatic ? Utility.GetPrismaticColor(348 + (int)this.specialNumber, 5f) : color, this.rotation, new Vector2(this.Sprite.SpriteWidth / 2, (float)this.Sprite.SpriteHeight * 3f / 4f), Math.Max(0.2f, base.scale) * 4f, (base.flip || (this.Sprite.CurrentAnimation != null && this.Sprite.CurrentAnimation[this.Sprite.currentAnimationIndex].flip)) ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.991f : ((float)base.getStandingY() / 10000f)));
         }
 
         private void AttemptMovement(GameTime time, GameLocation location)
