@@ -196,31 +196,18 @@ namespace CustomCompanions.Framework.Companions
                 }
             }
 
-            if (!IsFlying())
+            // Perform the position movement
+            this.nextPosition.Value = this.GetBoundingBox();
+            this.nextPosition.X += (int)this.motion.X;
+            if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
             {
-                // Perform the position movement
-                this.nextPosition.Value = this.GetBoundingBox();
-                this.nextPosition.X += (int)this.motion.X;
-                if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
-                {
-                    base.position.X += (int)this.motion.X;
-                }
-                this.nextPosition.X -= (int)this.motion.X;
-                this.nextPosition.Y += (int)this.motion.Y;
-                if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
-                {
-                    base.position.Y += (int)this.motion.Y;
-                }
+                base.position.X += (int)this.motion.X;
             }
-            else
+            this.nextPosition.X -= (int)this.motion.X;
+            this.nextPosition.Y += (int)this.motion.Y;
+            if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
             {
-                Vector2 targetPosition = Game1.player.position + new Vector2(this.model.SpawnOffsetX, this.model.SpawnOffsetY);
-                Vector2 smoothedPositionSlow = Vector2.Lerp(this.position, targetPosition, 0.02f);
-
-                // Setting up wander zone
-                base.position.Value = smoothedPositionSlow;
-
-                base.position.Value += this.motion;
+                base.position.Y += (int)this.motion.Y;
             }
 
             // Update any animations
