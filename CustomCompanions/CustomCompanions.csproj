@@ -73,6 +73,7 @@
   <ItemGroup>
     <None Include="Examples\[CC] Example Pack\Companions\ExampleFlyingCompanion\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWalkingCompanion\companion.json" />
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCustomCharacter\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkingGameCharacter\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCompanion\companion.json" />
     <None Include="Examples\[CC] Example Pack\manifest.json" />
@@ -88,6 +89,7 @@
   <ItemGroup>
     <Content Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWalkingCompanion\companion.png" />
     <Content Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCompanion\companion.png" />
+    <Content Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCustomCharacter\companion.png" />
     <Content Include="Examples\[CC] Example Pack\Objects\ExampleWalkingGameCharacterRing\object.png" />
     <Content Include="Examples\[CC] Example Pack\Objects\ExampleFlyingRing\object.png" />
     <Content Include="Examples\[CC] Example Pack\Objects\ExampleWalkingRing\object.png" />

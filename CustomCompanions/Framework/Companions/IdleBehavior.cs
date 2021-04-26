@@ -12,7 +12,8 @@ namespace CustomCompanions.Framework.Companions
     {
         NOTHING,
         HOVER,
-        WANDER
+        WANDER,
+        JUMPER
     }
 
     internal class IdleBehavior
@@ -38,13 +39,16 @@ namespace CustomCompanions.Framework.Companions
                 case "WANDER":
                     this.behavior = Behavior.WANDER;
                     break;
+                case "JUMPER":
+                    this.behavior = Behavior.JUMPER;
+                    break;
                 default:
                     this.behavior = Behavior.NOTHING;
                     break;
             }
         }
 
-        internal Vector2 ApplyMotionModifications(Vector2 motion, GameTime time)
+        internal bool PerformIdleBehavior(Companion companion, GameTime time)
         {
             // Determine the behavior logic to apply
             if (this.behavior == Behavior.WANDER)
@@ -56,43 +60,59 @@ namespace CustomCompanions.Framework.Companions
                     this.behaviorTimer = Game1.random.Next(1000, 8000);
                 }
 
+                //Vector2 targetPosition = companion.GetTargetPosition() + new Vector2(companion.model.SpawnOffsetX, companion.model.SpawnOffsetY);
+                //Vector2 smoothedPositionSlow = Vector2.Lerp(companion.position, targetPosition, 0.02f);
+                //companion.position.Value = smoothedPositionSlow;
+
                 // Get the current motion multiplier
+                companion.position.Value += companion.motion.Value * this.motionMultiplier;
                 this.motionMultiplier -= 0.0005f * time.ElapsedGameTime.Milliseconds;
                 if (this.motionMultiplier <= 1f)
                 {
                     this.motionMultiplier = 1f;
                 }
 
-                motion.X += Game1.random.Next(-1, 2) * 0.1f;
-                motion.Y += Game1.random.Next(-1, 2) * 0.1f;
+                companion.motion.X += Game1.random.Next(-1, 2) * 0.1f;
+                companion.motion.Y += Game1.random.Next(-1, 2) * 0.1f;
 
-                if (motion.X < -1f)
+                if (companion.motion.X < -1f)
                 {
-                    motion.X = -1f;
+                    companion.motion.X = -1f;
                 }
-                if (motion.X > 1f)
+                if (companion.motion.X > 1f)
                 {
-                    motion.X = 1f;
+                    companion.motion.X = 1f;
                 }
-                if (motion.Y < -1f)
+                if (companion.motion.Y < -1f)
                 {
-                    motion.Y = -1f;
+                    companion.motion.Y = -1f;
                 }
-                if (motion.Y > 1f)
+                if (companion.motion.Y > 1f)
                 {
-                    motion.Y = 1f;
+                    companion.motion.Y = 1f;
                 }
 
-                return motion * motionMultiplier;
+                companion.motion.Value = companion.motion.Value * motionMultiplier;
+                return false;
             }
             else if (this.behavior == Behavior.HOVER)
             {
                 // TODO: Implement parameter so user can pick frequency of HOVER and other idle behaviors
                 behaviorTimer = (behaviorTimer + (float)time.ElapsedGameTime.TotalMilliseconds / 1000) % 1;
-                return new Vector2(0f, 2f * ((float)Math.Sin(2 * Math.PI * behaviorTimer)));
-            }
+                companion.motion.Value = new Vector2(0f, 2f * ((float)Math.Sin(2 * Math.PI * behaviorTimer)));
 
-            return Vector2.Zero;
+                return true;
+            }
+            else if (this.behavior == Behavior.JUMPER)
+            {
+                companion.PerformJumpMovement();
+                return true;
+            }
+            else
+            {
+                companion.motion.Value = Vector2.Zero;
+                return true;
+            }
         }
     }
 }

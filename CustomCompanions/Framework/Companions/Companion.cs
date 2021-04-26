@@ -13,8 +13,9 @@ namespace CustomCompanions.Framework.Companions
 {
     public class Companion : NPC
     {
-        private Farmer owner;
-        private CompanionModel model;
+        internal Farmer owner;
+        internal Vector2 targetTile;
+        internal CompanionModel model;
         private IdleBehavior idleBehavior;
 
         private float lightPulseTimer;
@@ -33,8 +34,14 @@ namespace CustomCompanions.Framework.Companions
         private readonly NetInt specialNumber = new NetInt();
         private readonly NetBool isPrismatic = new NetBool();
         private readonly NetColor color = new NetColor();
-        private readonly NetVector2 motion = new NetVector2(Vector2.Zero);
+        internal readonly NetVector2 motion = new NetVector2(Vector2.Zero);
         private new readonly NetRectangle nextPosition = new NetRectangle();
+
+        public Companion(CompanionModel model, Vector2 targetTile, GameLocation location) : this(model, null)
+        {
+            this.targetTile = targetTile;
+            this.currentLocation = location;
+        }
 
         public Companion(CompanionModel model, Farmer owner) : base(new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight), owner.getTileLocation() * 64f + new Vector2(model.SpawnOffsetX, model.SpawnOffsetY), 2, model.Name)
         {
@@ -45,23 +52,28 @@ namespace CustomCompanions.Framework.Companions
             base.farmerPassesThrough = true;
             base.HideShadow = true;
 
+            if (owner != null)
+            {
+                this.owner = owner;
+                this.model = model;
+                this.currentLocation = owner.currentLocation;
+                this.specialNumber.Value = Game1.random.Next(100);
+                this.idleBehavior = new IdleBehavior(model.IdleBehavior);
+            }
+
             // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)
             if (collidesWithOtherCharacters)
             {
-                foreach (var character in owner.currentLocation.characters.Where(c => c != this))
+                foreach (var character in this.currentLocation.characters.Where(c => c != this))
                 {
                     if (character.GetBoundingBox().Intersects(this.GetBoundingBox()))
                     {
-                        base.Position = Utility.getRandomAdjacentOpenTile(owner.getTileLocation(), owner.currentLocation) * 64f;
+                        base.Position = Utility.getRandomAdjacentOpenTile(this.getTileLocation(), this.currentLocation) * 64f;
                     }
                 }
             }
-
-            this.owner = owner;
-            this.model = model;
-            this.specialNumber.Value = Game1.random.Next(100);
             this.nextPosition.Value = this.GetBoundingBox();
-            this.idleBehavior = new IdleBehavior(model.IdleBehavior);
+
 
             // Set up the sounds to play, if any
             idleSound = model.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "IDLE");
@@ -177,7 +189,7 @@ namespace CustomCompanions.Framework.Companions
                     this.hasReachedPlayer.Value = false;
                     base.position.Value = f.position;
                 }
-                else if ((targetDistance > 64f && !owner.isMoving()) || targetDistance > 128f)
+                else if ((targetDistance > 64f && (owner.isMoving() || !this.hasReachedPlayer.Value)) || targetDistance > 256f)
                 {
                     this.hasReachedPlayer.Value = false;
 
@@ -187,27 +199,36 @@ namespace CustomCompanions.Framework.Companions
                         base.Speed = model.TravelSpeed + (int)(targetDistance / 64f) - 1;
                     }
 
-                    this.SetMotion(Utility.getVelocityTowardPlayer(new Point((int)base.Position.X + this.model.SpawnOffsetX, (int)base.Position.Y + this.model.SpawnOffsetY), base.speed, f));
+                    if (IsJumper())
+                    {
+                        this.PerformJumpMovement();
+                    }
+                    else
+                    {
+                        this.SetMotion(Utility.getVelocityTowardPlayer(new Point((int)base.Position.X + this.model.SpawnOffsetX, (int)base.Position.Y + this.model.SpawnOffsetY), base.speed, f));
+                    }
                 }
                 else
                 {
                     this.hasReachedPlayer.Value = true;
-                    this.motion.Value = this.idleBehavior.ApplyMotionModifications(this.motion.Value, time);
                 }
             }
 
             // Perform the position movement
-            this.nextPosition.Value = this.GetBoundingBox();
-            this.nextPosition.X += (int)this.motion.X;
-            if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
+            if (!this.hasReachedPlayer.Value || this.idleBehavior.PerformIdleBehavior(this, time))
             {
-                base.position.X += (int)this.motion.X;
-            }
-            this.nextPosition.X -= (int)this.motion.X;
-            this.nextPosition.Y += (int)this.motion.Y;
-            if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
-            {
-                base.position.Y += (int)this.motion.Y;
+                this.nextPosition.Value = this.GetBoundingBox();
+                this.nextPosition.X += (int)this.motion.X;
+                if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
+                {
+                    base.position.X += (int)this.motion.X;
+                }
+                this.nextPosition.X -= (int)this.motion.X;
+                this.nextPosition.Y += (int)this.motion.Y;
+                if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
+                {
+                    base.position.Y += (int)this.motion.Y;
+                }
             }
 
             // Update any animations
@@ -333,6 +354,49 @@ namespace CustomCompanions.Framework.Companions
         internal bool IsFlying()
         {
             return this.model.Type.ToUpper() == "FLYING";
+        }
+
+        internal bool IsJumper()
+        {
+            return this.model.Type.ToUpper() == "JUMPING";
+        }
+
+        internal void PerformJumpMovement()
+        {
+            if (this.yJumpOffset == 0)
+            {
+                this.jumpWithoutSound();
+                this.yJumpVelocity = (float)Game1.random.Next(50, 70) / 10f;
+
+                if (Game1.random.NextDouble() < 0.01)
+                {
+                    this.yJumpVelocity *= 2f;
+                }
+            }
+
+            Vector2 v = Utility.getAwayFromPositionTrajectory(this.GetBoundingBox(), this.GetTargetPosition());
+            this.xVelocity += (0f - v.X) / 150f + ((Game1.random.NextDouble() < 0.01) ? ((float)Game1.random.Next(-50, 50) / 10f) : 0f);
+            if (Math.Abs(this.xVelocity) > 5f)
+            {
+                this.xVelocity = Math.Sign(this.xVelocity) * 5;
+            }
+            this.yVelocity += (0f - v.Y) / 150f + ((Game1.random.NextDouble() < 0.01) ? ((float)Game1.random.Next(-50, 50) / 10f) : 0f);
+            if (Math.Abs(this.yVelocity) > 5f)
+            {
+                this.yVelocity = Math.Sign(this.yVelocity) * 5;
+            }
+
+            this.SetMotion(Utility.getVelocityTowardPoint(new Point((int)this.Position.X + this.model.SpawnOffsetX, (int)this.Position.Y + this.model.SpawnOffsetY), new Vector2(this.GetTargetPosition().X, this.GetTargetPosition().Y), this.speed));
+        }
+
+        internal Vector2 GetTargetPosition()
+        {
+            if (owner != null && owner.currentLocation == this.currentLocation)
+            {
+                return owner.position;
+            }
+
+            return targetTile;
         }
 
         internal void SetMotion(Vector2 motion)

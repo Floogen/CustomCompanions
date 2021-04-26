@@ -3,6 +3,9 @@
   "Companions": {
     "ExampleWalkingGameCharacter": {
       "NumberToSummon": 1
+    },
+    "ExampleWalkingCustomCharacter": {
+      "NumberToSummon": 1
     }
   },
   "Description": "The gemstone faintly glows.",
