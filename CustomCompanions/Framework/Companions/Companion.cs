@@ -15,6 +15,7 @@ namespace CustomCompanions.Framework.Companions
     {
         private Farmer owner;
         private CompanionModel model;
+        private IdleBehavior idleBehavior;
 
         private float lightPulseTimer;
 
@@ -59,6 +60,7 @@ namespace CustomCompanions.Framework.Companions
             this.model = model;
             this.specialNumber.Value = Game1.random.Next(100);
             this.nextPosition.Value = this.GetBoundingBox();
+            this.idleBehavior = new IdleBehavior(model.IdleBehavior);
 
             // Set up the sounds to play, if any
             idleSound = model.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "IDLE");
@@ -165,7 +167,7 @@ namespace CustomCompanions.Framework.Companions
         private void AttemptMovement(GameTime time, GameLocation location)
         {
 
-            Farmer f = Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation);
+            Farmer f = owner is null ? Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) : owner;
             if (f != null)
             {
                 var targetDistance = Vector2.Distance(base.Position, f.Position);
@@ -185,10 +187,11 @@ namespace CustomCompanions.Framework.Companions
                 }
                 else
                 {
-                    this.motion.Value = Vector2.Zero;
+                    this.motion.Value = this.idleBehavior.ApplyMotionModifications(this.motion.Value, time);
                 }
             }
 
+            // Perform the position movement
             this.nextPosition.Value = this.GetBoundingBox();
             this.nextPosition.X += (int)this.motion.X;
             if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
@@ -202,6 +205,7 @@ namespace CustomCompanions.Framework.Companions
                 base.position.Y += (int)this.motion.Y;
             }
 
+            // Update any animations
             if (!this.motion.Equals(Vector2.Zero))
             {
                 if (model.UniformAnimation != null && !CustomCompanions.CompanionHasFullMovementSet(model))
