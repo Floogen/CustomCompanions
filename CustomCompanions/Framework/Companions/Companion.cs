@@ -37,13 +37,13 @@ namespace CustomCompanions.Framework.Companions
         internal readonly NetVector2 motion = new NetVector2(Vector2.Zero);
         private new readonly NetRectangle nextPosition = new NetRectangle();
 
-        public Companion(CompanionModel model, Vector2 targetTile, GameLocation location) : this(model, null)
+        public Companion(CompanionModel model, Vector2 targetTile, GameLocation location) : this(model, null, targetTile)
         {
-            this.targetTile = targetTile;
+            this.targetTile = targetTile * 64f;
             this.currentLocation = location;
         }
 
-        public Companion(CompanionModel model, Farmer owner) : base(new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight), owner.getTileLocation() * 64f + new Vector2(model.SpawnOffsetX, model.SpawnOffsetY), 2, model.Name)
+        public Companion(CompanionModel model, Farmer owner, Vector2? targetTile = null) : base(new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight), (owner is null ? (Vector2)targetTile : owner.getTileLocation()) * 64f + new Vector2(model.SpawnOffsetX, model.SpawnOffsetY), 2, model.Name)
         {
             base.Breather = false;
             base.speed = model.TravelSpeed;
@@ -52,72 +52,17 @@ namespace CustomCompanions.Framework.Companions
             base.farmerPassesThrough = true;
             base.HideShadow = true;
 
+            this.model = model;
+            this.specialNumber.Value = Game1.random.Next(100);
+            this.idleBehavior = new IdleBehavior(model.IdleBehavior);
+
             if (owner != null)
             {
                 this.owner = owner;
-                this.model = model;
                 this.currentLocation = owner.currentLocation;
-                this.specialNumber.Value = Game1.random.Next(100);
-                this.idleBehavior = new IdleBehavior(model.IdleBehavior);
             }
 
-            // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)
-            if (collidesWithOtherCharacters)
-            {
-                foreach (var character in this.currentLocation.characters.Where(c => c != this))
-                {
-                    if (character.GetBoundingBox().Intersects(this.GetBoundingBox()))
-                    {
-                        base.Position = Utility.getRandomAdjacentOpenTile(this.getTileLocation(), this.currentLocation) * 64f;
-                    }
-                }
-            }
-            this.nextPosition.Value = this.GetBoundingBox();
-
-
-            // Set up the sounds to play, if any
-            idleSound = model.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "IDLE");
-            if (idleSound != null && CustomCompanions.IsSoundValid(idleSound.SoundName, true))
-            {
-                this.soundIdleTimer = idleSound.TimeBetweenSound;
-            }
-
-            movingSound = model.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "MOVING");
-            if (movingSound != null && CustomCompanions.IsSoundValid(movingSound.SoundName, true))
-            {
-                this.soundMovingTimer = movingSound.TimeBetweenSound;
-            }
-
-            alwaysSound = model.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "ALWAYS");
-            if (alwaysSound != null && CustomCompanions.IsSoundValid(alwaysSound.SoundName, true))
-            {
-                this.soundAlwaysTimer = alwaysSound.TimeBetweenSound;
-            }
-
-            // Pick a random color (Color.White if none given) or use prismatic if IsPrismatic is true
-            color.Value = Color.White;
-            if (model.Colors.Count > 0)
-            {
-                int randomColorIndex = Game1.random.Next(model.Colors.Count + (model.IsPrismatic ? 1 : 0));
-                if (randomColorIndex > model.Colors.Count - 1)
-                {
-                    // Primsatic color has been selected
-                    isPrismatic.Value = true;
-                }
-                else
-                {
-                    color.Value = CustomCompanions.GetColorFromArray(model.Colors[randomColorIndex]);
-                }
-            }
-
-            // Set up the light to give off, if any
-            if (model.Light != null)
-            {
-                this.lightPulseTimer = model.Light.PulseSpeed;
-
-                this.light = new LightSource(1, new Vector2(this.position.X + model.Light.OffsetX, this.position.Y + model.Light.OffsetY), model.Light.Radius, CustomCompanions.GetColorFromArray(model.Light.Color), this.id, LightSource.LightContext.None, 0L);
-                Game1.currentLightSources.Add(this.light);
-            }
+            this.SetUpCompanion();
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -177,19 +122,78 @@ namespace CustomCompanions.Framework.Companions
             b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(this.GetSpriteWidthForPositioning() * 4 / 2, this.GetBoundingBox().Height / 2) + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), this.Sprite.SourceRect, this.isPrismatic ? Utility.GetPrismaticColor(348 + (int)this.specialNumber, 5f) : color, this.rotation, new Vector2(this.Sprite.SpriteWidth / 2, (float)this.Sprite.SpriteHeight * 3f / 4f), Math.Max(0.2f, base.scale) * 4f, (base.flip || (this.Sprite.CurrentAnimation != null && this.Sprite.CurrentAnimation[this.Sprite.currentAnimationIndex].flip)) ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.991f : ((float)base.getStandingY() / 10000f)));
         }
 
+        private void SetUpCompanion()
+        {
+            // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)
+            if (this.collidesWithOtherCharacters)
+            {
+                foreach (var character in this.currentLocation.characters.Where(c => c != this))
+                {
+                    if (character.GetBoundingBox().Intersects(this.GetBoundingBox()))
+                    {
+                        base.Position = Utility.getRandomAdjacentOpenTile(this.getTileLocation(), this.currentLocation) * 64f;
+                    }
+                }
+            }
+            this.nextPosition.Value = this.GetBoundingBox();
+
+
+            // Set up the sounds to play, if any
+            this.idleSound = this.model.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "IDLE");
+            if (this.idleSound != null && CustomCompanions.IsSoundValid(this.idleSound.SoundName, true))
+            {
+                this.soundIdleTimer = this.idleSound.TimeBetweenSound;
+            }
+
+            this.movingSound = this.model.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "MOVING");
+            if (this.movingSound != null && CustomCompanions.IsSoundValid(this.movingSound.SoundName, true))
+            {
+                this.soundMovingTimer = this.movingSound.TimeBetweenSound;
+            }
+
+            this.alwaysSound = this.model.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "ALWAYS");
+            if (this.alwaysSound != null && CustomCompanions.IsSoundValid(this.alwaysSound.SoundName, true))
+            {
+                this.soundAlwaysTimer = this.alwaysSound.TimeBetweenSound;
+            }
+
+            // Pick a random color (Color.White if none given) or use prismatic if IsPrismatic is true
+            color.Value = Color.White;
+            if (this.model.Colors.Count > 0)
+            {
+                int randomColorIndex = Game1.random.Next(this.model.Colors.Count + (this.model.IsPrismatic ? 1 : 0));
+                if (randomColorIndex > this.model.Colors.Count - 1)
+                {
+                    // Primsatic color has been selected
+                    this.isPrismatic.Value = true;
+                }
+                else
+                {
+                    this.color.Value = CustomCompanions.GetColorFromArray(this.model.Colors[randomColorIndex]);
+                }
+            }
+
+            // Set up the light to give off, if any
+            if (this.model.Light != null)
+            {
+                this.lightPulseTimer = this.model.Light.PulseSpeed;
+
+                this.light = new LightSource(1, new Vector2(this.position.X + this.model.Light.OffsetX, this.position.Y + this.model.Light.OffsetY), this.model.Light.Radius, CustomCompanions.GetColorFromArray(this.model.Light.Color), this.id, LightSource.LightContext.None, 0L);
+                Game1.currentLightSources.Add(this.light);
+            }
+        }
+
         private void AttemptMovement(GameTime time, GameLocation location)
         {
-
-            Farmer f = owner is null ? Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) : owner;
-            if (f != null)
+            if (owner != null || targetTile != null)
             {
-                var targetDistance = Vector2.Distance(base.Position, f.Position);
+                var targetDistance = Vector2.Distance(base.Position, this.GetTargetPosition());
                 if (targetDistance > 640f)
                 {
                     this.hasReachedPlayer.Value = false;
-                    base.position.Value = f.position;
+                    base.position.Value = this.GetTargetPosition();
                 }
-                else if ((targetDistance > 64f && (owner.isMoving() || !this.hasReachedPlayer.Value)) || targetDistance > 256f)
+                else if ((targetDistance > 64f && ((owner != null && owner.isMoving()) || !this.hasReachedPlayer.Value)) || targetDistance > 256f)
                 {
                     this.hasReachedPlayer.Value = false;
 
@@ -205,7 +209,7 @@ namespace CustomCompanions.Framework.Companions
                     }
                     else
                     {
-                        this.SetMotion(Utility.getVelocityTowardPlayer(new Point((int)base.Position.X + this.model.SpawnOffsetX, (int)base.Position.Y + this.model.SpawnOffsetY), base.speed, f));
+                        this.SetMotion(Utility.getVelocityTowardPoint(new Point((int)base.Position.X + this.model.SpawnOffsetX, (int)base.Position.Y + this.model.SpawnOffsetY), this.GetTargetPosition(), base.speed));
                     }
                 }
                 else

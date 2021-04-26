@@ -188,7 +188,40 @@ namespace CustomCompanions
 
         private void OnWarped(object sender, WarpedEventArgs e)
         {
+            var backLayer = e.NewLocation.map.GetLayer("Back");
+            for (int x = 0; x < backLayer.LayerWidth; x++)
+            {
+                for (int y = 0; y < backLayer.LayerHeight; y++)
+                {
+                    var tile = backLayer.Tiles[x, y];
+                    if (tile is null)
+                    {
+                        continue;
+                    }
 
+                    if (tile.Properties.ContainsKey("CustomCompanions"))
+                    {
+                        Monitor.Log("HERE123", LogLevel.Debug);
+                        string command = tile.Properties["CustomCompanions"].ToString();
+                        if (command.Split(' ')[0].ToUpper() != "SPAWN")
+                        {
+                            Monitor.Log($"Unknown CustomCompanions command ({command.Split(' ')[0]}) given on tile ({x}, {y}) for map {e.NewLocation.NameOrUniqueName}!", LogLevel.Warn);
+                            continue;
+                        }
+
+                        string companionKey = command.Substring(command.IndexOf(' ') + 1);
+                        var companion = CompanionManager.companionModels.FirstOrDefault(c => String.Concat(c.Owner, ".", c.Name) == companionKey);
+                        if (companion is null)
+                        {
+                            Monitor.Log($"Unable to find companion match for {companionKey} given on tile ({x}, {y}) for map {e.NewLocation.NameOrUniqueName}!", LogLevel.Warn);
+                            continue;
+                        }
+
+                        Monitor.Log($"Spawning [{companionKey}] x1 on tile ({x}, {y}) for map {e.NewLocation.NameOrUniqueName}");
+                        CompanionManager.SummonCompanions(companion, 1, new Vector2(x, y), e.NewLocation);
+                    }
+                }
+            }
         }
 
         internal static bool IsSoundValid(string soundName, bool logFailure = false)

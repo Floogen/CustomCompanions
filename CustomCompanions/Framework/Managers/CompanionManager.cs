@@ -41,6 +41,23 @@ namespace CustomCompanions.Framework.Managers
             activeCompanions.Add(new BoundCompanions() { SummoningRing = summoningRing, Companions = companions });
         }
 
+        internal static void SummonCompanions(CompanionModel model, int numberToSummon, Vector2 tile, GameLocation location)
+        {
+            if (location.characters is null)
+            {
+                CustomCompanions.monitor.Log($"Unable to summon {model.Name} due to the location {location.Name} not having an instantiated GameLocation.characters!");
+                return;
+            }
+
+            List<Companion> companions = new List<Companion>();
+            for (int x = 0; x < numberToSummon; x++)
+            {
+                Companion companion = new Companion(model, tile, location);
+                location.characters.Add(companion);
+                companions.Add(companion);
+            }
+        }
+
         internal static void RespawnCompanions(RingModel summoningRing, Farmer who, GameLocation location, bool removeFromActive = true)
         {
             var boundCompanions = activeCompanions.FirstOrDefault(a => a.SummoningRing == summoningRing);
