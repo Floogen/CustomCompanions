@@ -17,10 +17,18 @@ namespace CustomCompanions.Framework.Managers
         public List<Companion> Companions { get; set; }
     }
 
+    internal class SceneryCompanions
+    {
+        public GameLocation Location { get; set; }
+        public Vector2 Tile { get; set; }
+        public List<Companion> Companions { get; set; }
+    }
+
     internal static class CompanionManager
     {
         internal static List<CompanionModel> companionModels;
         internal static List<BoundCompanions> activeCompanions;
+        internal static List<SceneryCompanions> sceneryCompanions;
 
         internal static void SummonCompanions(CompanionModel model, int numberToSummon, RingModel summoningRing, Farmer who, GameLocation location)
         {
@@ -53,8 +61,14 @@ namespace CustomCompanions.Framework.Managers
             for (int x = 0; x < numberToSummon; x++)
             {
                 Companion companion = new Companion(model, tile, location);
-                location.characters.Add(companion);
                 companions.Add(companion);
+            }
+
+            var sceneryCompanion = new SceneryCompanions() { Location = location, Tile = tile, Companions = companions };
+            if (!sceneryCompanions.Any(s => s.Tile == tile && s.Location == location))
+            {
+                companions.ForEach(c => location.characters.Add(c));
+                sceneryCompanions.Add(sceneryCompanion);
             }
         }
 

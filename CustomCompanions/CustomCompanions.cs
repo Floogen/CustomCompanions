@@ -37,6 +37,7 @@ namespace CustomCompanions
             // Set up the CompanionManager
             CompanionManager.companionModels = new List<CompanionModel>();
             CompanionManager.activeCompanions = new List<BoundCompanions>();
+            CompanionManager.sceneryCompanions = new List<SceneryCompanions>();
 
             // Set up the RingManager
             RingManager.rings = new List<RingModel>();
@@ -184,6 +185,8 @@ namespace CustomCompanions
                     }
                 }
             }
+
+            CompanionManager.sceneryCompanions = new List<SceneryCompanions>();
         }
 
         private void OnWarped(object sender, WarpedEventArgs e)
@@ -201,7 +204,6 @@ namespace CustomCompanions
 
                     if (tile.Properties.ContainsKey("CustomCompanions"))
                     {
-                        Monitor.Log("HERE123", LogLevel.Debug);
                         string command = tile.Properties["CustomCompanions"].ToString();
                         if (command.Split(' ')[0].ToUpper() != "SPAWN")
                         {
@@ -209,7 +211,13 @@ namespace CustomCompanions
                             continue;
                         }
 
-                        string companionKey = command.Substring(command.IndexOf(' ') + 1);
+                        string companionKey = command.Substring(command.IndexOf(' ') + 2).TrimStart();
+                        if (!Int32.TryParse(command.Split(' ')[1], out int amountToSummon))
+                        {
+                            amountToSummon = 1;
+                            companionKey = command.Substring(command.IndexOf(' ') + 1);
+                        }
+
                         var companion = CompanionManager.companionModels.FirstOrDefault(c => String.Concat(c.Owner, ".", c.Name) == companionKey);
                         if (companion is null)
                         {
@@ -217,8 +225,8 @@ namespace CustomCompanions
                             continue;
                         }
 
-                        Monitor.Log($"Spawning [{companionKey}] x1 on tile ({x}, {y}) for map {e.NewLocation.NameOrUniqueName}");
-                        CompanionManager.SummonCompanions(companion, 1, new Vector2(x, y), e.NewLocation);
+                        Monitor.Log($"Spawning [{companionKey}] x{amountToSummon} on tile ({x}, {y}) for map {e.NewLocation.NameOrUniqueName}");
+                        CompanionManager.SummonCompanions(companion, amountToSummon, new Vector2(x, y), e.NewLocation);
                     }
                 }
             }
