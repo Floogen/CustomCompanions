@@ -16,7 +16,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public List<int[]> Colors { get; set; } = new List<int[]>();
         public bool IsPrismatic { get; set; } = false;
         public LightModel Light { get; set; }
-        public List<SoundModel> Sounds { get; set; }
+        public List<SoundModel> Sounds { get; set; } = new List<SoundModel>();
         public int FrameSizeWidth { get; set; }
         public int FrameSizeHeight { get; set; }
         public string TileSheetPath { get; set; }
@@ -33,14 +33,14 @@ namespace CustomCompanions.Framework.Models.Companion
                 $"\tTravelSpeed: {TravelSpeed} | SpawnOffsetX: {SpawnOffsetX} | SpawnOffsetY: {SpawnOffsetY}\n" +
                 $"\tIdleBehavior: {IdleBehavior}\n" +
                 $"\tColors: {string.Join(",", Colors.Select(c => "[" + string.Join(",", c) + "]"))} | IsPrismatic: {IsPrismatic}\n" +
-                $"\tLight: {Light}\n" +
+                $"\tLight: {(Light is null ? null : Light)}\n" +
                 $"\tSounds: {string.Join(",", Sounds)}\n" +
                 $"\tFrameSize: {FrameSizeWidth}x{FrameSizeHeight} | TileSheetPath: {TileSheetPath}\n" +
-                $"\tUniformAnimation: {UniformAnimation}\n" +
-                $"\tUpAnimation: {UpAnimation}\n" +
-                $"\tDownAnimation: {DownAnimation}\n" +
-                $"\tLeftAnimation: {LeftAnimation}\n" +
-                $"\tRightAnimation: {RightAnimation}\n]";
+                $"\tUniformAnimation: {(UniformAnimation is null ? null : UniformAnimation)}\n" +
+                $"\tUpAnimation: {(UpAnimation is null ? null : UpAnimation)}\n" +
+                $"\tDownAnimation: {(DownAnimation is null ? null : DownAnimation)}\n" +
+                $"\tLeftAnimation: {(LeftAnimation is null ? null : LeftAnimation)}\n" +
+                $"\tRightAnimation: {(RightAnimation is null ? null : RightAnimation)}\n]";
         }
     }
 }

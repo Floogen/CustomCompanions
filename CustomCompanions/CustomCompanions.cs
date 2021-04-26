@@ -36,7 +36,7 @@ namespace CustomCompanions
 
             // Set up the CompanionManager
             CompanionManager.companionModels = new List<CompanionModel>();
-            CompanionManager.activeCompanions = new List<Companion>();
+            CompanionManager.activeCompanions = new List<BoundCompanions>();
 
             // Set up the RingManager
             RingManager.rings = new List<RingModel>();
@@ -59,6 +59,10 @@ namespace CustomCompanions
             // Hook into GameLoop events
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
+            helper.Events.GameLoop.Saving += this.OnSaving;
+
+            // Hook into Player events
+            helper.Events.Player.Warped += this.OnWarped;
         }
 
         private void OnGameLaunched(object sender, GameLaunchedEventArgs e)
@@ -165,6 +169,26 @@ namespace CustomCompanions
         private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
             RingManager.LoadWornRings();
+        }
+
+        private void OnSaving(object sender, SavingEventArgs e)
+        {
+            // Go through all game locations and purge any of custom critters / creatures
+            foreach (GameLocation location in Game1.locations.Where(l => l != null))
+            {
+                if (location.characters != null)
+                {
+                    foreach (var creature in location.characters.Where(c => CompanionManager.IsCustomCompanion(c)).ToList())
+                    {
+                        location.characters.Remove(creature);
+                    }
+                }
+            }
+        }
+
+        private void OnWarped(object sender, WarpedEventArgs e)
+        {
+
         }
 
         internal static bool IsSoundValid(string soundName, bool logFailure = false)

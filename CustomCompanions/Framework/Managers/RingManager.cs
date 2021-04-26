@@ -68,31 +68,49 @@ namespace CustomCompanions.Framework.Managers
 
             // Create a new Companion and add it to the player's location
             CustomCompanions.monitor.Log($"Spawning [{selectedCompanionData}] x{selectedCompanionData.Value.NumberToSummon} via the summoning ring [{ring.Name}]");
-            CompanionManager.SummonCompanion(companion, selectedCompanionData.Value.NumberToSummon, who, location);
+            CompanionManager.SummonCompanions(companion, selectedCompanionData.Value.NumberToSummon, summoningRing, who, location);
         }
 
         internal static void HandleUnequip(Farmer who, GameLocation location, Ring ring)
         {
-            if (ring != null)
+            var summoningRing = rings.FirstOrDefault(r => r.ObjectID == ring.ParentSheetIndex);
+            if (summoningRing is null)
             {
-                //customRing.HandleUnequip(who, location);
+                CustomCompanions.monitor.Log($"Failed to find a summoning ring match to [{ring.Name}]");
+                return;
             }
+
+            // Despawn the summoned companion(s) bound to this ring
+            CustomCompanions.monitor.Log($"Despawning companions bound to the summoning ring [{ring.Name}]");
+            CompanionManager.RemoveCompanions(summoningRing, location);
         }
 
         internal static void HandleNewLocation(Farmer who, GameLocation location, Ring ring)
         {
-            if (ring != null)
+            var summoningRing = rings.FirstOrDefault(r => r.ObjectID == ring.ParentSheetIndex);
+            if (summoningRing is null)
             {
-                //customRing.HandleNewLocation(who, location);
+                CustomCompanions.monitor.Log($"Failed to find a summoning ring match to [{ring.Name}]");
+                return;
             }
+
+            // Create a new Companion and add it to the player's location
+            CustomCompanions.monitor.Log($"Respawning companions bound to the summoning ring [{ring.Name}]");
+            CompanionManager.RespawnCompanions(summoningRing, who, location);
         }
 
         internal static void HandleLeaveLocation(Farmer who, GameLocation location, Ring ring)
         {
-            if (ring != null)
+            var summoningRing = rings.FirstOrDefault(r => r.ObjectID == ring.ParentSheetIndex);
+            if (summoningRing is null)
             {
-                //customRing.HandleLeaveLocation(who, location);
+                CustomCompanions.monitor.Log($"Failed to find a summoning ring match to [{ring.Name}]");
+                return;
             }
+
+            // Despawn the summoned companion(s) bound to this ring
+            CustomCompanions.monitor.Log($"Despawning companions bound to the summoning ring [{ring.Name}]");
+            CompanionManager.RemoveCompanions(summoningRing, location, false);
         }
     }
 }
