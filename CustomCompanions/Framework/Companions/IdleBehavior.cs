@@ -52,14 +52,15 @@ namespace CustomCompanions.Framework.Companions
                 this.behaviorTimer -= time.ElapsedGameTime.Milliseconds;
                 if (this.behaviorTimer <= 0)
                 {
+                    this.motionMultiplier = 2f;
                     this.behaviorTimer = Game1.random.Next(1000, 8000);
+                }
 
-                    // Get the current motion multiplier
-                    this.motionMultiplier -= 0.0005f * time.ElapsedGameTime.Milliseconds;
-                    if (this.motionMultiplier <= 1f)
-                    {
-                        this.motionMultiplier = 1f;
-                    }
+                // Get the current motion multiplier
+                this.motionMultiplier -= 0.0005f * time.ElapsedGameTime.Milliseconds;
+                if (this.motionMultiplier <= 1f)
+                {
+                    this.motionMultiplier = 1f;
                 }
 
                 motion.X += Game1.random.Next(-1, 2) * 0.1f;
@@ -86,6 +87,7 @@ namespace CustomCompanions.Framework.Companions
             }
             else if (this.behavior == Behavior.HOVER)
             {
+                // TODO: Implement parameter so user can pick frequency of HOVER and other idle behaviors
                 behaviorTimer = (behaviorTimer + (float)time.ElapsedGameTime.TotalMilliseconds / 1000) % 1;
                 return new Vector2(0f, 2f * ((float)Math.Sin(2 * Math.PI * behaviorTimer)));
             }

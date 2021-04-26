@@ -29,6 +29,7 @@ namespace CustomCompanions.Framework.Companions
 
         private LightSource light;
 
+        private readonly NetBool hasReachedPlayer = new NetBool();
         private readonly NetInt specialNumber = new NetInt();
         private readonly NetBool isPrismatic = new NetBool();
         private readonly NetColor color = new NetColor();
@@ -173,10 +174,13 @@ namespace CustomCompanions.Framework.Companions
                 var targetDistance = Vector2.Distance(base.Position, f.Position);
                 if (targetDistance > 640f)
                 {
+                    this.hasReachedPlayer.Value = false;
                     base.position.Value = f.position;
                 }
-                else if (targetDistance > 64f)
+                else if ((targetDistance > 64f && !owner.isMoving()) || targetDistance > 128f)
                 {
+                    this.hasReachedPlayer.Value = false;
+
                     base.Speed = model.TravelSpeed;
                     if (targetDistance > 128f)
                     {
@@ -187,22 +191,36 @@ namespace CustomCompanions.Framework.Companions
                 }
                 else
                 {
+                    this.hasReachedPlayer.Value = true;
                     this.motion.Value = this.idleBehavior.ApplyMotionModifications(this.motion.Value, time);
                 }
             }
 
-            // Perform the position movement
-            this.nextPosition.Value = this.GetBoundingBox();
-            this.nextPosition.X += (int)this.motion.X;
-            if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
+            if (!IsFlying())
             {
-                base.position.X += (int)this.motion.X;
+                // Perform the position movement
+                this.nextPosition.Value = this.GetBoundingBox();
+                this.nextPosition.X += (int)this.motion.X;
+                if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
+                {
+                    base.position.X += (int)this.motion.X;
+                }
+                this.nextPosition.X -= (int)this.motion.X;
+                this.nextPosition.Y += (int)this.motion.Y;
+                if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
+                {
+                    base.position.Y += (int)this.motion.Y;
+                }
             }
-            this.nextPosition.X -= (int)this.motion.X;
-            this.nextPosition.Y += (int)this.motion.Y;
-            if (!location.isCollidingPosition(this.nextPosition, Game1.viewport, this) || IsFlying())
+            else
             {
-                base.position.Y += (int)this.motion.Y;
+                Vector2 targetPosition = Game1.player.position + new Vector2(this.model.SpawnOffsetX, this.model.SpawnOffsetY);
+                Vector2 smoothedPositionSlow = Vector2.Lerp(this.position, targetPosition, 0.02f);
+
+                // Setting up wander zone
+                base.position.Value = smoothedPositionSlow;
+
+                base.position.Value += this.motion;
             }
 
             // Update any animations
