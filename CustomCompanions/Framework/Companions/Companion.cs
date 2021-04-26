@@ -205,7 +205,15 @@ namespace CustomCompanions.Framework.Companions
 
                     if (IsJumper())
                     {
-                        this.PerformJumpMovement();
+                        float jumpScale = 10f;
+                        float randomJumpBoostMultiplier = 2f;
+                        if (this.model.IdleArguments is null && this.model.IdleArguments.Length >= 2)
+                        {
+                            jumpScale = this.model.IdleArguments[0];
+                            randomJumpBoostMultiplier = this.model.IdleArguments[1];
+                        }
+
+                        this.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier);
                     }
                     else
                     {
@@ -219,7 +227,7 @@ namespace CustomCompanions.Framework.Companions
             }
 
             // Perform the position movement
-            if (!this.hasReachedPlayer.Value || this.idleBehavior.PerformIdleBehavior(this, time))
+            if (!this.hasReachedPlayer.Value || this.idleBehavior.PerformIdleBehavior(this, time, this.model.IdleArguments))
             {
                 this.nextPosition.Value = this.GetBoundingBox();
                 this.nextPosition.X += (int)this.motion.X;
@@ -365,16 +373,16 @@ namespace CustomCompanions.Framework.Companions
             return this.model.Type.ToUpper() == "JUMPING";
         }
 
-        internal void PerformJumpMovement()
+        internal void PerformJumpMovement(float jumpScale, float randomJumpBoostMultiplier)
         {
             if (this.yJumpOffset == 0)
             {
                 this.jumpWithoutSound();
-                this.yJumpVelocity = (float)Game1.random.Next(50, 70) / 10f;
+                this.yJumpVelocity = (float)Game1.random.Next(50, 70) / jumpScale;
 
                 if (Game1.random.NextDouble() < 0.01)
                 {
-                    this.yJumpVelocity *= 2f;
+                    this.yJumpVelocity *= randomJumpBoostMultiplier;
                 }
             }
 

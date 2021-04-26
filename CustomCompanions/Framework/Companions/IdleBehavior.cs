@@ -48,16 +48,24 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
-        internal bool PerformIdleBehavior(Companion companion, GameTime time)
+        internal bool PerformIdleBehavior(Companion companion, GameTime time, float[] arguments)
         {
             // Determine the behavior logic to apply
             if (this.behavior == Behavior.WANDER)
             {
+                float dashMultiplier = 2f;
+                int maxTimeBetweenDash = 5000;
+                if (arguments is null && arguments.Length >= 2)
+                {
+                    dashMultiplier = arguments[0];
+                    maxTimeBetweenDash = (int)arguments[1];
+                }
+
                 this.behaviorTimer -= time.ElapsedGameTime.Milliseconds;
                 if (this.behaviorTimer <= 0)
                 {
-                    this.motionMultiplier = 2f;
-                    this.behaviorTimer = Game1.random.Next(1000, 8000);
+                    this.motionMultiplier = dashMultiplier;
+                    this.behaviorTimer = Game1.random.Next(maxTimeBetweenDash);
                 }
 
                 //Vector2 targetPosition = companion.GetTargetPosition() + new Vector2(companion.model.SpawnOffsetX, companion.model.SpawnOffsetY);
@@ -97,15 +105,28 @@ namespace CustomCompanions.Framework.Companions
             }
             else if (this.behavior == Behavior.HOVER)
             {
-                // TODO: Implement parameter so user can pick frequency of HOVER and other idle behaviors
-                behaviorTimer = (behaviorTimer + (float)time.ElapsedGameTime.TotalMilliseconds / 1000) % 1;
+                float hoverCycleTime = 1000;
+                if (arguments is null && arguments.Length >= 1)
+                {
+                    hoverCycleTime = arguments[0];
+                }
+
+                behaviorTimer = (behaviorTimer + (float)time.ElapsedGameTime.TotalMilliseconds / hoverCycleTime) % 1;
                 companion.motion.Value = new Vector2(0f, 2f * ((float)Math.Sin(2 * Math.PI * behaviorTimer)));
 
                 return true;
             }
             else if (this.behavior == Behavior.JUMPER)
             {
-                companion.PerformJumpMovement();
+                float jumpScale = 10f;
+                float randomJumpBoostMultiplier = 2f;
+                if (arguments is null && arguments.Length >= 2)
+                {
+                    jumpScale = arguments[0];
+                    randomJumpBoostMultiplier = arguments[1];
+                }
+
+                companion.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier);
                 return true;
             }
             else
