@@ -33,6 +33,7 @@ namespace CustomCompanions.Framework.Companions
         private readonly NetBool hasReachedPlayer = new NetBool();
         private readonly NetInt specialNumber = new NetInt();
         private readonly NetBool isPrismatic = new NetBool();
+        private readonly NetInt previousDirection = new NetInt();
         private readonly NetColor color = new NetColor();
         internal readonly NetVector2 motion = new NetVector2(Vector2.Zero);
         private new readonly NetRectangle nextPosition = new NetRectangle();
@@ -51,6 +52,7 @@ namespace CustomCompanions.Framework.Companions
             base.collidesWithOtherCharacters.Value = (model.Type.ToUpper() == "FLYING" ? false : true);
             base.farmerPassesThrough = true;
             base.HideShadow = true;
+            base.Sprite.loop = true;
 
             this.model = model;
             this.specialNumber.Value = Game1.random.Next(100);
@@ -255,15 +257,15 @@ namespace CustomCompanions.Framework.Companions
             // Update any animations
             if (!this.motion.Equals(Vector2.Zero))
             {
+                this.previousDirection.Value = this.FacingDirection;
+
                 if (model.UniformAnimation != null && !CustomCompanions.CompanionHasFullMovementSet(model))
                 {
-                    this.Sprite.Animate(time, model.UniformAnimation.StartingFrame, model.UniformAnimation.NumberOfFrames, model.UniformAnimation.Duration);
                     this.FacingDirection = 2;
+                    this.Animate(time, false);
                 }
                 else if (CustomCompanions.CompanionHasFullMovementSet(model))
                 {
-                    int oldDirection = this.FacingDirection;
-
                     if (Math.Abs(this.motion.Y) > Math.Abs(this.motion.X) && this.motion.Y < 0f)
                     {
                         this.FacingDirection = 0;
@@ -281,48 +283,156 @@ namespace CustomCompanions.Framework.Companions
                         this.FacingDirection = 3;
                     }
 
-                    switch (this.FacingDirection)
-                    {
-                        case 0:
-                            this.Sprite.Animate(time, model.UpAnimation.StartingFrame, model.UpAnimation.NumberOfFrames, model.UpAnimation.Duration);
-                            break;
-                        case 1:
-                            this.Sprite.Animate(time, model.RightAnimation.StartingFrame, model.RightAnimation.NumberOfFrames, model.RightAnimation.Duration);
-                            break;
-                        case 2:
-                            this.Sprite.Animate(time, model.DownAnimation.StartingFrame, model.DownAnimation.NumberOfFrames, model.DownAnimation.Duration);
-                            break;
-                        case 3:
-                            this.Sprite.Animate(time, model.LeftAnimation.StartingFrame, model.LeftAnimation.NumberOfFrames, model.LeftAnimation.Duration);
-                            break;
-                    }
+                    this.Animate(time, false);
                 }
             }
             else
             {
-                if (model.UniformAnimation != null && !CustomCompanions.CompanionHasFullMovementSet(model))
+                this.Animate(time, true);
+            }
+        }
+
+        private void Animate(GameTime time, bool isIdle = false)
+        {
+            if (isIdle)
+            {
+                if (this.Sprite.CurrentAnimation != null || this.previousDirection != this.FacingDirection)
                 {
-                    this.Sprite.Animate(time, model.UniformAnimation.IdleAnimation.StartingFrame, model.UniformAnimation.IdleAnimation.NumberOfFrames, model.UniformAnimation.IdleAnimation.Duration);
+                    this.Sprite.animateOnce(time);
+                }
+                else if (this.model.UniformAnimation != null && !CustomCompanions.CompanionHasFullMovementSet(model))
+                {
+                    if (this.model.UniformAnimation.IdleAnimation.ManualFrames != null)
+                    {
+                        this.Sprite.setCurrentAnimation(GetManualFrames(this.model.UniformAnimation.IdleAnimation.ManualFrames));
+                    }
+                    else
+                    {
+                        this.Sprite.Animate(time, model.UniformAnimation.IdleAnimation.StartingFrame, model.UniformAnimation.IdleAnimation.NumberOfFrames, model.UniformAnimation.IdleAnimation.Duration);
+                    }
                 }
                 else
                 {
                     switch (this.FacingDirection)
                     {
                         case 0:
-                            this.Sprite.Animate(time, model.UpAnimation.IdleAnimation.StartingFrame, model.UpAnimation.IdleAnimation.NumberOfFrames, model.UpAnimation.IdleAnimation.Duration);
+                            if (this.model.UpAnimation.IdleAnimation.ManualFrames != null)
+                            {
+                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.UpAnimation.IdleAnimation.ManualFrames));
+                            }
+                            else
+                            {
+                                this.Sprite.Animate(time, model.UpAnimation.IdleAnimation.StartingFrame, model.UpAnimation.IdleAnimation.NumberOfFrames, model.UpAnimation.IdleAnimation.Duration);
+                            }
                             break;
                         case 1:
-                            this.Sprite.Animate(time, model.RightAnimation.IdleAnimation.StartingFrame, model.RightAnimation.IdleAnimation.NumberOfFrames, model.RightAnimation.IdleAnimation.Duration);
+                            if (this.model.RightAnimation.IdleAnimation.ManualFrames != null)
+                            {
+                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.RightAnimation.IdleAnimation.ManualFrames));
+                            }
+                            else
+                            {
+                                this.Sprite.Animate(time, model.RightAnimation.IdleAnimation.StartingFrame, model.RightAnimation.IdleAnimation.NumberOfFrames, model.RightAnimation.IdleAnimation.Duration);
+                            }
                             break;
                         case 2:
-                            this.Sprite.Animate(time, model.DownAnimation.IdleAnimation.StartingFrame, model.DownAnimation.IdleAnimation.NumberOfFrames, model.DownAnimation.IdleAnimation.Duration);
+                            if (this.model.DownAnimation.IdleAnimation.ManualFrames != null)
+                            {
+                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.DownAnimation.IdleAnimation.ManualFrames));
+                            }
+                            else
+                            {
+                                this.Sprite.Animate(time, model.DownAnimation.IdleAnimation.StartingFrame, model.DownAnimation.IdleAnimation.NumberOfFrames, model.DownAnimation.IdleAnimation.Duration);
+                            }
                             break;
                         case 3:
-                            this.Sprite.Animate(time, model.LeftAnimation.IdleAnimation.StartingFrame, model.LeftAnimation.IdleAnimation.NumberOfFrames, model.LeftAnimation.IdleAnimation.Duration);
+                            if (this.model.LeftAnimation.IdleAnimation.ManualFrames != null)
+                            {
+                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.LeftAnimation.IdleAnimation.ManualFrames));
+                            }
+                            else
+                            {
+                                this.Sprite.Animate(time, model.LeftAnimation.IdleAnimation.StartingFrame, model.LeftAnimation.IdleAnimation.NumberOfFrames, model.LeftAnimation.IdleAnimation.Duration);
+                            }
                             break;
                     }
                 }
             }
+            else
+            {
+                if (this.Sprite.CurrentAnimation != null || this.previousDirection != this.FacingDirection)
+                {
+                    this.Sprite.animateOnce(time);
+                }
+                else if (this.model.UniformAnimation != null && !CustomCompanions.CompanionHasFullMovementSet(model))
+                {
+                    if (this.model.UniformAnimation.IdleAnimation.ManualFrames != null)
+                    {
+                        this.Sprite.setCurrentAnimation(GetManualFrames(this.model.UniformAnimation.IdleAnimation.ManualFrames));
+                    }
+                    else
+                    {
+                        this.Sprite.Animate(time, model.UniformAnimation.IdleAnimation.StartingFrame, model.UniformAnimation.IdleAnimation.NumberOfFrames, model.UniformAnimation.IdleAnimation.Duration);
+                    }
+                }
+                else
+                {
+                    switch (this.FacingDirection)
+                    {
+                        case 0:
+                            if (this.model.UpAnimation.ManualFrames != null)
+                            {
+                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.UpAnimation.ManualFrames));
+                            }
+                            else
+                            {
+                                this.Sprite.Animate(time, model.UpAnimation.StartingFrame, model.UpAnimation.NumberOfFrames, model.UpAnimation.Duration);
+                            }
+                            break;
+                        case 1:
+                            if (this.model.RightAnimation.ManualFrames != null)
+                            {
+                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.RightAnimation.ManualFrames));
+                            }
+                            else
+                            {
+                                this.Sprite.Animate(time, model.RightAnimation.StartingFrame, model.RightAnimation.NumberOfFrames, model.RightAnimation.Duration);
+                            }
+                            break;
+                        case 2:
+                            if (this.model.DownAnimation.ManualFrames != null)
+                            {
+                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.DownAnimation.ManualFrames));
+                            }
+                            else
+                            {
+                                this.Sprite.Animate(time, model.DownAnimation.StartingFrame, model.DownAnimation.NumberOfFrames, model.DownAnimation.Duration);
+                            }
+                            break;
+                        case 3:
+                            if (this.model.LeftAnimation.ManualFrames != null)
+                            {
+                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.LeftAnimation.ManualFrames));
+                            }
+                            else
+                            {
+                                this.Sprite.Animate(time, model.LeftAnimation.StartingFrame, model.LeftAnimation.NumberOfFrames, model.LeftAnimation.Duration);
+                            }
+                            break;
+                    }
+                }
+            }
+        }
+
+        private List<FarmerSprite.AnimationFrame> GetManualFrames(List<ManualFrameModel> manualFrames)
+        {
+            var frames = new List<FarmerSprite.AnimationFrame>();
+            foreach (var frame in manualFrames)
+            {
+                frames.Add(new FarmerSprite.AnimationFrame(frame.Frame, frame.Duration));
+            }
+
+            return frames;
         }
 
         private void UpdateLight(GameTime time)

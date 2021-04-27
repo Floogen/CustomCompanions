@@ -45,12 +45,44 @@
     "StartingFrame": 0, // The index of the first frame for this animation (e.g. 0 is the up most left tile in companion.png)
     "NumberOfFrames": 4, // Number of frames to play (including the StartingFrame) in sequential order 
     "Duration": 50, // Duration of each frame in milliseconds
+    "ManualFrames": [
+      {
+        "Frame": 0,
+        "Duration": 100
+      },
+      {
+        "Frame": 1,
+        "Duration": 100
+      },
+      {
+        "Frame": 2,
+        "Duration": 1000
+      },
+      {
+        "Frame": 3,
+        "Duration": 100
+      }
+    ],
 
     // This is the animation that plays when the companion is not moving
     "IdleAnimation": {
       "StartingFrame": 0,
       "NumberOfFrames": 4,
-      "Duration": 100
+      "Duration": 100,
+      "ManualFrames": [
+        {
+          "Frame": 0,
+          "Duration": 100
+        },
+        {
+          "Frame": 1,
+          "Duration": 100
+        },
+        {
+          "Frame": 2,
+          "Duration": 1000
+        }
+      ]
     }
   }
 }

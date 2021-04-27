@@ -33,55 +33,34 @@
 
   "FrameSizeWidth": 16, // Width of each frame / tile in pixels | Default is 16
   "FrameSizeHeight": 16, // Height of each frame / tile in pixels | Default is 16
-  "TileSheetPath": "", // Optional parameter, but needed if creating a companion with an existing in-game sprite (e.g. Animals\\Rabbit)
+  "TileSheetPath": "Characters\\Penny", // Optional parameter, but needed if creating a companion with an existing in-game sprite (e.g. Animals\\Rabbit)
 
   // This plays when the companion travels upwards
-  "UpAnimation": {
+  "UniformAnimation": {
     "StartingFrame": 4,
     "NumberOfFrames": 4,
     "Duration": 100,
+    "ManualFrames": [
+      {
+        "Frame": 0,
+        "Duration": 100
+      },
+      {
+        "Frame": 4,
+        "Duration": 100
+      },
+      {
+        "Frame": 8,
+        "Duration": 100
+      },
+      {
+        "Frame": 12,
+        "Duration": 100
+      }
+    ],
 
     "IdleAnimation": {
       "StartingFrame": 20,
-      "NumberOfFrames": 2,
-      "Duration": 500
-    }
-  },
-
-  // This plays when the companion travels downwards
-  "DownAnimation": {
-    "StartingFrame": 0,
-    "NumberOfFrames": 4,
-    "Duration": 100,
-
-    "IdleAnimation": {
-      "StartingFrame": 18,
-      "NumberOfFrames": 2,
-      "Duration": 500
-    }
-  },
-
-  // This plays when the companion travels left
-  "LeftAnimation": {
-    "StartingFrame": 12,
-    "NumberOfFrames": 4,
-    "Duration": 100,
-
-    "IdleAnimation": {
-      "StartingFrame": 22,
-      "NumberOfFrames": 2,
-      "Duration": 500
-    }
-  },
-
-  // This plays when the companion travels right
-  "RightAnimation": {
-    "StartingFrame": 8,
-    "NumberOfFrames": 4,
-    "Duration": 100,
-
-    "IdleAnimation": {
-      "StartingFrame": 16,
       "NumberOfFrames": 2,
       "Duration": 500
     }

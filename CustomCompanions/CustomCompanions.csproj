@@ -58,6 +58,7 @@
     <Compile Include="Framework\Interfaces\IJsonAssetsApi.cs" />
     <Compile Include="Framework\Interfaces\IWearMoreRingsApi.cs" />
     <Compile Include="Framework\Managers\CompanionManager.cs" />
+    <Compile Include="Framework\Models\Companion\ManualFrameModel.cs" />
     <Compile Include="Framework\Models\RingModel.cs" />
     <Compile Include="Framework\Models\ContentPackModel.cs" />
     <Compile Include="Framework\Models\Companion\IdleAnimationModel.cs" />
@@ -87,7 +88,6 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <Content Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWalkingCompanion\companion.png" />
     <Content Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCompanion\companion.png" />
     <Content Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCustomCharacter\companion.png" />
     <Content Include="Examples\[CC] Example Pack\Objects\ExampleWalkingGameCharacterRing\object.png" />
