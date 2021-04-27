@@ -56,7 +56,7 @@
       },
       {
         "Frame": 2,
-        "Duration": 1000
+        "Duration": 100
       },
       {
         "Frame": 3,
@@ -72,15 +72,15 @@
       "ManualFrames": [
         {
           "Frame": 0,
-          "Duration": 100
+          "Duration": 200
         },
         {
           "Frame": 1,
-          "Duration": 100
+          "Duration": 200
         },
         {
           "Frame": 2,
-          "Duration": 1000
+          "Duration": 200
         }
       ]
     }

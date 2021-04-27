@@ -10,6 +10,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public string Name { get; set; }
         public string Type { get; set; }
         public int TravelSpeed { get; set; }
+        public int SpawnDirection { get; set; } = 2;
         public int SpawnOffsetX { get; set; }
         public int SpawnOffsetY { get; set; }
         public float MaxIdleDistance { get; set; } = 128f;
@@ -32,7 +33,7 @@ namespace CustomCompanions.Framework.Models.Companion
         {
             return $"\n[\n" +
                 $"\tOwner: {Owner} | Name: {Name} | Type: {Type}\n" +
-                $"\tTravelSpeed: {TravelSpeed} | SpawnOffsetX: {SpawnOffsetX} | SpawnOffsetY: {SpawnOffsetY}\n" +
+                $"\tTravelSpeed: {TravelSpeed} | SpawnDirection: {SpawnDirection} | SpawnOffsetX: {SpawnOffsetX} | SpawnOffsetY: {SpawnOffsetY}\n" +
                 $"\tMaxIdleDistance: {MaxIdleDistance} | IdleBehavior: {IdleBehavior} | IdleArguments: { (IdleArguments is null ? null : IdleArguments) }\n" +
                 $"\tColors: {string.Join(",", Colors.Select(c => "[" + string.Join(",", c) + "]"))} | IsPrismatic: {IsPrismatic}\n" +
                 $"\tLight: {(Light is null ? null : Light)}\n" +

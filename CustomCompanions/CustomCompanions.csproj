@@ -72,7 +72,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Examples\[CC] Example Pack\Companions\ExampleWanderWalkingCompanion\companion.json" />
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleWanderWalkingCow\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleFlyingCompanion\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCustomCharacter\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWalkingCompanion\companion.json" />

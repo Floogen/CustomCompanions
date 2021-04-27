@@ -30,10 +30,23 @@ namespace CustomCompanions.Framework.Companions
 
         private LightSource light;
 
+        private List<FarmerSprite.AnimationFrame> idleUniformFrames;
+        private List<FarmerSprite.AnimationFrame> idleUpFrames;
+        private List<FarmerSprite.AnimationFrame> idleRightFrames;
+        private List<FarmerSprite.AnimationFrame> idleDownFrames;
+        private List<FarmerSprite.AnimationFrame> idleLeftFrames;
+
+        private List<FarmerSprite.AnimationFrame> activeUniformFrames;
+        private List<FarmerSprite.AnimationFrame> activeUpFrames;
+        private List<FarmerSprite.AnimationFrame> activeRightFrames;
+        private List<FarmerSprite.AnimationFrame> activeDownFrames;
+        private List<FarmerSprite.AnimationFrame> activeLeftFrames;
+
         private readonly NetBool hasReachedPlayer = new NetBool();
         private readonly NetInt specialNumber = new NetInt();
         private readonly NetBool isPrismatic = new NetBool();
-        private readonly NetInt previousDirection = new NetInt();
+        internal readonly NetInt previousDirection = new NetInt();
+        internal readonly NetBool wasIdle = new NetBool();
         private readonly NetColor color = new NetColor();
         internal readonly NetVector2 motion = new NetVector2(Vector2.Zero);
         private new readonly NetRectangle nextPosition = new NetRectangle();
@@ -45,7 +58,7 @@ namespace CustomCompanions.Framework.Companions
             this.SetUpCompanion();
         }
 
-        public Companion(CompanionModel model, Farmer owner, Vector2? targetTile = null) : base(new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight), (owner is null ? (Vector2)targetTile : owner.getTileLocation()) * 64f + new Vector2(model.SpawnOffsetX, model.SpawnOffsetY), 2, model.Name)
+        public Companion(CompanionModel model, Farmer owner, Vector2? targetTile = null) : base(new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight), (owner is null ? (Vector2)targetTile : owner.getTileLocation()) * 64f + new Vector2(model.SpawnOffsetX, model.SpawnOffsetY), model.SpawnDirection, model.Name)
         {
             base.Breather = false;
             base.speed = model.TravelSpeed;
@@ -53,7 +66,7 @@ namespace CustomCompanions.Framework.Companions
             base.collidesWithOtherCharacters.Value = (model.Type.ToUpper() == "FLYING" ? false : true);
             base.farmerPassesThrough = true;
             base.HideShadow = true;
-            base.Sprite.loop = true;
+            base.Sprite.loop = false;
 
             this.model = model;
             this.specialNumber.Value = Game1.random.Next(100);
@@ -177,14 +190,39 @@ namespace CustomCompanions.Framework.Companions
                 this.light = new LightSource(1, new Vector2(this.position.X + this.model.Light.OffsetX, this.position.Y + this.model.Light.OffsetY), this.model.Light.Radius, CustomCompanions.GetColorFromArray(this.model.Light.Color), this.id, LightSource.LightContext.None, 0L);
                 Game1.currentLightSources.Add(this.light);
             }
+
+            // Set up uniform frames
+            if (this.model.UniformAnimation != null && !CustomCompanions.CompanionHasFullMovementSet(model))
+            {
+                this.idleUniformFrames = (this.model.UniformAnimation.IdleAnimation.ManualFrames != null) ? GetManualFrames(this.model.UniformAnimation.IdleAnimation.ManualFrames) : GetManualFrames(model.UniformAnimation.IdleAnimation.StartingFrame, model.UniformAnimation.IdleAnimation.NumberOfFrames, model.UniformAnimation.IdleAnimation.Duration);
+                this.activeUniformFrames = (this.model.UniformAnimation.ManualFrames != null) ? GetManualFrames(this.model.UniformAnimation.ManualFrames) : GetManualFrames(model.UniformAnimation.StartingFrame, model.UniformAnimation.NumberOfFrames, model.UniformAnimation.Duration);
+            }
+            else
+            {
+                // Up frames
+                this.idleUpFrames = (this.model.UpAnimation.IdleAnimation.ManualFrames != null) ? GetManualFrames(this.model.UpAnimation.IdleAnimation.ManualFrames) : GetManualFrames(model.UpAnimation.IdleAnimation.StartingFrame, model.UpAnimation.IdleAnimation.NumberOfFrames, model.UpAnimation.IdleAnimation.Duration);
+                this.activeUpFrames = (this.model.UpAnimation.ManualFrames != null) ? GetManualFrames(this.model.UpAnimation.ManualFrames) : GetManualFrames(model.UpAnimation.StartingFrame, model.UpAnimation.NumberOfFrames, model.UpAnimation.Duration);
+
+                // Right frames
+                this.idleRightFrames = (this.model.RightAnimation.IdleAnimation.ManualFrames != null) ? GetManualFrames(this.model.RightAnimation.IdleAnimation.ManualFrames) : GetManualFrames(model.RightAnimation.IdleAnimation.StartingFrame, model.RightAnimation.IdleAnimation.NumberOfFrames, model.RightAnimation.IdleAnimation.Duration);
+                this.activeRightFrames = (this.model.RightAnimation.ManualFrames != null) ? GetManualFrames(this.model.RightAnimation.ManualFrames) : GetManualFrames(model.RightAnimation.StartingFrame, model.RightAnimation.NumberOfFrames, model.RightAnimation.Duration);
+
+                // Down frames
+                this.idleDownFrames = (this.model.DownAnimation.IdleAnimation.ManualFrames != null) ? GetManualFrames(this.model.DownAnimation.IdleAnimation.ManualFrames) : GetManualFrames(model.DownAnimation.IdleAnimation.StartingFrame, model.DownAnimation.IdleAnimation.NumberOfFrames, model.DownAnimation.IdleAnimation.Duration);
+                this.activeDownFrames = (this.model.DownAnimation.ManualFrames != null) ? GetManualFrames(this.model.DownAnimation.ManualFrames) : GetManualFrames(model.DownAnimation.StartingFrame, model.DownAnimation.NumberOfFrames, model.DownAnimation.Duration);
+
+                // Left frames
+                this.idleLeftFrames = (this.model.LeftAnimation.IdleAnimation.ManualFrames != null) ? GetManualFrames(this.model.LeftAnimation.IdleAnimation.ManualFrames) : GetManualFrames(model.LeftAnimation.IdleAnimation.StartingFrame, model.LeftAnimation.IdleAnimation.NumberOfFrames, model.LeftAnimation.IdleAnimation.Duration);
+                this.activeLeftFrames = (this.model.LeftAnimation.ManualFrames != null) ? GetManualFrames(this.model.LeftAnimation.ManualFrames) : GetManualFrames(model.LeftAnimation.StartingFrame, model.LeftAnimation.NumberOfFrames, model.LeftAnimation.Duration);
+            }
         }
+
         private void PlaceInEmptyTile()
         {
             foreach (var character in this.currentLocation.characters.Where(c => c != this))
             {
                 if (character.GetBoundingBox().Intersects(this.GetBoundingBox()))
                 {
-                    CustomCompanions.monitor.Log("HERE", StardewModdingAPI.LogLevel.Debug);
                     base.Position = Utility.getRandomAdjacentOpenTile(this.getTileLocation(), this.currentLocation) * 64f;
                 }
             }
@@ -200,7 +238,7 @@ namespace CustomCompanions.Framework.Companions
                     this.hasReachedPlayer.Value = false;
                     base.position.Value = this.GetTargetPosition();
                 }
-                else if ((targetDistance > 64f && ((owner != null && owner.isMoving()) || !this.hasReachedPlayer.Value)) || targetDistance > this.model.MaxIdleDistance)
+                else if ((targetDistance > 64f && ((owner != null && owner.isMoving()) || !this.hasReachedPlayer.Value)) || (targetDistance > this.model.MaxIdleDistance && this.model.MaxIdleDistance != -1))
                 {
                     if (owner is null && targetDistance > this.model.MaxIdleDistance)
                     {
@@ -271,166 +309,96 @@ namespace CustomCompanions.Framework.Companions
                 }
                 else if (CustomCompanions.CompanionHasFullMovementSet(model))
                 {
-                    if (Math.Abs(this.motion.Y) > Math.Abs(this.motion.X) && this.motion.Y < 0f)
+                    if (base.moveUp || Math.Abs(this.motion.Y) > Math.Abs(this.motion.X) && this.motion.Y < 0f)
                     {
                         this.FacingDirection = 0;
                     }
-                    else if (Math.Abs(this.motion.X) > Math.Abs(this.motion.Y) && this.motion.X > 0f)
+                    else if (base.moveRight || Math.Abs(this.motion.X) > Math.Abs(this.motion.Y) && this.motion.X > 0f)
                     {
                         this.FacingDirection = 1;
                     }
-                    else if (Math.Abs(this.motion.Y) > Math.Abs(this.motion.X) && this.motion.Y > 0f)
+                    else if (base.moveDown || Math.Abs(this.motion.Y) > Math.Abs(this.motion.X) && this.motion.Y > 0f)
                     {
                         this.FacingDirection = 2;
                     }
-                    else if (Math.Abs(this.motion.X) > Math.Abs(this.motion.Y) && this.motion.X < 0f)
+                    else if (base.moveLeft || Math.Abs(this.motion.X) > Math.Abs(this.motion.Y) && this.motion.X < 0f)
                     {
                         this.FacingDirection = 3;
                     }
 
                     this.Animate(time, false);
+                    this.wasIdle.Value = false;
                 }
             }
             else
             {
                 this.Animate(time, true);
+                this.wasIdle.Value = true;
             }
         }
 
         private void Animate(GameTime time, bool isIdle = false)
         {
+            if (this.Sprite.CurrentAnimation != null && this.previousDirection == this.FacingDirection && this.wasIdle == isIdle)
+            {
+                if (!this.Sprite.animateOnce(time))
+                {
+                    return;
+                }
+            }
+
             if (isIdle)
             {
-                if (this.Sprite.CurrentAnimation != null && this.previousDirection == this.FacingDirection)
+                if (this.idleUniformFrames != null)
                 {
-                    this.Sprite.animateOnce(time);
-                }
-                else if (this.model.UniformAnimation != null && !CustomCompanions.CompanionHasFullMovementSet(model))
-                {
-                    this.Sprite.CurrentAnimation = null;
-                    if (this.model.UniformAnimation.IdleAnimation.ManualFrames != null)
-                    {
-                        this.Sprite.setCurrentAnimation(GetManualFrames(this.model.UniformAnimation.IdleAnimation.ManualFrames));
-                    }
-                    else
-                    {
-                        this.Sprite.Animate(time, model.UniformAnimation.IdleAnimation.StartingFrame, model.UniformAnimation.IdleAnimation.NumberOfFrames, model.UniformAnimation.IdleAnimation.Duration);
-                    }
+                    this.Sprite.setCurrentAnimation(this.idleUniformFrames);
                 }
                 else
                 {
-                    this.Sprite.CurrentAnimation = null;
                     switch (this.FacingDirection)
                     {
                         case 0:
-                            if (this.model.UpAnimation.IdleAnimation.ManualFrames != null)
-                            {
-                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.UpAnimation.IdleAnimation.ManualFrames));
-                            }
-                            else
-                            {
-                                this.Sprite.Animate(time, model.UpAnimation.IdleAnimation.StartingFrame, model.UpAnimation.IdleAnimation.NumberOfFrames, model.UpAnimation.IdleAnimation.Duration);
-                            }
+                            this.Sprite.setCurrentAnimation(this.idleUpFrames);
                             break;
                         case 1:
-                            if (this.model.RightAnimation.IdleAnimation.ManualFrames != null)
-                            {
-                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.RightAnimation.IdleAnimation.ManualFrames));
-                            }
-                            else
-                            {
-                                this.Sprite.Animate(time, model.RightAnimation.IdleAnimation.StartingFrame, model.RightAnimation.IdleAnimation.NumberOfFrames, model.RightAnimation.IdleAnimation.Duration);
-                            }
+                            this.Sprite.setCurrentAnimation(this.idleRightFrames);
                             break;
                         case 2:
-                            if (this.model.DownAnimation.IdleAnimation.ManualFrames != null)
-                            {
-                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.DownAnimation.IdleAnimation.ManualFrames));
-                            }
-                            else
-                            {
-                                this.Sprite.Animate(time, model.DownAnimation.IdleAnimation.StartingFrame, model.DownAnimation.IdleAnimation.NumberOfFrames, model.DownAnimation.IdleAnimation.Duration);
-                            }
+                            this.Sprite.setCurrentAnimation(this.idleDownFrames);
                             break;
                         case 3:
-                            if (this.model.LeftAnimation.IdleAnimation.ManualFrames != null)
-                            {
-                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.LeftAnimation.IdleAnimation.ManualFrames));
-                            }
-                            else
-                            {
-                                this.Sprite.Animate(time, model.LeftAnimation.IdleAnimation.StartingFrame, model.LeftAnimation.IdleAnimation.NumberOfFrames, model.LeftAnimation.IdleAnimation.Duration);
-                            }
+                            this.Sprite.setCurrentAnimation(this.idleLeftFrames);
                             break;
                     }
                 }
             }
             else
             {
-                if (this.Sprite.CurrentAnimation != null && this.previousDirection == this.FacingDirection)
+                if (this.activeUniformFrames != null)
                 {
-                    this.Sprite.animateOnce(time);
-                }
-                else if (this.model.UniformAnimation != null && !CustomCompanions.CompanionHasFullMovementSet(model))
-                {
-                    this.Sprite.CurrentAnimation = null;
-                    if (this.model.UniformAnimation.ManualFrames != null)
-                    {
-                        this.Sprite.setCurrentAnimation(GetManualFrames(this.model.UniformAnimation.ManualFrames));
-                    }
-                    else
-                    {
-                        this.Sprite.Animate(time, model.UniformAnimation.StartingFrame, model.UniformAnimation.NumberOfFrames, model.UniformAnimation.Duration);
-                    }
+                    this.Sprite.setCurrentAnimation(this.activeUniformFrames);
                 }
                 else
                 {
-                    this.Sprite.CurrentAnimation = null;
                     switch (this.FacingDirection)
                     {
                         case 0:
-                            if (this.model.UpAnimation.ManualFrames != null)
-                            {
-                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.UpAnimation.ManualFrames));
-                            }
-                            else
-                            {
-                                this.Sprite.Animate(time, model.UpAnimation.StartingFrame, model.UpAnimation.NumberOfFrames, model.UpAnimation.Duration);
-                            }
+                            this.Sprite.setCurrentAnimation(this.activeUpFrames);
                             break;
                         case 1:
-                            if (this.model.RightAnimation.ManualFrames != null)
-                            {
-                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.RightAnimation.ManualFrames));
-                            }
-                            else
-                            {
-                                this.Sprite.Animate(time, model.RightAnimation.StartingFrame, model.RightAnimation.NumberOfFrames, model.RightAnimation.Duration);
-                            }
+                            this.Sprite.setCurrentAnimation(this.activeRightFrames);
                             break;
                         case 2:
-                            if (this.model.DownAnimation.ManualFrames != null)
-                            {
-                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.DownAnimation.ManualFrames));
-                            }
-                            else
-                            {
-                                this.Sprite.Animate(time, model.DownAnimation.StartingFrame, model.DownAnimation.NumberOfFrames, model.DownAnimation.Duration);
-                            }
+                            this.Sprite.setCurrentAnimation(this.activeDownFrames);
                             break;
                         case 3:
-                            if (this.model.LeftAnimation.ManualFrames != null)
-                            {
-                                this.Sprite.setCurrentAnimation(GetManualFrames(this.model.LeftAnimation.ManualFrames));
-                            }
-                            else
-                            {
-                                this.Sprite.Animate(time, model.LeftAnimation.StartingFrame, model.LeftAnimation.NumberOfFrames, model.LeftAnimation.Duration);
-                            }
+                            this.Sprite.setCurrentAnimation(this.activeLeftFrames);
                             break;
                     }
                 }
             }
+
+            this.Sprite.animateOnce(time);
         }
 
         private List<FarmerSprite.AnimationFrame> GetManualFrames(List<ManualFrameModel> manualFrames)
@@ -439,6 +407,17 @@ namespace CustomCompanions.Framework.Companions
             foreach (var frame in manualFrames)
             {
                 frames.Add(new FarmerSprite.AnimationFrame(frame.Frame, frame.Duration, false, flip: frame.Flip));
+            }
+
+            return frames;
+        }
+
+        private List<FarmerSprite.AnimationFrame> GetManualFrames(int startingFrame, int numberOfFrames, int duration)
+        {
+            var frames = new List<FarmerSprite.AnimationFrame>();
+            for (int x = 0; x < numberOfFrames; x++)
+            {
+                frames.Add(new FarmerSprite.AnimationFrame(startingFrame + x, duration, false, flip: false));
             }
 
             return frames;
@@ -542,6 +521,30 @@ namespace CustomCompanions.Framework.Companions
         internal void SetMotion(Vector2 motion)
         {
             this.motion.Value = motion;
+        }
+
+        internal void SetMovingDirection(int direction)
+        {
+            base.moveUp = false;
+            base.moveDown = false;
+            base.moveRight = false;
+            base.moveLeft = false;
+
+            switch (direction)
+            {
+                case 0:
+                    moveUp = true;
+                    break;
+                case 1:
+                    moveRight = true;
+                    break;
+                case 2:
+                    moveDown = true;
+                    break;
+                case 3:
+                    moveLeft = true;
+                    break;
+            }
         }
 
         internal void ResetForNewLocation(GameLocation location, Vector2 position)
