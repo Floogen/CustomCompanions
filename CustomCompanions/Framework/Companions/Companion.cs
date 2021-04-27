@@ -42,6 +42,7 @@ namespace CustomCompanions.Framework.Companions
         {
             this.targetTile = targetTile * 64f;
             this.currentLocation = location;
+            this.SetUpCompanion();
         }
 
         public Companion(CompanionModel model, Farmer owner, Vector2? targetTile = null) : base(new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight), (owner is null ? (Vector2)targetTile : owner.getTileLocation()) * 64f + new Vector2(model.SpawnOffsetX, model.SpawnOffsetY), 2, model.Name)
@@ -62,9 +63,8 @@ namespace CustomCompanions.Framework.Companions
             {
                 this.owner = owner;
                 this.currentLocation = owner.currentLocation;
+                this.SetUpCompanion();
             }
-
-            this.SetUpCompanion();
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -96,7 +96,7 @@ namespace CustomCompanions.Framework.Companions
                 return false;
             }
 
-            return base.shouldCollideWithBuildingLayer(location);
+            return true;
         }
 
         public override bool collideWith(StardewValley.Object o)
@@ -121,7 +121,7 @@ namespace CustomCompanions.Framework.Companions
 
         public override void draw(SpriteBatch b, float alpha = 1f)
         {
-            b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(this.GetSpriteWidthForPositioning() * 4 / 2, this.GetBoundingBox().Height / 2) + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), this.Sprite.SourceRect, this.isPrismatic ? Utility.GetPrismaticColor(348 + (int)this.specialNumber, 5f) : color, this.rotation, new Vector2(this.Sprite.SpriteWidth / 2, (float)this.Sprite.SpriteHeight * 3f / 4f), Math.Max(0.2f, base.scale) * 4f, (base.flip || (this.Sprite.CurrentAnimation != null && this.Sprite.CurrentAnimation[this.Sprite.currentAnimationIndex].flip)) ? SpriteEffects.FlipHorizontally : SpriteEffects.None, this.IsFlying() ? 0.991f : Math.Max(0f, base.drawOnTop ? 0.991f : ((float)base.getStandingY() / 10000f)));
+            b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(this.GetSpriteWidthForPositioning() * 4 / 2, this.GetBoundingBox().Height / 2) + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), this.Sprite.SourceRect, this.isPrismatic ? Utility.GetPrismaticColor(348 + (int)this.specialNumber, 5f) : color, this.rotation, new Vector2(this.Sprite.SpriteWidth / 2, (float)this.Sprite.SpriteHeight * 3f / 4f), Math.Max(0.2f, base.scale) * 4f, (base.flip || (this.Sprite.CurrentAnimation != null && this.Sprite.CurrentAnimation[this.Sprite.currentAnimationIndex].flip)) ? SpriteEffects.FlipHorizontally : SpriteEffects.None, this.IsFlying() ? 0.991f : base.position.Y / 10000f);
         }
 
         private void SetUpCompanion()
@@ -296,12 +296,13 @@ namespace CustomCompanions.Framework.Companions
         {
             if (isIdle)
             {
-                if (this.Sprite.CurrentAnimation != null || this.previousDirection != this.FacingDirection)
+                if (this.Sprite.CurrentAnimation != null && this.previousDirection == this.FacingDirection)
                 {
                     this.Sprite.animateOnce(time);
                 }
                 else if (this.model.UniformAnimation != null && !CustomCompanions.CompanionHasFullMovementSet(model))
                 {
+                    this.Sprite.CurrentAnimation = null;
                     if (this.model.UniformAnimation.IdleAnimation.ManualFrames != null)
                     {
                         this.Sprite.setCurrentAnimation(GetManualFrames(this.model.UniformAnimation.IdleAnimation.ManualFrames));
@@ -313,6 +314,7 @@ namespace CustomCompanions.Framework.Companions
                 }
                 else
                 {
+                    this.Sprite.CurrentAnimation = null;
                     switch (this.FacingDirection)
                     {
                         case 0:
@@ -360,23 +362,25 @@ namespace CustomCompanions.Framework.Companions
             }
             else
             {
-                if (this.Sprite.CurrentAnimation != null || this.previousDirection != this.FacingDirection)
+                if (this.Sprite.CurrentAnimation != null && this.previousDirection == this.FacingDirection)
                 {
                     this.Sprite.animateOnce(time);
                 }
                 else if (this.model.UniformAnimation != null && !CustomCompanions.CompanionHasFullMovementSet(model))
                 {
-                    if (this.model.UniformAnimation.IdleAnimation.ManualFrames != null)
+                    this.Sprite.CurrentAnimation = null;
+                    if (this.model.UniformAnimation.ManualFrames != null)
                     {
-                        this.Sprite.setCurrentAnimation(GetManualFrames(this.model.UniformAnimation.IdleAnimation.ManualFrames));
+                        this.Sprite.setCurrentAnimation(GetManualFrames(this.model.UniformAnimation.ManualFrames));
                     }
                     else
                     {
-                        this.Sprite.Animate(time, model.UniformAnimation.IdleAnimation.StartingFrame, model.UniformAnimation.IdleAnimation.NumberOfFrames, model.UniformAnimation.IdleAnimation.Duration);
+                        this.Sprite.Animate(time, model.UniformAnimation.StartingFrame, model.UniformAnimation.NumberOfFrames, model.UniformAnimation.Duration);
                     }
                 }
                 else
                 {
+                    this.Sprite.CurrentAnimation = null;
                     switch (this.FacingDirection)
                     {
                         case 0:
@@ -429,7 +433,7 @@ namespace CustomCompanions.Framework.Companions
             var frames = new List<FarmerSprite.AnimationFrame>();
             foreach (var frame in manualFrames)
             {
-                frames.Add(new FarmerSprite.AnimationFrame(frame.Frame, frame.Duration));
+                frames.Add(new FarmerSprite.AnimationFrame(frame.Frame, frame.Duration, false, flip: frame.Flip));
             }
 
             return frames;
