@@ -54,28 +54,24 @@ namespace CustomCompanions.Framework.Companions
             if (this.behavior == Behavior.WANDER)
             {
                 float dashMultiplier = 2f;
-                int maxTimeBetweenDash = 5000;
-                if (arguments is null && arguments.Length >= 2)
+                int minTimeBetweenDash = 5000;
+                if (arguments != null && arguments.Length >= 2)
                 {
                     dashMultiplier = arguments[0];
-                    maxTimeBetweenDash = (int)arguments[1];
+                    minTimeBetweenDash = (int)arguments[1];
                 }
 
                 this.behaviorTimer -= time.ElapsedGameTime.Milliseconds;
                 if (this.behaviorTimer <= 0)
                 {
                     this.motionMultiplier = dashMultiplier;
-                    this.behaviorTimer = Game1.random.Next(maxTimeBetweenDash);
+                    this.behaviorTimer = Game1.random.Next(minTimeBetweenDash, minTimeBetweenDash * 2);
                 }
-
-                //Vector2 targetPosition = companion.GetTargetPosition() + new Vector2(companion.model.SpawnOffsetX, companion.model.SpawnOffsetY);
-                //Vector2 smoothedPositionSlow = Vector2.Lerp(companion.position, targetPosition, 0.02f);
-                //companion.position.Value = smoothedPositionSlow;
 
                 // Get the current motion multiplier
                 companion.position.Value += companion.motion.Value * this.motionMultiplier;
                 this.motionMultiplier -= 0.0005f * time.ElapsedGameTime.Milliseconds;
-                if (this.motionMultiplier <= 1f)
+                if (this.motionMultiplier <= 0f)
                 {
                     this.motionMultiplier = 1f;
                 }
@@ -100,13 +96,12 @@ namespace CustomCompanions.Framework.Companions
                     companion.motion.Y = 1f;
                 }
 
-                companion.motion.Value = companion.motion.Value * motionMultiplier;
                 return false;
             }
             else if (this.behavior == Behavior.HOVER)
             {
                 float hoverCycleTime = 1000;
-                if (arguments is null && arguments.Length >= 1)
+                if (arguments != null && arguments.Length >= 1)
                 {
                     hoverCycleTime = arguments[0];
                 }
@@ -120,7 +115,7 @@ namespace CustomCompanions.Framework.Companions
             {
                 float jumpScale = 10f;
                 float randomJumpBoostMultiplier = 2f;
-                if (arguments is null && arguments.Length >= 2)
+                if (arguments != null && arguments.Length >= 2)
                 {
                     jumpScale = arguments[0];
                     randomJumpBoostMultiplier = arguments[1];

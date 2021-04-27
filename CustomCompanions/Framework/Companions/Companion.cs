@@ -119,7 +119,7 @@ namespace CustomCompanions.Framework.Companions
 
         public override void draw(SpriteBatch b, float alpha = 1f)
         {
-            b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(this.GetSpriteWidthForPositioning() * 4 / 2, this.GetBoundingBox().Height / 2) + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), this.Sprite.SourceRect, this.isPrismatic ? Utility.GetPrismaticColor(348 + (int)this.specialNumber, 5f) : color, this.rotation, new Vector2(this.Sprite.SpriteWidth / 2, (float)this.Sprite.SpriteHeight * 3f / 4f), Math.Max(0.2f, base.scale) * 4f, (base.flip || (this.Sprite.CurrentAnimation != null && this.Sprite.CurrentAnimation[this.Sprite.currentAnimationIndex].flip)) ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.991f : ((float)base.getStandingY() / 10000f)));
+            b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(this.GetSpriteWidthForPositioning() * 4 / 2, this.GetBoundingBox().Height / 2) + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), this.Sprite.SourceRect, this.isPrismatic ? Utility.GetPrismaticColor(348 + (int)this.specialNumber, 5f) : color, this.rotation, new Vector2(this.Sprite.SpriteWidth / 2, (float)this.Sprite.SpriteHeight * 3f / 4f), Math.Max(0.2f, base.scale) * 4f, (base.flip || (this.Sprite.CurrentAnimation != null && this.Sprite.CurrentAnimation[this.Sprite.currentAnimationIndex].flip)) ? SpriteEffects.FlipHorizontally : SpriteEffects.None, this.IsFlying() ? 0.991f : Math.Max(0f, base.drawOnTop ? 0.991f : ((float)base.getStandingY() / 10000f)));
         }
 
         private void SetUpCompanion()
@@ -193,31 +193,40 @@ namespace CustomCompanions.Framework.Companions
                     this.hasReachedPlayer.Value = false;
                     base.position.Value = this.GetTargetPosition();
                 }
-                else if ((targetDistance > 64f && ((owner != null && owner.isMoving()) || !this.hasReachedPlayer.Value)) || targetDistance > 256f)
+                else if ((targetDistance > 64f && ((owner != null && owner.isMoving()) || !this.hasReachedPlayer.Value)) || targetDistance > this.model.MaxIdleDistance)
                 {
-                    this.hasReachedPlayer.Value = false;
-
-                    base.Speed = model.TravelSpeed;
-                    if (targetDistance > 128f)
+                    if (owner is null && targetDistance > this.model.MaxIdleDistance)
                     {
-                        base.Speed = model.TravelSpeed + (int)(targetDistance / 64f) - 1;
-                    }
-
-                    if (IsJumper())
-                    {
-                        float jumpScale = 10f;
-                        float randomJumpBoostMultiplier = 2f;
-                        if (this.model.IdleArguments is null && this.model.IdleArguments.Length >= 2)
-                        {
-                            jumpScale = this.model.IdleArguments[0];
-                            randomJumpBoostMultiplier = this.model.IdleArguments[1];
-                        }
-
-                        this.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier);
+                        Vector2 targetPosition = this.GetTargetPosition() + new Vector2(this.model.SpawnOffsetX, this.model.SpawnOffsetY);
+                        base.position.Value = Vector2.Lerp(base.position, targetPosition, this.model.TravelSpeed / 300f);
+                        this.motion.Value *= -1;
                     }
                     else
                     {
-                        this.SetMotion(Utility.getVelocityTowardPoint(new Point((int)base.Position.X + this.model.SpawnOffsetX, (int)base.Position.Y + this.model.SpawnOffsetY), this.GetTargetPosition(), base.speed));
+                        this.hasReachedPlayer.Value = false;
+
+                        base.Speed = model.TravelSpeed;
+                        if (targetDistance > this.model.MaxIdleDistance)
+                        {
+                            base.Speed = model.TravelSpeed + (int)(targetDistance / 64f) - 1;
+                        }
+
+                        if (IsJumper())
+                        {
+                            float jumpScale = 10f;
+                            float randomJumpBoostMultiplier = 2f;
+                            if (this.model.IdleArguments != null && this.model.IdleArguments.Length >= 2)
+                            {
+                                jumpScale = this.model.IdleArguments[0];
+                                randomJumpBoostMultiplier = this.model.IdleArguments[1];
+                            }
+
+                            this.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier);
+                        }
+                        else
+                        {
+                            this.SetMotion(Utility.getVelocityTowardPoint(new Point((int)base.Position.X + this.model.SpawnOffsetX, (int)base.Position.Y + this.model.SpawnOffsetY), this.GetTargetPosition(), base.speed));
+                        }
                     }
                 }
                 else
