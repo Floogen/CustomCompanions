@@ -121,7 +121,7 @@ namespace CustomCompanions.Framework.Companions
 
         public override void draw(SpriteBatch b, float alpha = 1f)
         {
-            b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(this.GetSpriteWidthForPositioning() * 4 / 2, this.GetBoundingBox().Height / 2) + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), this.Sprite.SourceRect, this.isPrismatic ? Utility.GetPrismaticColor(348 + (int)this.specialNumber, 5f) : color, this.rotation, new Vector2(this.Sprite.SpriteWidth / 2, (float)this.Sprite.SpriteHeight * 3f / 4f), Math.Max(0.2f, base.scale) * 4f, (base.flip || (this.Sprite.CurrentAnimation != null && this.Sprite.CurrentAnimation[this.Sprite.currentAnimationIndex].flip)) ? SpriteEffects.FlipHorizontally : SpriteEffects.None, this.IsFlying() ? 0.991f : base.position.Y / 10000f);
+            b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(this.GetSpriteWidthForPositioning() * 4 / 2, this.GetBoundingBox().Height / 2) + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), this.Sprite.SourceRect, this.isPrismatic ? Utility.GetPrismaticColor(348 + (int)this.specialNumber, 5f) : color, this.rotation, new Vector2(this.Sprite.SpriteWidth / 2, (float)this.Sprite.SpriteHeight * 3f / 4f), Math.Max(0.2f, base.scale) * 4f, (base.flip || (this.Sprite.CurrentAnimation != null && this.Sprite.CurrentAnimation[this.Sprite.currentAnimationIndex].flip)) ? SpriteEffects.FlipHorizontally : SpriteEffects.None, this.IsFlying() ? 0.991f : Math.Max(0f, base.drawOnTop ? 0.991f : ((float)base.getStandingY() / 10000f)));
         }
 
         private void SetUpCompanion()
@@ -129,13 +129,7 @@ namespace CustomCompanions.Framework.Companions
             // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)
             if (this.collidesWithOtherCharacters)
             {
-                foreach (var character in this.currentLocation.characters.Where(c => c != this))
-                {
-                    if (character.GetBoundingBox().Intersects(this.GetBoundingBox()))
-                    {
-                        base.Position = Utility.getRandomAdjacentOpenTile(this.getTileLocation(), this.currentLocation) * 64f;
-                    }
-                }
+                this.PlaceInEmptyTile();
             }
             this.nextPosition.Value = this.GetBoundingBox();
 
@@ -182,6 +176,17 @@ namespace CustomCompanions.Framework.Companions
 
                 this.light = new LightSource(1, new Vector2(this.position.X + this.model.Light.OffsetX, this.position.Y + this.model.Light.OffsetY), this.model.Light.Radius, CustomCompanions.GetColorFromArray(this.model.Light.Color), this.id, LightSource.LightContext.None, 0L);
                 Game1.currentLightSources.Add(this.light);
+            }
+        }
+        private void PlaceInEmptyTile()
+        {
+            foreach (var character in this.currentLocation.characters.Where(c => c != this))
+            {
+                if (character.GetBoundingBox().Intersects(this.GetBoundingBox()))
+                {
+                    CustomCompanions.monitor.Log("HERE", StardewModdingAPI.LogLevel.Debug);
+                    base.Position = Utility.getRandomAdjacentOpenTile(this.getTileLocation(), this.currentLocation) * 64f;
+                }
             }
         }
 
@@ -539,9 +544,15 @@ namespace CustomCompanions.Framework.Companions
             this.motion.Value = motion;
         }
 
-        internal void ResetForNewLocation(Vector2 position)
+        internal void ResetForNewLocation(GameLocation location, Vector2 position)
         {
             base.Position = position * 64f;
+            this.currentLocation = location;
+
+            if (this.collidesWithOtherCharacters)
+            {
+                this.PlaceInEmptyTile();
+            }
         }
     }
 }

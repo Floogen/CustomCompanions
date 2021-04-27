@@ -86,7 +86,7 @@ namespace CustomCompanions.Framework.Managers
                 if (location.characters != null && !location.characters.Contains(companion))
                 {
                     location.characters.Add(companion);
-                    companion.ResetForNewLocation(who.getTileLocation());
+                    companion.ResetForNewLocation(location, who.getTileLocation());
                 }
             }
         }
