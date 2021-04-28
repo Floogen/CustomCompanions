@@ -34,13 +34,8 @@ namespace CustomCompanions
             monitor = Monitor;
             modHelper = helper;
 
-            // Set up the CompanionManager
-            CompanionManager.companionModels = new List<CompanionModel>();
-            CompanionManager.activeCompanions = new List<BoundCompanions>();
-            CompanionManager.sceneryCompanions = new List<SceneryCompanions>();
-
-            // Set up the RingManager
-            RingManager.rings = new List<RingModel>();
+            // Set up the mod's resources
+            this.Reset(true);
 
             // Load our Harmony patches
             try
@@ -64,6 +59,7 @@ namespace CustomCompanions
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.Saving += this.OnSaving;
+            helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
 
             // Hook into Player events
             helper.Events.Player.Warped += this.OnWarped;
@@ -177,7 +173,7 @@ namespace CustomCompanions
 
         private void OnSaving(object sender, SavingEventArgs e)
         {
-            // Go through all game locations and purge any of custom critters / creatures
+            // Go through all game locations and purge any of custom creatures
             foreach (GameLocation location in Game1.locations.Where(l => l != null))
             {
                 if (location.characters != null)
@@ -190,6 +186,11 @@ namespace CustomCompanions
             }
 
             CompanionManager.sceneryCompanions = new List<SceneryCompanions>();
+        }
+
+        private void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
+        {
+            this.Reset();
         }
 
         private void OnWarped(object sender, WarpedEventArgs e)
@@ -233,6 +234,22 @@ namespace CustomCompanions
                     }
                 }
             }
+        }
+
+        private void Reset(bool isFirstRun = false)
+        {
+            if (isFirstRun)
+            {
+                // Set up the companion models
+                CompanionManager.companionModels = new List<CompanionModel>();
+
+                // Set up the RingManager
+                RingManager.rings = new List<RingModel>();
+            }
+
+            // Set up the CompanionManager
+            CompanionManager.activeCompanions = new List<BoundCompanions>();
+            CompanionManager.sceneryCompanions = new List<SceneryCompanions>();
         }
 
         private void DebugSpawnCompanion(string command, string[] args)
