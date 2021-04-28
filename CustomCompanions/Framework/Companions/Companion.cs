@@ -295,6 +295,7 @@ namespace CustomCompanions.Framework.Companions
                     else
                     {
                         this.hasReachedPlayer.Value = false;
+                        this.motion.Value = Vector2.Zero;
 
                         base.Speed = model.TravelSpeed;
                         if (targetDistance > this.model.MaxIdleDistance)
@@ -320,10 +321,10 @@ namespace CustomCompanions.Framework.Companions
                         }
                     }
                 }
-                else
+                else if (this.owner is null || (!this.hasReachedPlayer.Value && !this.owner.isMoving()))
                 {
-                    this.hasReachedPlayer.Value = true;
                     this.motion.Value = Vector2.Zero;
+                    this.hasReachedPlayer.Value = true;
                 }
             }
 
