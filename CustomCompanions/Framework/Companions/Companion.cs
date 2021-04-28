@@ -562,7 +562,7 @@ namespace CustomCompanions.Framework.Companions
         {
             if (owner != null && owner.currentLocation == this.currentLocation)
             {
-                return owner.position;
+                return owner.position + new Vector2(this.model.SpawnOffsetX, this.model.SpawnOffsetY);
             }
 
             return targetTile;
