@@ -319,7 +319,7 @@ namespace CustomCompanions.Framework.Companions
             }
 
             // Update any animations
-            if (!this.hasReachedPlayer.Value)
+            if (!this.hasReachedPlayer.Value || (this.owner is null && !this.motion.Equals(Vector2.Zero)))
             {
                 this.previousDirection.Value = this.FacingDirection;
 
