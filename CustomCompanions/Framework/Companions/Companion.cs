@@ -82,6 +82,11 @@ namespace CustomCompanions.Framework.Companions
 
         public override void update(GameTime time, GameLocation location)
         {
+            if (!Game1.shouldTimePass())
+            {
+                return;
+            }
+
             base.currentLocation = location;
             base.update(time, location);
             base.forceUpdateTimer = 99999;
