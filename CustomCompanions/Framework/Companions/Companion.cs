@@ -217,6 +217,26 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
+        private bool HasIdleFrames(int direction = -1)
+        {
+
+            switch (direction)
+            {
+                case -1:
+                    return !(this.model.UniformAnimation is null || (this.model.UniformAnimation.IdleAnimation.StartingFrame == -1 && this.model.UniformAnimation.IdleAnimation.ManualFrames is null));
+                case 0:
+                    return !(this.model.UpAnimation is null || (this.model.UpAnimation.IdleAnimation.StartingFrame == -1 && this.model.UpAnimation.IdleAnimation.ManualFrames is null));
+                case 1:
+                    return !(this.model.RightAnimation is null || (this.model.RightAnimation.IdleAnimation.StartingFrame == -1 && this.model.RightAnimation.IdleAnimation.ManualFrames is null));
+                case 2:
+                    return !(this.model.DownAnimation is null || (this.model.DownAnimation.IdleAnimation.StartingFrame == -1 && this.model.DownAnimation.IdleAnimation.ManualFrames is null));
+                case 3:
+                    return !(this.model.LeftAnimation is null || (this.model.LeftAnimation.IdleAnimation.StartingFrame == -1 && this.model.LeftAnimation.IdleAnimation.ManualFrames is null));
+                default:
+                    return false;
+            }
+        }
+
         private void PlaceInEmptyTile()
         {
             foreach (var character in this.currentLocation.characters.Where(c => c != this))
@@ -299,7 +319,7 @@ namespace CustomCompanions.Framework.Companions
             }
 
             // Update any animations
-            if (!this.motion.Equals(Vector2.Zero))
+            if (!this.hasReachedPlayer.Value)
             {
                 this.previousDirection.Value = this.FacingDirection;
 
@@ -341,7 +361,9 @@ namespace CustomCompanions.Framework.Companions
 
         private void Animate(GameTime time, bool isIdle = false)
         {
-            if (this.Sprite.CurrentAnimation != null && this.wasIdle == isIdle && (this.previousDirection == this.FacingDirection || this.activeUniformFrames != null))
+            bool hasIdleFrames = HasIdleFrames(this.idleUniformFrames != null ? -1 : this.FacingDirection);
+
+            if (this.Sprite.CurrentAnimation != null && (!hasIdleFrames || (hasIdleFrames && this.wasIdle == isIdle)) && (this.previousDirection == this.FacingDirection || this.activeUniformFrames != null))
             {
                 if (!this.Sprite.animateOnce(time))
                 {
@@ -349,7 +371,7 @@ namespace CustomCompanions.Framework.Companions
                 }
             }
 
-            if (isIdle)
+            if (isIdle && hasIdleFrames)
             {
                 if (this.idleUniformFrames != null)
                 {

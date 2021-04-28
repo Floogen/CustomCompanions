@@ -4,9 +4,9 @@ namespace CustomCompanions.Framework.Models.Companion
 {
     public class IdleAnimationModel
     {
-        public int StartingFrame { get; set; }
-        public int NumberOfFrames { get; set; }
-        public int Duration { get; set; }
+        public int StartingFrame { get; set; } = -1;
+        public int NumberOfFrames { get; set; } = -1;
+        public int Duration { get; set; } = -1;
         public List<ManualFrameModel> ManualFrames { get; set; }
 
         public override string ToString()

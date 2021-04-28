@@ -8,7 +8,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public int NumberOfFrames { get; set; }
         public int Duration { get; set; }
         public List<ManualFrameModel> ManualFrames { get; set; }
-        public IdleAnimationModel IdleAnimation { get; set; }
+        public IdleAnimationModel IdleAnimation { get; set; } = new IdleAnimationModel();
 
         public override string ToString()
         {

@@ -57,12 +57,6 @@
         "Frame": 12,
         "Duration": 100
       }
-    ],
-
-    "IdleAnimation": {
-      "StartingFrame": 20,
-      "NumberOfFrames": 2,
-      "Duration": 500
-    }
+    ]
   }
 }
