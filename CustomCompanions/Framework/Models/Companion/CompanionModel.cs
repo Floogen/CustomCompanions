@@ -9,6 +9,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public string Owner { get; set; }
         public string Name { get; set; }
         public string Type { get; set; }
+        public bool EnableFarmerCollision { get; set; }
         public int TravelSpeed { get; set; }
         public int SpawnDirection { get; set; } = 2;
         public int SpawnOffsetX { get; set; }
@@ -33,7 +34,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public override string ToString()
         {
             return $"\n[\n" +
-                $"\tOwner: {Owner} | Name: {Name} | Type: {Type}\n" +
+                $"\tOwner: {Owner} | Name: {Name} | Type: {Type} | EnableFarmerCollision: {EnableFarmerCollision}\n" +
                 $"\tTravelSpeed: {TravelSpeed} | SpawnDirection: {SpawnDirection} | SpawnOffsetX: {SpawnOffsetX} | SpawnOffsetY: {SpawnOffsetY}\n" +
                 $"\tMaxIdleDistance: {MaxIdleDistance} | MaxDistanceBeforeTeleport: {MaxDistanceBeforeTeleport} | IdleBehavior: {IdleBehavior} | IdleArguments: { (IdleArguments is null ? null : IdleArguments) }\n" +
                 $"\tColors: {string.Join(",", Colors.Select(c => "[" + string.Join(",", c) + "]"))} | IsPrismatic: {IsPrismatic}\n" +
