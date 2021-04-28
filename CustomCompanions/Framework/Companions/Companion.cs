@@ -96,6 +96,10 @@ namespace CustomCompanions.Framework.Companions
             this.PlayRequiredSounds(time);
         }
 
+        public override void performTenMinuteUpdate(int timeOfDay, GameLocation l)
+        {
+            // Do nothing
+        }
         public override bool isMoving()
         {
             return !this.motion.Equals(Vector2.Zero);
