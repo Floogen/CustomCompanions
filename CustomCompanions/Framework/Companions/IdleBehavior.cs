@@ -197,7 +197,6 @@ namespace CustomCompanions.Framework.Companions
             }
             else
             {
-                companion.motion.Value = Vector2.Zero;
                 return true;
             }
         }

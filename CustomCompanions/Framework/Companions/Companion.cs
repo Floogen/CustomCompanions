@@ -277,6 +277,7 @@ namespace CustomCompanions.Framework.Companions
                 else
                 {
                     this.hasReachedPlayer.Value = true;
+                    this.motion.Value = Vector2.Zero;
                 }
             }
 
@@ -327,8 +328,9 @@ namespace CustomCompanions.Framework.Companions
                     }
 
                     this.Animate(time, false);
-                    this.wasIdle.Value = false;
                 }
+
+                this.wasIdle.Value = false;
             }
             else
             {
@@ -339,7 +341,7 @@ namespace CustomCompanions.Framework.Companions
 
         private void Animate(GameTime time, bool isIdle = false)
         {
-            if (this.Sprite.CurrentAnimation != null && this.previousDirection == this.FacingDirection && this.wasIdle == isIdle)
+            if (this.Sprite.CurrentAnimation != null && this.wasIdle == isIdle && (this.previousDirection == this.FacingDirection || this.activeUniformFrames != null))
             {
                 if (!this.Sprite.animateOnce(time))
                 {
