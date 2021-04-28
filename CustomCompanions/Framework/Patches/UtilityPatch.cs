@@ -1,4 +1,5 @@
-﻿using CustomCompanions.Framework.Managers;
+﻿using CustomCompanions.Framework.Companions;
+using CustomCompanions.Framework.Managers;
 using Harmony;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
@@ -26,6 +27,7 @@ namespace CustomCompanions.Framework.Patches
         internal void Apply(HarmonyInstance harmony)
         {
             harmony.Patch(AccessTools.Method(_utility, nameof(Utility.isThereAFarmerOrCharacterWithinDistance), new[] { typeof(Vector2), typeof(int), typeof(GameLocation) }), postfix: new HarmonyMethod(GetType(), nameof(IsThereAFarmerOrCharacterWithinDistancePostfix)));
+            harmony.Patch(AccessTools.Method(_utility, nameof(Utility.checkForCharacterInteractionAtTile), new[] { typeof(Vector2), typeof(Farmer) }), postfix: new HarmonyMethod(GetType(), nameof(CheckForCharacterInteractionAtTilePostfix)));
         }
 
         private static void IsThereAFarmerOrCharacterWithinDistancePostfix(Utility __instance, ref Character __result, Vector2 tileLocation, int tilesAway, GameLocation environment)
@@ -33,6 +35,20 @@ namespace CustomCompanions.Framework.Patches
             if (environment is Town && __result != null && CompanionManager.IsCustomCompanion(__result))
             {
                 __result = null;
+            }
+        }
+
+        private static void CheckForCharacterInteractionAtTilePostfix(Utility __instance, Vector2 tileLocation, Farmer who)
+        {
+            NPC character = Game1.currentLocation.isCharacterAtTile(tileLocation);
+            if (CompanionManager.IsCustomCompanion(character))
+            {
+                Companion companion = character as Companion;
+                if (companion.owner is null && !String.IsNullOrEmpty(companion.model.InspectionDialogue))
+                {
+                    Game1.mouseCursor = 4;
+                    Game1.mouseCursorTransparency = Utility.tileWithinRadiusOfPlayer((int)tileLocation.X, (int)tileLocation.Y, 1, who) ? 1f : 0.5f;
+                }
             }
         }
     }

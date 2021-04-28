@@ -8,6 +8,7 @@
   "SpawnOffsetY": 0, // Y offset (from player) of where to spawn | Note: Negative values will spawn above player head, positive will spawn below player head
   "MaxIdleDistance": -1,
   "MaxDistanceBeforeTeleport": -1, // Optional parameter, determines how far away a companion can be from a player / spawn point before teleporting back | NOTE: -1 will make it never teleport if it gets too far
+  "InspectionDialogue": "A cow.", // Optional parameter, determines what dialogue appears when interacting with the companion | NOTE: Only applicable for map-based spawns
   "IdleBehavior": "Wander", // Optional parameter, determines how the companion acts while idle | Options: [Nothing, Hover, Wander]
 
   "Colors": [ // Optional parameter, Takes an array of colors (RGBA values) to overlay on the sprite | NOTE: If multiple colors are given, then one will be chosen randomly on each spawn

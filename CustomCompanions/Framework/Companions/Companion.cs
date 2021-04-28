@@ -100,6 +100,17 @@ namespace CustomCompanions.Framework.Companions
         {
             // Do nothing
         }
+
+        public override bool checkAction(Farmer who, GameLocation l)
+        {
+            if (this.owner is null && !String.IsNullOrEmpty(this.model.InspectionDialogue))
+            {
+                Game1.drawObjectDialogue(this.model.InspectionDialogue);
+                return true;
+            }
+            return false;
+        }
+
         public override bool isMoving()
         {
             return !this.motion.Equals(Vector2.Zero);
