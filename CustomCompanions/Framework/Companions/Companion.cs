@@ -55,6 +55,7 @@ namespace CustomCompanions.Framework.Companions
         {
             this.targetTile = targetTile * 64f;
             this.currentLocation = location;
+            base.farmerPassesThrough = model.EnableFarmerCollision ? false : true;
             this.SetUpCompanion();
         }
 
