@@ -14,6 +14,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public int SpawnOffsetX { get; set; }
         public int SpawnOffsetY { get; set; }
         public float MaxIdleDistance { get; set; } = 128f;
+        public float MaxDistanceBeforeTeleport { get; set; } = 512f;
         public string IdleBehavior { get; set; } = "NOTHING";
         public float[] IdleArguments { get; set; }
         public List<int[]> Colors { get; set; } = new List<int[]>();
@@ -34,7 +35,7 @@ namespace CustomCompanions.Framework.Models.Companion
             return $"\n[\n" +
                 $"\tOwner: {Owner} | Name: {Name} | Type: {Type}\n" +
                 $"\tTravelSpeed: {TravelSpeed} | SpawnDirection: {SpawnDirection} | SpawnOffsetX: {SpawnOffsetX} | SpawnOffsetY: {SpawnOffsetY}\n" +
-                $"\tMaxIdleDistance: {MaxIdleDistance} | IdleBehavior: {IdleBehavior} | IdleArguments: { (IdleArguments is null ? null : IdleArguments) }\n" +
+                $"\tMaxIdleDistance: {MaxIdleDistance} | MaxDistanceBeforeTeleport: {MaxDistanceBeforeTeleport} | IdleBehavior: {IdleBehavior} | IdleArguments: { (IdleArguments is null ? null : IdleArguments) }\n" +
                 $"\tColors: {string.Join(",", Colors.Select(c => "[" + string.Join(",", c) + "]"))} | IsPrismatic: {IsPrismatic}\n" +
                 $"\tLight: {(Light is null ? null : Light)}\n" +
                 $"\tSounds: {string.Join(",", Sounds)}\n" +

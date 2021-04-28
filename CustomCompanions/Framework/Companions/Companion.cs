@@ -253,7 +253,7 @@ namespace CustomCompanions.Framework.Companions
             if (owner != null || targetTile != null)
             {
                 var targetDistance = Vector2.Distance(base.Position, this.GetTargetPosition());
-                if (targetDistance > this.model.MaxIdleDistance * 4f && this.model.MaxIdleDistance != -1)
+                if (targetDistance > this.model.MaxDistanceBeforeTeleport && this.model.MaxDistanceBeforeTeleport != -1)
                 {
                     this.hasReachedPlayer.Value = false;
                     base.position.Value = this.GetTargetPosition();
