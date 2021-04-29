@@ -499,9 +499,12 @@ namespace CustomCompanions.Framework.Companions
             if (this.soundAlwaysTimer != null)
             {
                 this.soundAlwaysTimer = Math.Max(0, (int)this.soundAlwaysTimer - time.ElapsedGameTime.Milliseconds);
-                if (soundAlwaysTimer <= 0 && Game1.random.NextDouble() <= alwaysSound.ChanceOfPlaying)
+                if (soundAlwaysTimer <= 0)
                 {
-                    Game1.playSound(alwaysSound.SoundName);
+                    if (Game1.random.NextDouble() <= alwaysSound.ChanceOfPlaying)
+                    {
+                        Game1.playSound(alwaysSound.SoundName);
+                    }
                     soundAlwaysTimer = alwaysSound.TimeBetweenSound;
                 }
             }
@@ -509,9 +512,12 @@ namespace CustomCompanions.Framework.Companions
             if (this.isMoving() && this.soundMovingTimer != null)
             {
                 this.soundMovingTimer = Math.Max(0, (int)this.soundMovingTimer - time.ElapsedGameTime.Milliseconds);
-                if (soundMovingTimer <= 0 && Game1.random.NextDouble() <= movingSound.ChanceOfPlaying)
+                if (soundMovingTimer <= 0)
                 {
-                    Game1.playSound(movingSound.SoundName);
+                    if (Game1.random.NextDouble() <= movingSound.ChanceOfPlaying)
+                    {
+                        Game1.playSound(movingSound.SoundName);
+                    }
                     soundMovingTimer = movingSound.TimeBetweenSound;
                 }
             }
@@ -519,9 +525,12 @@ namespace CustomCompanions.Framework.Companions
             if (!this.isMoving() && this.soundIdleTimer != null)
             {
                 this.soundIdleTimer = Math.Max(0, (int)this.soundIdleTimer - time.ElapsedGameTime.Milliseconds);
-                if (soundIdleTimer <= 0 && Game1.random.NextDouble() <= idleSound.ChanceOfPlaying)
+                if (soundIdleTimer <= 0)
                 {
-                    Game1.playSound(idleSound.SoundName);
+                    if (Game1.random.NextDouble() <= idleSound.ChanceOfPlaying)
+                    {
+                        Game1.playSound(idleSound.SoundName);
+                    }
                     soundIdleTimer = idleSound.TimeBetweenSound;
                 }
             }
