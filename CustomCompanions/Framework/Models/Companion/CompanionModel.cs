@@ -10,7 +10,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public string Name { get; set; }
         public string Type { get; set; }
         public bool EnableFarmerCollision { get; set; }
-        public int TravelSpeed { get; set; }
+        public int TravelSpeed { get; set; } = 6;
         public int SpawnDirection { get; set; } = 2;
         public int SpawnOffsetX { get; set; }
         public int SpawnOffsetY { get; set; }
