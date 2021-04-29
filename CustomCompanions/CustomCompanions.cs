@@ -95,6 +95,7 @@ namespace CustomCompanions
                         }
 
                         CompanionModel companion = contentPack.ReadJsonFile<CompanionModel>(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.json"));
+                        companion.Name = companion.Name.Replace(" ", "");
                         companion.Owner = contentPack.Manifest.UniqueID;
                         Monitor.Log(companion.ToString(), LogLevel.Trace);
 
