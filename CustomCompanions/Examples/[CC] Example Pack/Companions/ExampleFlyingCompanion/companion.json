@@ -30,7 +30,7 @@
   "Sounds": [
     {
       "SoundName": "croak", // Name of in-game sound (capitalization sensitive)
-      "WhenToPlay": "Idle", // Optional parameter, determines when to play the sound | Options: [Always, Idle, Moving]
+      "WhenToPlay": "Idle", // Determines when to play the sound | Options: [Always, Idle, Moving]
       "TimeBetweenSound": 1000, // Minimum amount of milliseconds to wait between playing the sound
       "ChanceOfPlaying": 0 // Gives the sound a random chance to play after TimeBetweenSound | Default 1 (e.g. always)
     }
