@@ -8,11 +8,11 @@ Custom Companions only requires [SMAPI](https://smapi.io/), which enables suppor
 
 &nbsp;
 ## Creating a Content Pack
-See the wiki for detailed instructions on how to create content pack for Custom Companions.
+See [the wiki](https://github.com/Floogen/CustomCompanions/wiki) for detailed instructions on how to create content pack for Custom Companions.
 
 &nbsp;
 ## Spawning a Custom Companion via Map Tile Property
-See this section in the wiki for exact details on how to spawn via a map tile property.
+See [this section](https://github.com/Floogen/CustomCompanions/wiki/Spawning-a-Companion-via-Map-Tile) in the wiki for exact details on how to spawn via a map tile property.
 
 &nbsp;
 ## Example Content Packs
