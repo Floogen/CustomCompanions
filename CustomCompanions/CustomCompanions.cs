@@ -53,7 +53,7 @@ namespace CustomCompanions
             }
 
             // Add in our debug commands
-            helper.ConsoleCommands.Add("cc_spawnCompanion", "Gives all the variations of the ancient flag.\n\nUsage: cc_spawnCompanion quantity UNIQUE_ID.COMPANION_NAME", this.DebugSpawnCompanion);
+            helper.ConsoleCommands.Add("cc_spawnCompanion", "Gives all the variations of the ancient flag.\n\nUsage: cc_spawnCompanion QUANTITY UNIQUE_ID.COMPANION_NAME", this.DebugSpawnCompanion);
 
             // Hook into GameLoop events
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;

@@ -9,81 +9,35 @@
   "IdleBehavior": "Wander", // Optional parameter, determines how the companion acts while idle | Options: [Nothing, Hover, Wander, Jumper]
   "IdleArguments": [ 5, 5000 ], // Optional parameter, array of values used by IdleBehavior (see docs for details)
 
-  "Colors": [ // Optional parameter, Takes an array of colors (RGBA values) to overlay on the sprite | NOTE: If multiple colors are given, then one will be chosen randomly on each spawn
-    [ 255, 255, 255, 255 ],
-    [ 255, 198, 0, 255 ],
-    [ 129, 198, 225, 130 ]
-  ],
-  "IsPrismatic": false, // Causes the companion's colors to change like a Prismatic Slime | NOTE: If Colors contains any values, then the companion will randomly be pick a color or prismatic
-
-  // Optional parameter, handles if the companion gives off a light
-  "Light": {
-    "Color": [ 255, 255, 255, 255 ], // RGBA value of the light
-    "Radius": 2.5, // Radius of the light to give off
-    "OffsetX": 8, // Optional parameter, X offset (from top left corner of the companion) for light spawning point | Note: Use half of FrameSizeWidth to get the X center point
-    "OffsetY": 16, // Optional parameter, Y offset (from top left corner of the companion) for light spawning point | Note: Use half of FrameSizeHeight to get the Y center point
-    "PulseSpeed": 5000, // Optional parameter, amount of time to iterate between Radius to PulseMinRadius
-    "PulseMinRadius": 1 // Optional parameter, minimum radius to shrink to during pulsing | Default 0
-  },
-
-  // Optional parameter, handles playing a specific in-game sound
   "Sounds": [
     {
-      "SoundName": "croak", // Name of in-game sound (capitalization sensitive)
-      "WhenToPlay": "Idle", // Determines when to play the sound | Options: [Always, Idle, Moving]
-      "TimeBetweenSound": 1000, // Minimum amount of milliseconds to wait between playing the sound
-      "ChanceOfPlaying": 0 // Gives the sound a random chance to play after TimeBetweenSound | Default 1 (e.g. always)
+      "SoundName": "batFlap",
+      "WhenToPlay": "Always",
+      "TimeBetweenSound": 100,
+      "ChanceOfPlaying": 0.7
+    },
+    {
+      "SoundName": "batScreech",
+      "WhenToPlay": "Moving",
+      "TimeBetweenSound": 5000,
+      "ChanceOfPlaying": 0.1
     }
   ],
 
-  "FrameSizeWidth": 16, // Width of each frame / tile in pixels | Default is 16
-  "FrameSizeHeight": 32, // Height of each frame / tile in pixels | Default is 16
-  "TileSheetPath": "Characters\\Monsters\\Bat", // Optional parameter, but needed if creating a companion with an existing in-game sprite (e.g. Animals\\Rabbit)
+  "FrameSizeWidth": 16,
+  "FrameSizeHeight": 32,
+  "TileSheetPath": "Characters\\Monsters\\Bat",
 
-  // UniformAnimation is the default moving animation played if none of the directional animations are provided (e.g. UpAnimation, LeftAnimation, etc.)
-  // IMPORTANT NOTE: This animation will be ignored if any of the directional animations are included in this JSON
   "UniformAnimation": {
-    "StartingFrame": 0, // The index of the first frame for this animation (e.g. 0 is the up most left tile in companion.png)
-    "NumberOfFrames": 4, // Number of frames to play (including the StartingFrame) in sequential order 
-    "Duration": 50, // Duration of each frame in milliseconds
-    "ManualFrames": [
-      {
-        "Frame": 0,
-        "Duration": 100
-      },
-      {
-        "Frame": 1,
-        "Duration": 100
-      },
-      {
-        "Frame": 2,
-        "Duration": 100
-      },
-      {
-        "Frame": 3,
-        "Duration": 100
-      }
-    ],
+    "StartingFrame": 0,
+    "NumberOfFrames": 4,
+    "Duration": 50,
 
     // This is the animation that plays when the companion is not moving
     "IdleAnimation": {
       "StartingFrame": 0,
       "NumberOfFrames": 4,
-      "Duration": 100,
-      "ManualFrames": [
-        {
-          "Frame": 0,
-          "Duration": 200
-        },
-        {
-          "Frame": 1,
-          "Duration": 200
-        },
-        {
-          "Frame": 2,
-          "Duration": 200
-        }
-      ]
+      "Duration": 100
     }
   }
 }
