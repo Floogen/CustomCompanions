@@ -486,7 +486,7 @@ namespace CustomCompanions.Framework.Companions
             {
                 if (this.model.Light.PulseSpeed != 0)
                 {
-                    this.light.radius.Value = this.model.Light.PulseMinRadius + (0.5f * (this.model.Light.Radius - this.model.Light.PulseMinRadius) * (1 + (float)Math.Sin(2 * Math.PI * lightPulseTimer)));//(this.model.Light.Radius / 2) * (1 + (float)Math.Sin(2 * Math.PI * lightPulseTimer));
+                    this.light.radius.Value = this.model.Light.PulseMinRadius + (0.5f * (this.model.Light.Radius - this.model.Light.PulseMinRadius) * (1 + (float)Math.Sin(2 * Math.PI * lightPulseTimer)));
                     this.lightPulseTimer = (this.lightPulseTimer + (float)time.ElapsedGameTime.TotalMilliseconds / this.model.Light.PulseSpeed) % 1;
                 }
 
