@@ -345,6 +345,12 @@ namespace CustomCompanions.Framework.Companions
                 }
             }
 
+            // Check if the collision based companion is stuck, if so set it to idle animations
+            if (this.owner != null && !this.owner.isMoving() && this.lastPosition.Equals(this.position) && !this.IsFlying())
+            {
+                this.hasReachedPlayer.Value = true;
+            }
+
             // Update any animations
             if (!this.hasReachedPlayer.Value || (this.owner is null && !this.motion.Equals(Vector2.Zero)))
             {
