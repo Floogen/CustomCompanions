@@ -74,7 +74,7 @@
   <ItemGroup>
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWanderWalkingCow\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleFlyingCompanion\companion.json" />
-    <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCustomCharacter\companion.json" />
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleJumperSPenny\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWalkingCompanion\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkingGameCharacter\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCompanion\companion.json" />
