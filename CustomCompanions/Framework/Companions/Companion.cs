@@ -327,7 +327,7 @@ namespace CustomCompanions.Framework.Companions
                 }
                 else if (this.owner is null || (!this.hasReachedPlayer.Value && !this.owner.isMoving()))
                 {
-                    this.motion.Value = Vector2.Zero;
+                    this.motion.Value = this.owner is null && IsFlying() ? this.motion.Value : Vector2.Zero;
                     this.hasReachedPlayer.Value = true;
                 }
             }
