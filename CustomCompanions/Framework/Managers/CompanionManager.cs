@@ -75,6 +75,12 @@ namespace CustomCompanions.Framework.Managers
                 var existingSceneryCompanions = sceneryCompanions.First(s => s.Tile == tile && s.Location == location);
                 companions.ForEach(c => existingSceneryCompanions.Companions.Add(c));
             }
+
+            // Ensures each collision based companion is moved to an empty tile
+            foreach (var companion in companions.Where(c => c.collidesWithOtherCharacters))
+            {
+                companion.PlaceInEmptyTile();
+            }
         }
 
         internal static void RespawnCompanions(RingModel summoningRing, Farmer who, GameLocation location, bool removeFromActive = true)

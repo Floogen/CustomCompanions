@@ -267,17 +267,6 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
-        private void PlaceInEmptyTile()
-        {
-            foreach (var character in this.currentLocation.characters.Where(c => c != this))
-            {
-                if (character.GetBoundingBox().Intersects(this.GetBoundingBox()))
-                {
-                    base.Position = Utility.getRandomAdjacentOpenTile(this.getTileLocation(), this.currentLocation) * 64f;
-                }
-            }
-        }
-
         private void AttemptMovement(GameTime time, GameLocation location)
         {
             if (owner != null || targetTile != null)
@@ -536,6 +525,17 @@ namespace CustomCompanions.Framework.Companions
                         this.currentLocation.localSound(idleSound.SoundName);
                     }
                     soundIdleTimer = idleSound.TimeBetweenSound;
+                }
+            }
+        }
+
+        internal void PlaceInEmptyTile()
+        {
+            foreach (var character in this.currentLocation.characters.Where(c => c != this))
+            {
+                if (character.GetBoundingBox().Intersects(this.GetBoundingBox()))
+                {
+                    base.Position = Utility.getRandomAdjacentOpenTile(this.getTileLocation(), this.currentLocation) * 64f;
                 }
             }
         }
