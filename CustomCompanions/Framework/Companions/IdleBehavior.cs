@@ -192,7 +192,7 @@ namespace CustomCompanions.Framework.Companions
                     randomJumpBoostMultiplier = arguments[1];
                 }
 
-                companion.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier);
+                companion.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier, companion.GetTargetPosition());
                 return true;
             }
             else

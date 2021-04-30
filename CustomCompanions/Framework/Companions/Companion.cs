@@ -271,6 +271,8 @@ namespace CustomCompanions.Framework.Companions
         {
             if (owner != null || targetTile != null)
             {
+                this.lastPosition = this.position;
+
                 var targetDistance = Vector2.Distance(base.Position, this.GetTargetPosition());
                 if (targetDistance > this.model.MaxDistanceBeforeTeleport && this.model.MaxDistanceBeforeTeleport != -1)
                 {
@@ -289,6 +291,7 @@ namespace CustomCompanions.Framework.Companions
                     {
                         this.hasReachedPlayer.Value = false;
                         this.motion.Value = Vector2.Zero;
+                        this.SetMovingDirection(-1);
 
                         base.Speed = model.TravelSpeed;
                         if (targetDistance > this.model.MaxIdleDistance)
@@ -306,7 +309,7 @@ namespace CustomCompanions.Framework.Companions
                                 randomJumpBoostMultiplier = this.model.IdleArguments[1];
                             }
 
-                            this.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier);
+                            this.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier, this.GetTargetPosition());
                         }
                         else
                         {
@@ -345,7 +348,7 @@ namespace CustomCompanions.Framework.Companions
             }
 
             // Update any animations
-            if (!this.hasReachedPlayer.Value || (this.owner is null && !this.motion.Equals(Vector2.Zero)))
+            if ((!this.lastPosition.Equals(this.position) && !this.IsHovering()) || (this.owner != null && this.owner.isMoving()) || (this.owner is null && (!this.hasReachedPlayer.Value || !this.motion.Equals(Vector2.Zero))))
             {
                 this.previousDirection.Value = this.FacingDirection;
 
@@ -540,6 +543,11 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
+        internal bool IsHovering()
+        {
+            return this.idleBehavior.behavior == Behavior.HOVER;
+        }
+
         internal bool IsFlying()
         {
             return this.model.Type.ToUpper() == "FLYING";
@@ -550,7 +558,7 @@ namespace CustomCompanions.Framework.Companions
             return this.model.Type.ToUpper() == "JUMPING";
         }
 
-        internal void PerformJumpMovement(float jumpScale, float randomJumpBoostMultiplier)
+        internal void PerformJumpMovement(float jumpScale, float randomJumpBoostMultiplier, Vector2 targetTile)
         {
             if (this.yJumpOffset == 0)
             {
@@ -563,7 +571,7 @@ namespace CustomCompanions.Framework.Companions
                 }
             }
 
-            Vector2 v = Utility.getAwayFromPositionTrajectory(this.GetBoundingBox(), this.GetTargetPosition());
+            Vector2 v = Utility.getAwayFromPositionTrajectory(this.GetBoundingBox(), targetTile);
             this.xVelocity += (0f - v.X) / 150f + ((Game1.random.NextDouble() < 0.01) ? ((float)Game1.random.Next(-50, 50) / 10f) : 0f);
             if (Math.Abs(this.xVelocity) > 5f)
             {
@@ -575,7 +583,7 @@ namespace CustomCompanions.Framework.Companions
                 this.yVelocity = Math.Sign(this.yVelocity) * 5;
             }
 
-            this.SetMotion(Utility.getVelocityTowardPoint(new Point((int)this.Position.X + this.model.SpawnOffsetX, (int)this.Position.Y + this.model.SpawnOffsetY), new Vector2(this.GetTargetPosition().X, this.GetTargetPosition().Y), this.speed));
+            this.SetMotion(Utility.getVelocityTowardPoint(new Point((int)this.Position.X + this.model.SpawnOffsetX, (int)this.Position.Y + this.model.SpawnOffsetY), targetTile, this.speed));
         }
 
         internal Vector2 GetTargetPosition()
