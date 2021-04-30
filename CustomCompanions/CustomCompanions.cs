@@ -53,7 +53,7 @@ namespace CustomCompanions
             }
 
             // Add in our debug commands
-            helper.ConsoleCommands.Add("cc_spawnCompanion", "Gives all the variations of the ancient flag.\n\nUsage: cc_spawnCompanion QUANTITY UNIQUE_ID.COMPANION_NAME", this.DebugSpawnCompanion);
+            helper.ConsoleCommands.Add("cc_spawnCompanion", "Gives all the variations of the ancient flag.\n\nUsage: cc_spawnCompanion [QUANTITY] UNIQUE_ID.COMPANION_NAME", this.DebugSpawnCompanion);
 
             // Hook into GameLoop events
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
@@ -255,20 +255,33 @@ namespace CustomCompanions
 
         private void DebugSpawnCompanion(string command, string[] args)
         {
-            if (!CompanionManager.companionModels.Any(c => String.Concat(c.Owner, ".", c.Name) == args[0]) && !CompanionManager.companionModels.Any(c => String.Concat(c.Name) == args[0]))
+            if (args.Length == 0)
             {
-                Monitor.Log($"No match found for the companion name {args[0]}.", LogLevel.Warn);
-                return;
-            }
-            if (CompanionManager.companionModels.Where(c => String.Concat(c.Name) == args[0]).Count() > 1)
-            {
-                Monitor.Log($"There was more than one match to the companion name {args[0]}. Use exact name (UNIQUE_ID.COMPANION_NAME) to resolve this issue.", LogLevel.Warn);
+                Monitor.Log($"Missing required arguments: [QUANTITY] UNIQUE_ID.COMPANION_NAME", LogLevel.Warn);
                 return;
             }
 
-            Monitor.Log($"Spawning {args[0]} at {Game1.currentLocation} on tile {Game1.player.getTileLocation()}!", LogLevel.Debug);
-            var companion = CompanionManager.companionModels.Where(c => String.Concat(c.Name) == args[0]).Count() > 1 ? CompanionManager.companionModels.First(c => String.Concat(c.Owner, ".", c.Name) == args[0]) : CompanionManager.companionModels.First(c => String.Concat(c.Name) == args[0]);
-            CompanionManager.SummonCompanions(companion, 1, Game1.player.getTileLocation(), Game1.currentLocation);
+            int amountToSummon = 1;
+            string companionKey = args[0];
+            if (args.Length > 1 && Int32.TryParse(args[0], out amountToSummon))
+            {
+                companionKey = args[1];
+            }
+
+            if (!CompanionManager.companionModels.Any(c => String.Concat(c.Owner, ".", c.Name) == companionKey) && !CompanionManager.companionModels.Any(c => String.Concat(c.Name) == companionKey))
+            {
+                Monitor.Log($"No match found for the companion name {companionKey}.", LogLevel.Warn);
+                return;
+            }
+            if (CompanionManager.companionModels.Where(c => String.Concat(c.Name) == companionKey).Count() > 1)
+            {
+                Monitor.Log($"There was more than one match to the companion name {companionKey}. Use exact name (UNIQUE_ID.COMPANION_NAME) to resolve this issue.", LogLevel.Warn);
+                return;
+            }
+
+            Monitor.Log($"Spawning {companionKey} x{amountToSummon} at {Game1.currentLocation} on tile {Game1.player.getTileLocation()}!", LogLevel.Debug);
+            var companion = CompanionManager.companionModels.Where(c => String.Concat(c.Name) == companionKey).Count() > 1 ? CompanionManager.companionModels.First(c => String.Concat(c.Owner, ".", c.Name) == companionKey) : CompanionManager.companionModels.First(c => String.Concat(c.Name) == companionKey);
+            CompanionManager.SummonCompanions(companion, amountToSummon, Game1.player.getTileLocation(), Game1.currentLocation);
         }
 
         internal static bool IsSoundValid(string soundName, bool logFailure = false)
