@@ -98,8 +98,11 @@ namespace CustomCompanions.Framework.Companions
             // Update light location, if applicable
             this.UpdateLight(time);
 
-            // Play any sound(s) that are required
-            this.PlayRequiredSounds(time);
+            // Play any sound(s) that are required\
+            if (Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) != null)
+            {
+                this.PlayRequiredSounds(time);
+            }
         }
 
         public override void performTenMinuteUpdate(int timeOfDay, GameLocation l)
@@ -503,7 +506,7 @@ namespace CustomCompanions.Framework.Companions
                 {
                     if (Game1.random.NextDouble() <= alwaysSound.ChanceOfPlaying)
                     {
-                        Game1.playSound(alwaysSound.SoundName);
+                        this.currentLocation.localSound(alwaysSound.SoundName);
                     }
                     soundAlwaysTimer = alwaysSound.TimeBetweenSound;
                 }
@@ -516,7 +519,7 @@ namespace CustomCompanions.Framework.Companions
                 {
                     if (Game1.random.NextDouble() <= movingSound.ChanceOfPlaying)
                     {
-                        Game1.playSound(movingSound.SoundName);
+                        this.currentLocation.localSound(movingSound.SoundName);
                     }
                     soundMovingTimer = movingSound.TimeBetweenSound;
                 }
@@ -529,7 +532,7 @@ namespace CustomCompanions.Framework.Companions
                 {
                     if (Game1.random.NextDouble() <= idleSound.ChanceOfPlaying)
                     {
-                        Game1.playSound(idleSound.SoundName);
+                        this.currentLocation.localSound(idleSound.SoundName);
                     }
                     soundIdleTimer = idleSound.TimeBetweenSound;
                 }
