@@ -53,7 +53,8 @@ namespace CustomCompanions
             }
 
             // Add in our debug commands
-            helper.ConsoleCommands.Add("cc_spawnCompanion", "Gives all the variations of the ancient flag.\n\nUsage: cc_spawnCompanion [QUANTITY] UNIQUE_ID.COMPANION_NAME", this.DebugSpawnCompanion);
+            helper.ConsoleCommands.Add("cc_spawnCompanion", "Spawns in a specific companion.\n\nUsage: cc_spawnCompanion [QUANTITY] UNIQUE_ID.COMPANION_NAME", this.DebugSpawnCompanion);
+            helper.ConsoleCommands.Add("cc_removeAll", "Removes all map-based custom companions at the current location.\n\nUsage: cc_removeAll", this.DebugRemoveAll);
 
             // Hook into GameLoop events
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
@@ -282,6 +283,17 @@ namespace CustomCompanions
             Monitor.Log($"Spawning {companionKey} x{amountToSummon} at {Game1.currentLocation} on tile {Game1.player.getTileLocation()}!", LogLevel.Debug);
             var companion = CompanionManager.companionModels.Where(c => String.Concat(c.Name) == companionKey).Count() > 1 ? CompanionManager.companionModels.First(c => String.Concat(c.Owner, ".", c.Name) == companionKey) : CompanionManager.companionModels.First(c => String.Concat(c.Name) == companionKey);
             CompanionManager.SummonCompanions(companion, amountToSummon, Game1.player.getTileLocation(), Game1.currentLocation);
+        }
+
+        private void DebugRemoveAll(string command, string[] args)
+        {
+            var currentLocation = Game1.player.currentLocation;
+            foreach (var companion in currentLocation.characters.Where(c => CompanionManager.IsCustomCompanion(c)).ToList())
+            {
+                currentLocation.characters.Remove(companion);
+            }
+
+            CompanionManager.sceneryCompanions.Clear();
         }
 
         internal static bool IsSoundValid(string soundName, bool logFailure = false)

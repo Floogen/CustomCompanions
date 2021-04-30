@@ -70,6 +70,11 @@ namespace CustomCompanions.Framework.Managers
                 companions.ForEach(c => location.characters.Add(c));
                 sceneryCompanions.Add(sceneryCompanion);
             }
+            else
+            {
+                var existingSceneryCompanions = sceneryCompanions.First(s => s.Tile == tile && s.Location == location);
+                companions.ForEach(c => existingSceneryCompanions.Companions.Add(c));
+            }
         }
 
         internal static void RespawnCompanions(RingModel summoningRing, Farmer who, GameLocation location, bool removeFromActive = true)
