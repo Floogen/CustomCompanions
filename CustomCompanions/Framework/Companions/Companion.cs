@@ -72,6 +72,7 @@ namespace CustomCompanions.Framework.Companions
             this.model = model;
             this.specialNumber.Value = Game1.random.Next(100);
             this.idleBehavior = new IdleBehavior(model.IdleBehavior);
+            this.previousDirection.Value = this.FacingDirection;
 
             if (owner != null)
             {
