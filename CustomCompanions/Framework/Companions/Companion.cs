@@ -99,7 +99,7 @@ namespace CustomCompanions.Framework.Companions
             // Update light location, if applicable
             this.UpdateLight(time);
 
-            // Play any sound(s) that are required\
+            // Play any sound(s) that are required
             if (Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) != null)
             {
                 this.PlayRequiredSounds(time);
@@ -269,6 +269,7 @@ namespace CustomCompanions.Framework.Companions
 
         private void AttemptMovement(GameTime time, GameLocation location)
         {
+            // Heed thy warnin', there be spaghetti code ahead
             if (owner != null || targetTile != null)
             {
                 this.lastPosition = this.position;
@@ -284,7 +285,7 @@ namespace CustomCompanions.Framework.Companions
                     if (owner is null && targetDistance > this.model.MaxIdleDistance)
                     {
                         Vector2 targetPosition = this.GetTargetPosition() + new Vector2(this.model.SpawnOffsetX, this.model.SpawnOffsetY);
-                        base.position.Value = Vector2.Lerp(base.position, targetPosition, this.model.TravelSpeed / 300f);
+                        base.position.Value = Vector2.Lerp(base.position, targetPosition, this.model.TravelSpeed / 400f);
                         this.motion.Value *= -1;
                     }
                     else
@@ -630,9 +631,22 @@ namespace CustomCompanions.Framework.Companions
             base.Position = position * 64f;
             this.currentLocation = location;
 
+            if (this.light != null)
+            {
+                Game1.currentLightSources.Add(this.light);
+            }
+
             if (this.collidesWithOtherCharacters)
             {
                 this.PlaceInEmptyTile();
+            }
+        }
+
+        internal void PrepareForDeletion()
+        {
+            if (this.light != null)
+            {
+                Game1.currentLightSources.Remove(this.light);
             }
         }
     }
