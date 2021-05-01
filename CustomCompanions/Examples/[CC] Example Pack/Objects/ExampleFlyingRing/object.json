@@ -1,9 +1,11 @@
 {
   "Name": "AuthorName.Rings.ExampleFlyingRing",
-  "CompanionName": "ExampleFlyingCompanion",
   "Companions": {
     "ExampleFlyingCompanion": {
       "NumberToSummon": 1
+    },
+    "ExampleFirefly": {
+      "NumberToSummon": 3
     }
   },
   "Description": "The gemstone faintly glows.",

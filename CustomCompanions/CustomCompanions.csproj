@@ -72,6 +72,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleFirefly\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWanderWalkingCow\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleFlyingCompanion\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleJumperSPenny\companion.json" />
@@ -89,8 +90,9 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <Content Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCompanion\companion.png" />
     <Content Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWalkingCompanion\companion.png" />
+    <Content Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCompanion\companion.png" />
+    <Content Include="Examples\[CC] Example Pack\Companions\ExampleFirefly\companion.png" />
     <Content Include="Examples\[CC] Example Pack\Objects\ExampleWalkingGameCharacterRing\object.png" />
     <Content Include="Examples\[CC] Example Pack\Objects\ExampleFlyingRing\object.png" />
     <Content Include="Examples\[CC] Example Pack\Objects\ExampleWalkingRing\object.png" />
