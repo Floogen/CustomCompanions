@@ -21,10 +21,11 @@ namespace CustomCompanions.Framework.Companions
     {
         internal Behavior behavior;
 
+        private Vector2 destinationTile;
         private float behaviorTimer;
         private float motionMultiplier = 1f;
 
-        internal IdleBehavior(string behaviorType)
+        internal IdleBehavior(Companion companion, string behaviorType)
         {
             if (String.IsNullOrEmpty(behaviorType))
             {
@@ -42,6 +43,7 @@ namespace CustomCompanions.Framework.Companions
                     break;
                 case "JUMPER":
                     this.behavior = Behavior.JUMPER;
+                    destinationTile = companion.targetTile;
                     break;
                 default:
                     this.behavior = Behavior.NOTHING;
@@ -103,70 +105,7 @@ namespace CustomCompanions.Framework.Companions
                 }
                 else
                 {
-                    this.behaviorTimer -= time.ElapsedGameTime.Milliseconds;
-                    if (this.behaviorTimer >= 0)
-                    {
-                        companion.Halt();
-                        companion.motion.Value = Vector2.Zero;
-                        return false;
-                    }
-                    companion.motion.Value = Vector2.One;
-
-                    int targetDirection = companion.FacingDirection;
-                    if (Game1.random.NextDouble() < 0.007)
-                    {
-                        int newDirection = Game1.random.Next(5);
-                        if (newDirection != (companion.FacingDirection + 2) % 4)
-                        {
-                            if (newDirection < 4)
-                            {
-                                companion.Halt();
-                                targetDirection = newDirection;
-
-                                if (companion.currentLocation.isCollidingPosition(companion.nextPosition(newDirection), Game1.viewport, companion))
-                                {
-                                    companion.SetMovingDirection(companion.previousDirection);
-                                    this.behaviorTimer = Game1.random.Next(2000, 10000);
-                                    return false;
-                                }
-
-                                companion.previousDirection.Value = companion.FacingDirection;
-                                companion.SetMovingDirection(targetDirection);
-                            }
-                        }
-                    }
-
-                    Location next_tile = companion.nextPositionTile();
-                    if (!companion.currentLocation.isTileOnMap(new Vector2(next_tile.X, next_tile.Y)) || companion.currentLocation.isCollidingPosition(companion.nextPosition(targetDirection), Game1.viewport, isFarmer: true, 0, glider: false, companion, pathfinding: false))
-                    {
-                        companion.SetMovingDirection(companion.facingDirection);
-                        this.behaviorTimer = Game1.random.Next(2000, 10000);
-
-                        if (Game1.random.NextDouble() < 0.6)
-                        {
-                            companion.SetMovingDirection(Utility.GetOppositeFacingDirection(companion.facingDirection));
-                        }
-                    }
-                    else
-                    {
-                        switch (targetDirection)
-                        {
-                            case 0:
-                                companion.position.Y -= companion.speed;
-                                break;
-                            case 1:
-                                companion.position.X += companion.speed;
-                                break;
-                            case 2:
-                                companion.position.Y += companion.speed;
-                                break;
-                            case 3:
-                                companion.position.X -= companion.speed;
-                                break;
-                        }
-                    }
-
-                    return false;
+                    return PerformCollisionWander(companion, time);
                 }
             }
             else if (this.behavior == Behavior.HOVER)
@@ -192,13 +131,96 @@ namespace CustomCompanions.Framework.Companions
                     randomJumpBoostMultiplier = arguments[1];
                 }
 
-                companion.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier, companion.GetTargetPosition());
+
+                this.behaviorTimer -= time.ElapsedGameTime.Milliseconds;
+                if (this.behaviorTimer <= 0)
+                {
+                    this.behaviorTimer = Game1.random.Next(1000, 5000);
+
+                    if (Game1.random.NextDouble() <= 0.5)
+                    {
+                        this.destinationTile = Utility.getRandomAdjacentOpenTile(companion.getTileLocation(), companion.currentLocation) * 64f;
+                    }
+                }
+
+                Vector2 targetPosition = this.destinationTile;
+                Vector2 smoothedPosition = Vector2.Lerp(companion.position, targetPosition, 0.02f);
+                companion.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier, smoothedPosition);
+
                 return true;
             }
             else
             {
                 return true;
             }
+        }
+
+        private bool PerformCollisionWander(Companion companion, GameTime time)
+        {
+            this.behaviorTimer -= time.ElapsedGameTime.Milliseconds;
+            if (this.behaviorTimer >= 0)
+            {
+                companion.Halt();
+                companion.motion.Value = Vector2.Zero;
+                return false;
+            }
+            companion.motion.Value = Vector2.One;
+
+            int targetDirection = companion.FacingDirection;
+            if (Game1.random.NextDouble() < 0.007)
+            {
+                int newDirection = Game1.random.Next(5);
+                if (newDirection != (companion.FacingDirection + 2) % 4)
+                {
+                    if (newDirection < 4)
+                    {
+                        companion.Halt();
+                        targetDirection = newDirection;
+
+                        if (companion.currentLocation.isCollidingPosition(companion.nextPosition(newDirection), Game1.viewport, companion))
+                        {
+                            companion.SetMovingDirection(companion.previousDirection);
+                            this.behaviorTimer = Game1.random.Next(2000, 10000);
+                            return false;
+                        }
+
+                        companion.previousDirection.Value = companion.FacingDirection;
+                        companion.SetMovingDirection(targetDirection);
+                    }
+                }
+            }
+
+            Location next_tile = companion.nextPositionTile();
+            if (!companion.currentLocation.isTileOnMap(new Vector2(next_tile.X, next_tile.Y)) || companion.currentLocation.isCollidingPosition(companion.nextPosition(targetDirection), Game1.viewport, isFarmer: true, 0, glider: false, companion, pathfinding: false))
+            {
+                companion.SetMovingDirection(companion.facingDirection);
+                this.behaviorTimer = Game1.random.Next(2000, 10000);
+
+                if (Game1.random.NextDouble() < 0.6)
+                {
+                    companion.SetMovingDirection(Utility.GetOppositeFacingDirection(companion.facingDirection));
+                }
+            }
+            else
+            {
+                switch (targetDirection)
+                {
+                    case 0:
+                        companion.position.Y -= companion.speed;
+                        break;
+                    case 1:
+                        companion.position.X += companion.speed;
+                        break;
+                    case 2:
+                        companion.position.Y += companion.speed;
+                        break;
+                    case 3:
+                        companion.position.X -= companion.speed;
+                        break;
+                }
+            }
+
+            return false;
         }
     }
 }

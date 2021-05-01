@@ -71,7 +71,7 @@ namespace CustomCompanions.Framework.Companions
 
             this.model = model;
             this.specialNumber.Value = Game1.random.Next(100);
-            this.idleBehavior = new IdleBehavior(model.IdleBehavior);
+            this.idleBehavior = new IdleBehavior(this, model.IdleBehavior);
             this.previousDirection.Value = this.FacingDirection;
 
             if (owner != null)
@@ -583,7 +583,7 @@ namespace CustomCompanions.Framework.Companions
                 this.yVelocity = Math.Sign(this.yVelocity) * 5;
             }
 
-            this.SetMotion(Utility.getVelocityTowardPoint(new Point((int)this.Position.X + this.model.SpawnOffsetX, (int)this.Position.Y + this.model.SpawnOffsetY), targetTile, this.speed));
+            this.SetMotion(Utility.getVelocityTowardPoint(new Point((int)this.Position.X, (int)this.Position.Y), targetTile, this.speed));
         }
 
         internal Vector2 GetTargetPosition()
