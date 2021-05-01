@@ -16,6 +16,6 @@ See [this section](https://github.com/Floogen/CustomCompanions/wiki/Spawning-a-C
 
 &nbsp;
 ## Example Content Packs
-Some example companions are included in this repository, which can be [found here](https://github.com/Floogen/CustomCompanions/tree/main/CustomCompanions/Examples/%5BCC%5D%20Example%20Pack) or [downloaded here](https://www.nexusmods.com/stardewvalley/users/4112039?tab=user+files).
+Some example companions are included in this repository, which can be [found here](https://github.com/Floogen/CustomCompanions/tree/main/CustomCompanions/Examples/%5BCC%5D%20Example%20Pack) or [downloaded here](https://www.nexusmods.com/stardewvalley/mods/8626?tab=files).
 
 You're free to use any of the example ring assets in your own content pack, so long as credit is given.
