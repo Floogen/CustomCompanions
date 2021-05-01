@@ -2,11 +2,11 @@
   "Name": "Custom Companions",
   "Author": "PeacefulEnd",
   "Version": "REPLACE_ME_WITH_VERSION",
-  "Description": "Framework that allows Content Pack creators to make custom companions that follow you in Stardew Valley.",
+  "Description": "Framework for creating custom entities that can be spawned on maps or follow you around in Stardew Valley.",
   "UniqueID": "PeacefulEnd.CustomCompanions",
   "EntryDll": "CustomCompanions.dll",
   "MinimumApiVersion": "3.0.0",
-  "UpdateKeys": [ "Nexus:????" ],
+  "UpdateKeys": [ "Nexus:8626" ],
   "Dependencies": [
     {
       "UniqueID": "spacechase0.JsonAssets",
