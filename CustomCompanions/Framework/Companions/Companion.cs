@@ -42,6 +42,7 @@ namespace CustomCompanions.Framework.Companions
         private List<FarmerSprite.AnimationFrame> activeDownFrames;
         private List<FarmerSprite.AnimationFrame> activeLeftFrames;
 
+        private readonly NetBool hasShadow = new NetBool();
         private readonly NetBool hasReachedPlayer = new NetBool();
         private readonly NetInt specialNumber = new NetInt();
         private readonly NetBool isPrismatic = new NetBool();
@@ -61,15 +62,16 @@ namespace CustomCompanions.Framework.Companions
 
         public Companion(CompanionModel model, Farmer owner, Vector2? targetTile = null) : base(new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight), (owner is null ? (Vector2)targetTile : owner.getTileLocation()) * 64f + new Vector2(model.SpawnOffsetX, model.SpawnOffsetY), model.SpawnDirection, model.Name)
         {
-            base.Breather = false;
+            base.Breather = model.EnableBreathing;
             base.speed = model.TravelSpeed;
             base.forceUpdateTimer = 9999;
             base.collidesWithOtherCharacters.Value = (model.Type.ToUpper() == "FLYING" ? false : true);
             base.farmerPassesThrough = true;
-            base.HideShadow = true;
+            base.HideShadow = true; // Always hiding the default shadow, as we are allowing user to config beyond normal settings
             base.Sprite.loop = false;
 
             this.model = model;
+            this.hasShadow.Value = model.EnableShadow;
             this.specialNumber.Value = Game1.random.Next(100);
             this.idleBehavior = new IdleBehavior(this, model.IdleBehavior);
             this.previousDirection.Value = this.FacingDirection;
@@ -165,6 +167,23 @@ namespace CustomCompanions.Framework.Companions
         public override void draw(SpriteBatch b, float alpha = 1f)
         {
             b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(this.GetSpriteWidthForPositioning() * 4 / 2, this.GetBoundingBox().Height / 2) + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), this.Sprite.SourceRect, this.isPrismatic ? Utility.GetPrismaticColor(348 + (int)this.specialNumber, 5f) : color, this.rotation, new Vector2(this.Sprite.SpriteWidth / 2, (float)this.Sprite.SpriteHeight * 3f / 4f), Math.Max(0.2f, base.scale) * 4f, (base.flip || (this.Sprite.CurrentAnimation != null && this.Sprite.CurrentAnimation[this.Sprite.currentAnimationIndex].flip)) ? SpriteEffects.FlipHorizontally : SpriteEffects.None, this.IsFlying() ? 0.991f : Math.Max(0f, base.drawOnTop ? 0.991f : ((float)base.getStandingY() / 10000f)));
+
+            if (this.Breather && this.shakeTimer <= 0 && !this.isMoving())
+            {
+                Rectangle chestBox = this.Sprite.SourceRect;
+                chestBox.Y += this.Sprite.SpriteHeight / 2;
+                chestBox.Height = this.Sprite.SpriteHeight / 4;
+                chestBox.X += this.Sprite.SpriteWidth / 4;
+                chestBox.Width = this.Sprite.SpriteWidth / 2;
+                Vector2 chestPosition = new Vector2(this.Sprite.SpriteWidth * 4 / 2, 8f);
+                float breathScale = Math.Max(0f, (float)Math.Ceiling(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 600.0 + (double)(base.DefaultPosition.X * 20f))) / 4f);
+                b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + chestPosition + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), chestBox, Color.White * alpha, this.rotation, new Vector2(chestBox.Width / 2, chestBox.Height / 2 + 1), Math.Max(0.2f, base.scale) * 4f + breathScale, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.992f : ((float)base.getStandingY() / 10000f + 0.001f)));
+            }
+
+            if (this.hasShadow)
+            {
+                Game1.spriteBatch.Draw(Game1.shadowTexture, Game1.GlobalToLocal(Game1.viewport, this.GetShadowOffset() + this.Position + new Vector2((float)(this.GetSpriteWidthForPositioning() * 4) / 2f, this.GetBoundingBox().Height + 12)), Game1.shadowTexture.Bounds, Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), Math.Max(0f, (4f + (float)this.yJumpOffset / 40f) * (float)this.scale), SpriteEffects.None, Math.Max(0f, (float)this.getStandingY() / 10000f) - 1E-06f);
+            }
         }
 
         private void SetUpCompanion()
