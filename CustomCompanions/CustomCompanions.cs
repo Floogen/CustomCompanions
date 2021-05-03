@@ -111,6 +111,11 @@ namespace CustomCompanions
                             companion.TileSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.png"));
                         }
 
+                        if (contentPack.Translation != null)
+                        {
+                            companion.Translations = contentPack.Translation;
+                        }
+
                         // Add the companion to our cache
                         CompanionManager.companionModels.Add(companion);
                     }

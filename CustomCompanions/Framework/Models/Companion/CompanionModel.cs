@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,6 +9,7 @@ namespace CustomCompanions.Framework.Models.Companion
     {
         public string Owner { get; set; }
         public string Name { get; set; }
+        public ITranslationHelper Translations { get; set; }
         public string Type { get; set; }
         public bool EnableFarmerCollision { get; set; }
         public bool EnableShadow { get; set; }

@@ -117,7 +117,13 @@ namespace CustomCompanions.Framework.Companions
         {
             if (this.owner is null && !String.IsNullOrEmpty(this.model.InspectionDialogue))
             {
-                Game1.drawObjectDialogue(this.model.InspectionDialogue);
+                string dialogueText = this.model.InspectionDialogue;
+                if (this.model.Translations.GetTranslations().Any(t => t.Key == dialogueText))
+                {
+                    dialogueText = this.model.Translations.Get(this.model.InspectionDialogue);
+                }
+
+                Game1.drawObjectDialogue(dialogueText);
                 return true;
             }
             return false;
