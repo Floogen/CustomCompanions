@@ -213,7 +213,10 @@ namespace CustomCompanions
                         string command = tile.Properties["CustomCompanions"].ToString();
                         if (command.Split(' ')[0].ToUpper() != "SPAWN")
                         {
-                            Monitor.Log($"Unknown CustomCompanions command ({command.Split(' ')[0]}) given on tile ({x}, {y}) for map {e.NewLocation.NameOrUniqueName}!", LogLevel.Warn);
+                            if (!String.IsNullOrEmpty(command))
+                            {
+                                Monitor.Log($"Unknown CustomCompanions command ({command.Split(' ')[0]}) given on tile ({x}, {y}) for map {e.NewLocation.NameOrUniqueName}!", LogLevel.Warn);
+                            }
                             continue;
                         }
 
