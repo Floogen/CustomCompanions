@@ -58,6 +58,7 @@
     <Compile Include="Framework\Interfaces\IJsonAssetsApi.cs" />
     <Compile Include="Framework\Interfaces\IWearMoreRingsApi.cs" />
     <Compile Include="Framework\Managers\CompanionManager.cs" />
+    <Compile Include="Framework\Models\Companion\ShadowModel.cs" />
     <Compile Include="Framework\Models\Companion\ManualFrameModel.cs" />
     <Compile Include="Framework\Models\RingModel.cs" />
     <Compile Include="Framework\Models\ContentPackModel.cs" />
@@ -72,7 +73,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWanderWalkingChicken\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleFirefly\companion.json" />
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWanderWalkingCow\companion.json" />
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleWanderWalkingChicken\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWanderWalkingCow\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleFlyingCompanion\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleJumperSPenny\companion.json" />
