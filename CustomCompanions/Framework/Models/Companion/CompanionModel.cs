@@ -11,6 +11,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public string Type { get; set; }
         public bool EnableFarmerCollision { get; set; }
         public bool EnableShadow { get; set; }
+        public ShadowModel Shadow { get; set; }
         public bool EnableBreathing { get; set; }
         public int TravelSpeed { get; set; } = 6;
         public int SpawnDirection { get; set; } = 2;
@@ -38,6 +39,7 @@ namespace CustomCompanions.Framework.Models.Companion
         {
             return $"\n[\n" +
                 $"\tOwner: {Owner} | Name: {Name} | Type: {Type} | EnableFarmerCollision: {EnableFarmerCollision}\n" +
+                $"\tEnableShadow: {EnableShadow} | Shadow: {Shadow} | EnableBreathing: {EnableBreathing}\n" +
                 $"\tTravelSpeed: {TravelSpeed} | SpawnDirection: {SpawnDirection} | SpawnOffsetX: {SpawnOffsetX} | SpawnOffsetY: {SpawnOffsetY}\n" +
                 $"\tMaxIdleDistance: {MaxIdleDistance} | MaxDistanceBeforeTeleport: {MaxDistanceBeforeTeleport} | IdleBehavior: {IdleBehavior} | IdleArguments: { (IdleArguments is null ? null : IdleArguments) }\n" +
                 $"\tColors: {string.Join(",", Colors.Select(c => "[" + string.Join(",", c) + "]"))} | IsPrismatic: {IsPrismatic}\n" +
