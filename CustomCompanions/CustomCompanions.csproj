@@ -83,6 +83,9 @@
     <None Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWalkingCompanion\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkingGameCharacter\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCompanion\companion.json" />
+    <None Include="Examples\[CC] Example Pack\i18n\default.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Examples\[CC] Example Pack\manifest.json" />
     <None Include="Examples\[CC] Example Pack\Objects\ExampleWalkingGameCharacterRing\object.json" />
     <None Include="Examples\[CC] Example Pack\Objects\ExampleFlyingRing\object.json" />
