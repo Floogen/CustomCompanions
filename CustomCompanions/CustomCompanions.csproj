@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="CustomCompanions.cs" />
     <Compile Include="Framework\Companions\IdleBehavior.cs" />
+    <Compile Include="Framework\Companions\MapCompanion.cs" />
     <Compile Include="Framework\Managers\ApiManager.cs" />
     <Compile Include="Framework\Companions\Companion.cs" />
     <Compile Include="Framework\Interfaces\IJsonAssetsApi.cs" />
