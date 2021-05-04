@@ -40,12 +40,6 @@ namespace CustomCompanions.Framework.Companions
             // Update light location, if applicable
             base.UpdateLight(time);
 
-            // Play any sound(s) that are required
-            if (Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) != null)
-            {
-                base.PlayRequiredSounds(time);
-            }
-
             // Timers
             if (this.pauseTimer > 0)
             {
@@ -58,6 +52,12 @@ namespace CustomCompanions.Framework.Companions
 
             // Do Idle Behaviors
             this.PerformBehavior(base.idleBehavior.behavior, time, location);
+
+            // Play any sound(s) that are required
+            if (Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) != null)
+            {
+                base.PlayRequiredSounds(time, this.isMoving());
+            }
         }
 
         public override bool isMoving()
