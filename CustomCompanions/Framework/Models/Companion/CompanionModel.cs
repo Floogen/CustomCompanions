@@ -16,7 +16,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public ShadowModel Shadow { get; set; }
         public bool EnableBreathing { get; set; }
         public int TravelSpeed { get; set; } = 6;
-        public int SpawnDirection { get; set; } = 2;
+        public int SpawnDirection { get; set; } = -1;
         public int SpawnOffsetX { get; set; }
         public int SpawnOffsetY { get; set; }
         public float MaxIdleDistance { get; set; } = 128f;
