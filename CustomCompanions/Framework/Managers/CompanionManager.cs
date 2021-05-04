@@ -60,7 +60,7 @@ namespace CustomCompanions.Framework.Managers
             List<Companion> companions = new List<Companion>();
             for (int x = 0; x < numberToSummon; x++)
             {
-                Companion companion = new Companion(model, tile, location);
+                MapCompanion companion = new MapCompanion(model, tile, location);
                 companions.Add(companion);
             }
 
@@ -69,11 +69,6 @@ namespace CustomCompanions.Framework.Managers
             {
                 companions.ForEach(c => location.characters.Add(c));
                 sceneryCompanions.Add(sceneryCompanion);
-            }
-            else
-            {
-                var existingSceneryCompanions = sceneryCompanions.First(s => s.Tile == tile && s.Location == location);
-                companions.ForEach(c => existingSceneryCompanions.Companions.Add(c));
             }
 
             // Ensures each collision based companion is moved to an empty tile
@@ -129,6 +124,17 @@ namespace CustomCompanions.Framework.Managers
         internal static void UpdateCompanions()
         {
             // TODO: Implement game tick updates
+        }
+
+        internal static void RefreshLights()
+        {
+            foreach (var companion in sceneryCompanions.SelectMany(c => c.Companions).Where(c => c.light != null))
+            {
+                if (!Game1.currentLightSources.Contains(companion.light))
+                {
+                    Game1.currentLightSources.Add(companion.light);
+                }
+            }
         }
 
         internal static bool IsCustomCompanion(Character follower)
