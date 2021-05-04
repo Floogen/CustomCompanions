@@ -251,6 +251,8 @@ namespace CustomCompanions
                     }
                 }
             }
+
+            CompanionManager.RefreshLights();
         }
 
         private void Reset(bool isFirstRun = false)

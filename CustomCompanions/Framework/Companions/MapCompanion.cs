@@ -24,7 +24,7 @@ namespace CustomCompanions.Framework.Companions
             base.farmerPassesThrough = model.EnableFarmerCollision ? false : true;
             base.SetUpCompanion();
 
-            this.canHalt = !IsFlying();
+            this.canHalt = !base.IsFlying();
             this.motionMultiplier = 1f;
         }
 
@@ -58,7 +58,6 @@ namespace CustomCompanions.Framework.Companions
 
             // Do Idle Behaviors
             this.PerformBehavior(base.idleBehavior.behavior, time, location);
-            //CustomCompanions.monitor.Log($"{this.wasIdle} | {this.isMoving()} | {this.previousDirection} | {this.facingDirection}", StardewModdingAPI.LogLevel.Debug);
         }
 
         public override bool isMoving()
@@ -123,7 +122,7 @@ namespace CustomCompanions.Framework.Companions
                     if (newDirection < 4)
                     {
                         int oldDirection = this.FacingDirection;
-                        if (base.currentLocation.isCollidingPosition(this.nextPosition(newDirection), Game1.viewport, this))
+                        if (base.currentLocation.isCollidingPosition(this.nextPosition(newDirection), Game1.viewport, this) && !base.IsFlying())
                         {
                             return;
                         }
@@ -250,12 +249,6 @@ namespace CustomCompanions.Framework.Companions
                 return;
             }
 
-            Location next_tile = base.nextPositionTile();
-            if (!currentLocation.isTileOnMap(new Vector2(next_tile.X, next_tile.Y)))
-            {
-                this.FaceAndMoveInDirection(Utility.GetOppositeFacingDirection(base.FacingDirection));
-                return;
-            }
             if (base.moveUp)
             {
                 base.motion.Y -= Game1.random.Next(1, 2) * 0.1f;
@@ -277,30 +270,26 @@ namespace CustomCompanions.Framework.Companions
                 this.FaceAndMoveInDirection(3);
             }
 
+            // Restrict motion
+            this.KeepMotionWithinBounds(1f, 1f);
+
+            Location next_tile = base.nextPositionTile();
+            var targetDistance = Vector2.Distance(base.Position, this.GetTargetPosition());
+            if (targetDistance > this.model.MaxDistanceBeforeTeleport && this.model.MaxDistanceBeforeTeleport != -1)
+            {
+                base.position.Value = this.GetTargetPosition();
+            }
+            else if ((targetDistance > this.model.MaxIdleDistance && this.model.MaxIdleDistance != -1) || !currentLocation.isTileOnMap(new Vector2(next_tile.X, next_tile.Y)))
+            {
+                this.FaceAndMoveInDirection(this.getGeneralDirectionTowards(this.GetTargetPosition(), 0, opposite: false, useTileCalculations: false));
+            }
+
             // Update position
             base.Position += this.motion.Value * this.motionMultiplier * base.model.TravelSpeed;
             this.motionMultiplier -= 0.0005f * time.ElapsedGameTime.Milliseconds;
             if (this.motionMultiplier < 1f)
             {
                 this.motionMultiplier = 1f;
-            }
-
-            // Restrict motion
-            this.KeepMotionWithinBounds(1f, 1f);
-
-            var targetDistance = Vector2.Distance(base.Position, this.GetTargetPosition());
-            if (targetDistance > this.model.MaxDistanceBeforeTeleport && this.model.MaxDistanceBeforeTeleport != -1)
-            {
-                base.position.Value = this.GetTargetPosition();
-            }
-            else if (targetDistance > this.model.MaxIdleDistance && this.model.MaxIdleDistance != -1)
-            {
-                this.FaceAndMoveInDirection(this.getGeneralDirectionTowards(this.GetTargetPosition(), 0, opposite: false, useTileCalculations: false));
-
-                if (Game1.random.NextDouble() <= 0.25)
-                {
-                    this.pauseTimer = Game1.random.Next(2000, 10000);
-                }
             }
         }
 
