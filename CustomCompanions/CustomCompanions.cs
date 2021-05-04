@@ -94,7 +94,7 @@ namespace CustomCompanions
                     }
 
                     // Load in the companions
-                    foreach (var companionFolder in new DirectoryInfo(Path.Combine(contentPack.DirectoryPath, "Companions")).GetDirectories())
+                    foreach (var companionFolder in companionFolders)
                     {
                         if (!File.Exists(Path.Combine(companionFolder.FullName, "companion.json")))
                         {
@@ -295,9 +295,14 @@ namespace CustomCompanions
                 return;
             }
 
+            var companion = CompanionManager.companionModels.Where(c => String.Concat(c.Name) == companionKey).Count() > 1 ? CompanionManager.companionModels.FirstOrDefault(c => String.Concat(c.Owner, ".", c.Name) == companionKey) : CompanionManager.companionModels.FirstOrDefault(c => String.Concat(c.Name) == companionKey);
+            if (companion is null)
+            {
+                Monitor.Log($"An error has occured trying to spawn {companionKey}: Command failed!", LogLevel.Warn);
+                return;
+            }
 
             Monitor.Log($"Spawning {companionKey} x{amountToSummon} at {Game1.currentLocation} on tile {Game1.player.getTileLocation()}!", LogLevel.Debug);
-            var companion = CompanionManager.companionModels.Where(c => String.Concat(c.Name) == companionKey).Count() > 1 ? CompanionManager.companionModels.First(c => String.Concat(c.Owner, ".", c.Name) == companionKey) : CompanionManager.companionModels.First(c => String.Concat(c.Name) == companionKey);
             CompanionManager.SummonCompanions(companion, amountToSummon, Game1.player.getTileLocation(), Game1.currentLocation);
         }
 
