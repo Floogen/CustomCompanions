@@ -327,6 +327,9 @@ namespace CustomCompanions.Framework.Companions
                         DoWanderWalk(time, location);
                     }
                     return true;
+                case Behavior.HOVER:
+                    DoHover(time, location);
+                    return true;
             }
 
             return false;
@@ -356,6 +359,27 @@ namespace CustomCompanions.Framework.Companions
             base.wasIdle.Value = !this.isMoving();
 
             this.MovePositionViaSpeed(time, Game1.viewport, location);
+        }
+
+        private void DoHover(GameTime time, GameLocation location)
+        {
+            // Handle animating
+            base.Animate(time, false);
+            base.update(time, location, -1, move: false);
+            base.wasIdle.Value = false;
+
+            var gravity = -0.5f;
+            /*
+            if (arguments != null && arguments.Length >= 1)
+            {
+                gravity = arguments[0];
+            }
+            */
+            if (this.yJumpOffset == 0)
+            {
+                this.jumpWithoutSound(5);
+                this.yJumpGravity = Math.Abs(gravity) * -1;
+            }
         }
     }
 }
