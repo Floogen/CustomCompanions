@@ -12,7 +12,9 @@ namespace CustomCompanions.Framework.Companions
 {
     public class MapCompanion : Companion
     {
-        public int pauseTimer;
+        private int pauseTimer;
+        private bool canHalt;
+        private float motionMultiplier;
 
         public MapCompanion(CompanionModel model, Vector2 targetTile, GameLocation location) : base(model, null, targetTile)
         {
@@ -21,6 +23,9 @@ namespace CustomCompanions.Framework.Companions
 
             base.farmerPassesThrough = model.EnableFarmerCollision ? false : true;
             base.SetUpCompanion();
+
+            this.canHalt = !IsFlying();
+            this.motionMultiplier = 1f;
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -41,11 +46,7 @@ namespace CustomCompanions.Framework.Companions
                 base.PlayRequiredSounds(time);
             }
 
-            if (Game1.IsMasterGame && this.behaviors(time, location))
-            {
-                return;
-            }
-
+            // Timers
             if (this.pauseTimer > 0)
             {
                 this.pauseTimer -= time.ElapsedGameTime.Milliseconds;
@@ -55,37 +56,14 @@ namespace CustomCompanions.Framework.Companions
                 this.shakeTimer -= time.ElapsedGameTime.Milliseconds;
             }
 
-            // Do Idle Behaviors here
-            this.UpdateRandomMovements();
-            CustomCompanions.monitor.Log($"{this.wasIdle} | {this.isMoving()} | {this.previousDirection} | {this.facingDirection}", StardewModdingAPI.LogLevel.Debug);
-            base.Animate(time, !this.isMoving());
-            base.update(time, location, -1, move: false);
-
-            // Handle any movement
-            //this.SetAnimation(time);
-            this.wasIdle.Value = !this.isMoving();
-
-            if (!Game1.IsClient)
-            {
-                this.MovePosition(time, Game1.viewport, location);
-            }
-        }
-
-        private bool behaviors(GameTime time, GameLocation location)
-        {
-            if (!Game1.IsClient)
-            {
-                if (base.controller != null)
-                {
-                    return true;
-                }
-            }
-            return false;
+            // Do Idle Behaviors
+            this.PerformBehavior(base.idleBehavior.behavior, time, location);
+            //CustomCompanions.monitor.Log($"{this.wasIdle} | {this.isMoving()} | {this.previousDirection} | {this.facingDirection}", StardewModdingAPI.LogLevel.Debug);
         }
 
         public override bool isMoving()
         {
-            if (this.pauseTimer > 0)
+            if (this.pauseTimer > 0 && canHalt)
             {
                 return false;
             }
@@ -98,14 +76,46 @@ namespace CustomCompanions.Framework.Companions
             return true;
         }
 
-        public void UpdateRandomMovements()
+        public override void MovePosition(GameTime time, xTile.Dimensions.Rectangle viewport, GameLocation currentLocation)
         {
-            if (this.pauseTimer > 0)
+            // Unused
+            return;
+        }
+
+        public override void Halt()
+        {
+            if (canHalt)
+            {
+                base.Halt();
+                base.Sprite.UpdateSourceRect();
+                base.speed = this.model.TravelSpeed;
+                base.addedSpeed = 0;
+            }
+        }
+
+        internal void FaceAndMoveInDirection(int direction)
+        {
+            this.SetFacingDirection(direction);
+            this.SetMovingDirection(direction);
+        }
+        private bool HandleCollision(Microsoft.Xna.Framework.Rectangle next_position)
+        {
+            if (Game1.random.NextDouble() <= 0.25)
+            {
+                this.pauseTimer = Game1.random.Next(2000, 10000);
+            }
+
+            return false;
+        }
+
+        private void AttemptRandomDirection(float chanceWhileMoving, float chanceWhileIdle)
+        {
+            if (this.pauseTimer > 0 && canHalt)
             {
                 return;
             }
 
-            if (!Game1.IsClient && Game1.random.NextDouble() < (this.isMoving() ? 0.007 : 0.1))
+            if (!Game1.IsClient && Game1.random.NextDouble() < (this.isMoving() ? chanceWhileMoving : chanceWhileIdle))
             {
                 int newDirection = Game1.random.Next(5);
                 if (newDirection != (this.FacingDirection + 2) % 4)
@@ -128,8 +138,6 @@ namespace CustomCompanions.Framework.Companions
                             break;
                         default:
                             this.Halt();
-                            this.Sprite.StopAnimation();
-                            this.Sprite.UpdateSourceRect();
                             this.pauseTimer = Game1.random.Next(2000, 10000);
                             break;
                     }
@@ -137,9 +145,9 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
-        public override void MovePosition(GameTime time, xTile.Dimensions.Rectangle viewport, GameLocation currentLocation)
+        private void MovePositionViaSpeed(GameTime time, xTile.Dimensions.Rectangle viewport, GameLocation currentLocation)
         {
-            if (this.pauseTimer > 0 || Game1.IsClient)
+            if (this.pauseTimer > 0 && canHalt)
             {
                 if (this.previousDirection.Value != this.FacingDirection)
                 {
@@ -158,7 +166,7 @@ namespace CustomCompanions.Framework.Companions
             {
                 if (!currentLocation.isCollidingPosition(this.nextPosition(0), Game1.viewport, isFarmer: false, 0, glider: false, this, pathfinding: false))
                 {
-                    base.position.Y -= base.speed;
+                    base.position.Y -= base.speed + base.addedSpeed;
                     this.FaceAndMoveInDirection(0);
                 }
                 else if (!this.HandleCollision(this.nextPosition(0)))
@@ -173,7 +181,7 @@ namespace CustomCompanions.Framework.Companions
             {
                 if (!currentLocation.isCollidingPosition(this.nextPosition(1), Game1.viewport, isFarmer: false, 0, glider: false, this))
                 {
-                    base.position.X += base.speed;
+                    base.position.X += base.speed + base.addedSpeed;
                     this.FaceAndMoveInDirection(1);
                 }
                 else if (!this.HandleCollision(this.nextPosition(1)))
@@ -188,7 +196,7 @@ namespace CustomCompanions.Framework.Companions
             {
                 if (!currentLocation.isCollidingPosition(this.nextPosition(2), Game1.viewport, isFarmer: false, 0, glider: false, this))
                 {
-                    base.position.Y += base.speed;
+                    base.position.Y += base.speed + base.addedSpeed;
                     this.FaceAndMoveInDirection(2);
                 }
                 else if (!this.HandleCollision(this.nextPosition(2)))
@@ -203,7 +211,7 @@ namespace CustomCompanions.Framework.Companions
             {
                 if (!currentLocation.isCollidingPosition(this.nextPosition(3), Game1.viewport, isFarmer: false, 0, glider: false, this))
                 {
-                    base.position.X -= base.speed;
+                    base.position.X -= base.speed + base.addedSpeed;
                     this.FaceAndMoveInDirection(3);
                 }
                 else if (!this.HandleCollision(this.nextPosition(3)))
@@ -231,99 +239,134 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
-        public override void Halt()
+        private void MovePositionViaMotion(GameTime time, xTile.Dimensions.Rectangle viewport, GameLocation currentLocation)
         {
-            base.Halt();
-            base.speed = this.model.TravelSpeed;
-            base.addedSpeed = 0;
+            if (this.pauseTimer > 0 && canHalt)
+            {
+                if (this.previousDirection.Value != this.FacingDirection)
+                {
+                    this.previousDirection.Value = this.facingDirection;
+                }
+                return;
+            }
+
+            Location next_tile = base.nextPositionTile();
+            if (!currentLocation.isTileOnMap(new Vector2(next_tile.X, next_tile.Y)))
+            {
+                this.FaceAndMoveInDirection(Utility.GetOppositeFacingDirection(base.FacingDirection));
+                return;
+            }
+            if (base.moveUp)
+            {
+                base.motion.Y -= Game1.random.Next(1, 2) * 0.1f;
+                this.FaceAndMoveInDirection(0);
+            }
+            else if (base.moveRight)
+            {
+                base.motion.X += Game1.random.Next(1, 2) * 0.1f;
+                this.FaceAndMoveInDirection(1);
+            }
+            else if (base.moveDown)
+            {
+                base.motion.Y += Game1.random.Next(1, 2) * 0.1f;
+                this.FaceAndMoveInDirection(2);
+            }
+            else if (base.moveLeft)
+            {
+                base.motion.X -= Game1.random.Next(1, 2) * 0.1f;
+                this.FaceAndMoveInDirection(3);
+            }
+
+            // Update position
+            base.Position += this.motion.Value * this.motionMultiplier * base.model.TravelSpeed;
+            this.motionMultiplier -= 0.0005f * time.ElapsedGameTime.Milliseconds;
+            if (this.motionMultiplier < 1f)
+            {
+                this.motionMultiplier = 1f;
+            }
+
+            // Restrict motion
+            this.KeepMotionWithinBounds(1f, 1f);
+
+            var targetDistance = Vector2.Distance(base.Position, this.GetTargetPosition());
+            if (targetDistance > this.model.MaxDistanceBeforeTeleport && this.model.MaxDistanceBeforeTeleport != -1)
+            {
+                base.position.Value = this.GetTargetPosition();
+            }
+            else if (targetDistance > this.model.MaxIdleDistance && this.model.MaxIdleDistance != -1)
+            {
+                this.FaceAndMoveInDirection(this.getGeneralDirectionTowards(this.GetTargetPosition(), 0, opposite: false, useTileCalculations: false));
+
+                if (Game1.random.NextDouble() <= 0.25)
+                {
+                    this.pauseTimer = Game1.random.Next(2000, 10000);
+                }
+            }
         }
 
-        public bool HandleCollision(Microsoft.Xna.Framework.Rectangle next_position)
+        private void KeepMotionWithinBounds(float xBounds, float yBounds)
         {
-            if (Game1.random.NextDouble() <= 0.25)
+            if (base.motion.X < Math.Abs(xBounds) * -1)
             {
-                this.pauseTimer = Game1.random.Next(2000, 10000);
+                base.motion.X = Math.Abs(xBounds) * -1;
+            }
+            if (base.motion.X > Math.Abs(xBounds))
+            {
+                base.motion.X = Math.Abs(xBounds);
+            }
+            if (base.motion.Y < Math.Abs(yBounds) * -1)
+            {
+                base.motion.Y = Math.Abs(yBounds) * -1;
+            }
+            if (base.motion.Y > Math.Abs(yBounds))
+            {
+                base.motion.Y = Math.Abs(yBounds);
+            }
+        }
+
+        private bool PerformBehavior(Behavior behavior, GameTime time, GameLocation location)
+        {
+            switch (behavior)
+            {
+                case Behavior.WANDER:
+                    if (base.IsFlying())
+                    {
+                        DoWanderFly(time, location);
+                    }
+                    else
+                    {
+                        DoWanderWalk(time, location);
+                    }
+                    return true;
             }
 
             return false;
         }
 
-        internal void FaceAndMoveInDirection(int direction)
+        private void DoWanderFly(GameTime time, GameLocation location)
         {
-            this.SetFacingDirection(direction);
-            this.SetMovingDirection(direction);
+            // Handle random directional changes
+            this.AttemptRandomDirection(0.007f, 0.1f);
+
+            // Handle animating
+            base.Animate(time, !this.isMoving());
+            base.update(time, location, -1, move: false);
+            base.wasIdle.Value = !this.isMoving();
+
+            this.MovePositionViaMotion(time, Game1.viewport, location);
         }
 
-        internal void SetAnimation(GameTime time)
+        private void DoWanderWalk(GameTime time, GameLocation location)
         {
-            bool hasIdleFrames = base.HasIdleFrames(this.idleUniformFrames != null ? -1 : this.FacingDirection);
+            // Handle random movement
+            this.AttemptRandomDirection(0.007f, 0.1f);
 
-            if (this.Sprite.CurrentAnimation != null && (this.previousDirection == this.FacingDirection || this.activeUniformFrames != null))
-            {
-                if (!hasIdleFrames || ((base.IsPlayingIdleFrames(this.FacingDirection) && !this.isMoving()) || (!base.IsPlayingIdleFrames(this.FacingDirection) && this.isMoving())))
-                {
-                    if (!this.Sprite.animateOnce(time))
-                    {
-                        return;
-                    }
-                }
-            }
+            // Handle animating
+            base.Animate(time, !this.isMoving());
+            base.update(time, location, -1, move: false);
+            base.wasIdle.Value = !this.isMoving();
 
-            if (this.Sprite.CurrentAnimation == this.idleUniformFrames)
-
-                if (!this.isMoving() && hasIdleFrames)
-                {
-                    if (this.idleUniformFrames != null)
-                    {
-                        this.Sprite.setCurrentAnimation(this.idleUniformFrames);
-                    }
-                    else
-                    {
-                        switch (this.FacingDirection)
-                        {
-                            case 0:
-                                this.Sprite.setCurrentAnimation(this.idleUpFrames);
-                                break;
-                            case 1:
-                                this.Sprite.setCurrentAnimation(this.idleRightFrames);
-                                break;
-                            case 2:
-                                this.Sprite.setCurrentAnimation(this.idleDownFrames);
-                                break;
-                            case 3:
-                                this.Sprite.setCurrentAnimation(this.idleLeftFrames);
-                                break;
-                        }
-                    }
-                }
-                else
-                {
-                    if (this.activeUniformFrames != null)
-                    {
-                        this.Sprite.setCurrentAnimation(this.activeUniformFrames);
-                    }
-                    else
-                    {
-                        switch (this.FacingDirection)
-                        {
-                            case 0:
-                                this.Sprite.setCurrentAnimation(this.activeUpFrames);
-                                break;
-                            case 1:
-                                this.Sprite.setCurrentAnimation(this.activeRightFrames);
-                                break;
-                            case 2:
-                                this.Sprite.setCurrentAnimation(this.activeDownFrames);
-                                break;
-                            case 3:
-                                this.Sprite.setCurrentAnimation(this.activeLeftFrames);
-                                break;
-                        }
-                    }
-                }
-
-            this.Sprite.animateOnce(time);
+            this.MovePositionViaSpeed(time, Game1.viewport, location);
         }
-
     }
 }
