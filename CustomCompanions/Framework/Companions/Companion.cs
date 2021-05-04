@@ -16,7 +16,7 @@ namespace CustomCompanions.Framework.Companions
         internal Farmer owner;
         internal Vector2 targetTile;
         internal CompanionModel model;
-        private IdleBehavior idleBehavior;
+        internal IdleBehavior idleBehavior;
 
         private float lightPulseTimer;
 
@@ -28,34 +28,35 @@ namespace CustomCompanions.Framework.Companions
         private SoundModel movingSound;
         private SoundModel alwaysSound;
 
-        private LightSource light;
+        internal LightSource light;
 
-        private List<FarmerSprite.AnimationFrame> idleUniformFrames;
-        private List<FarmerSprite.AnimationFrame> idleUpFrames;
-        private List<FarmerSprite.AnimationFrame> idleRightFrames;
-        private List<FarmerSprite.AnimationFrame> idleDownFrames;
-        private List<FarmerSprite.AnimationFrame> idleLeftFrames;
+        internal List<FarmerSprite.AnimationFrame> idleUniformFrames;
+        internal List<FarmerSprite.AnimationFrame> idleUpFrames;
+        internal List<FarmerSprite.AnimationFrame> idleRightFrames;
+        internal List<FarmerSprite.AnimationFrame> idleDownFrames;
+        internal List<FarmerSprite.AnimationFrame> idleLeftFrames;
 
-        private List<FarmerSprite.AnimationFrame> activeUniformFrames;
-        private List<FarmerSprite.AnimationFrame> activeUpFrames;
-        private List<FarmerSprite.AnimationFrame> activeRightFrames;
-        private List<FarmerSprite.AnimationFrame> activeDownFrames;
-        private List<FarmerSprite.AnimationFrame> activeLeftFrames;
+        internal List<FarmerSprite.AnimationFrame> activeUniformFrames;
+        internal List<FarmerSprite.AnimationFrame> activeUpFrames;
+        internal List<FarmerSprite.AnimationFrame> activeRightFrames;
+        internal List<FarmerSprite.AnimationFrame> activeDownFrames;
+        internal List<FarmerSprite.AnimationFrame> activeLeftFrames;
 
-        private readonly NetBool hasShadow = new NetBool();
-        private readonly NetBool hasReachedPlayer = new NetBool();
-        private readonly NetInt specialNumber = new NetInt();
-        private readonly NetBool isPrismatic = new NetBool();
+        internal readonly NetBool hasShadow = new NetBool();
+        internal readonly NetBool hasReachedPlayer = new NetBool();
+        internal readonly NetInt specialNumber = new NetInt();
+        internal readonly NetBool isPrismatic = new NetBool();
         internal readonly NetInt previousDirection = new NetInt();
         internal readonly NetBool wasIdle = new NetBool();
-        private readonly NetColor color = new NetColor();
+        internal readonly NetColor color = new NetColor();
         internal readonly NetVector2 motion = new NetVector2(Vector2.Zero);
-        private new readonly NetRectangle nextPosition = new NetRectangle();
+        internal new readonly NetRectangle nextPosition = new NetRectangle();
 
         public Companion(CompanionModel model, Vector2 targetTile, GameLocation location) : this(model, null, targetTile)
         {
             this.targetTile = targetTile * 64f;
             this.currentLocation = location;
+            this.motion.Value = Vector2.Zero;
             base.farmerPassesThrough = model.EnableFarmerCollision ? false : true;
             this.SetUpCompanion();
         }
@@ -75,6 +76,7 @@ namespace CustomCompanions.Framework.Companions
             this.specialNumber.Value = Game1.random.Next(100);
             this.idleBehavior = new IdleBehavior(this, model.IdleBehavior);
             this.previousDirection.Value = this.FacingDirection;
+            this.SetMovingDirection(this.FacingDirection);
 
             if (owner != null)
             {
@@ -104,7 +106,7 @@ namespace CustomCompanions.Framework.Companions
             // Play any sound(s) that are required
             if (Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) != null)
             {
-                this.PlayRequiredSounds(time);
+                this.PlayRequiredSounds(time, this.isMoving());
             }
         }
 
@@ -200,7 +202,7 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
-        private void SetUpCompanion()
+        internal void SetUpCompanion()
         {
             // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)
             if (this.collidesWithOtherCharacters)
@@ -208,7 +210,6 @@ namespace CustomCompanions.Framework.Companions
                 this.PlaceInEmptyTile();
             }
             this.nextPosition.Value = this.GetBoundingBox();
-
 
             // Set up the sounds to play, if any
             this.idleSound = this.model.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "IDLE");
@@ -280,7 +281,7 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
-        private bool HasIdleFrames(int direction = -1)
+        internal bool HasIdleFrames(int direction = -1)
         {
 
             switch (direction)
@@ -313,13 +314,22 @@ namespace CustomCompanions.Framework.Companions
                     this.hasReachedPlayer.Value = false;
                     base.position.Value = this.GetTargetPosition();
                 }
-                else if ((targetDistance > 64f && ((owner != null && owner.isMoving()) || !this.hasReachedPlayer.Value)) || (targetDistance > this.model.MaxIdleDistance && this.model.MaxIdleDistance != -1))
+                else if ((targetDistance >= 64f && ((owner != null && owner.isMoving()) || !this.hasReachedPlayer.Value)) || (targetDistance >= this.model.MaxIdleDistance && this.model.MaxIdleDistance != -1))
                 {
                     if (owner is null && targetDistance > this.model.MaxIdleDistance)
                     {
-                        Vector2 targetPosition = this.GetTargetPosition() + new Vector2(this.model.SpawnOffsetX, this.model.SpawnOffsetY);
-                        base.position.Value = Vector2.Lerp(base.position, targetPosition, this.model.TravelSpeed / 400f);
-                        this.motion.Value *= -1;
+                        if (this.IsFlying())
+                        {
+                            Vector2 targetPosition = this.GetTargetPosition() + new Vector2(this.model.SpawnOffsetX, this.model.SpawnOffsetY);
+                            base.position.Value = Vector2.Lerp(base.position, targetPosition, this.model.TravelSpeed / 400f);
+                            this.motion.Value *= -1;
+                        }
+                        else
+                        {
+                            this.Halt();
+                            this.FlipDirection();
+                            this.SetMovingDirection(this.FacingDirection);
+                        }
                     }
                     else
                     {
@@ -422,7 +432,7 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
-        private void Animate(GameTime time, bool isIdle = false)
+        internal void Animate(GameTime time, bool isIdle = false)
         {
             bool hasIdleFrames = HasIdleFrames(this.idleUniformFrames != null ? -1 : this.FacingDirection);
 
@@ -510,7 +520,7 @@ namespace CustomCompanions.Framework.Companions
             return frames;
         }
 
-        private void UpdateLight(GameTime time)
+        internal void UpdateLight(GameTime time)
         {
             if (light != null)
             {
@@ -524,7 +534,7 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
-        private void PlayRequiredSounds(GameTime time)
+        internal void PlayRequiredSounds(GameTime time, bool currentlyMoving)
         {
             if (this.soundAlwaysTimer != null)
             {
@@ -539,7 +549,7 @@ namespace CustomCompanions.Framework.Companions
                 }
             }
 
-            if (this.isMoving() && this.soundMovingTimer != null)
+            if (currentlyMoving && this.soundMovingTimer != null)
             {
                 this.soundMovingTimer = Math.Max(0, (int)this.soundMovingTimer - time.ElapsedGameTime.Milliseconds);
                 if (soundMovingTimer <= 0)
@@ -552,7 +562,7 @@ namespace CustomCompanions.Framework.Companions
                 }
             }
 
-            if (!this.isMoving() && this.soundIdleTimer != null)
+            if (!currentlyMoving && this.soundIdleTimer != null)
             {
                 this.soundIdleTimer = Math.Max(0, (int)this.soundIdleTimer - time.ElapsedGameTime.Milliseconds);
                 if (soundIdleTimer <= 0)
@@ -564,6 +574,36 @@ namespace CustomCompanions.Framework.Companions
                     soundIdleTimer = idleSound.TimeBetweenSound;
                 }
             }
+        }
+
+        internal bool IsPlayingIdleFrames(int direction = -1)
+        {
+            if (this.Sprite.CurrentAnimation is null || !this.HasIdleFrames(direction))
+            {
+                return false;
+            }
+
+            switch (direction)
+            {
+                case -1:
+                    return this.Sprite.CurrentAnimation == this.idleUniformFrames;
+                case 0:
+                    return this.Sprite.CurrentAnimation == this.idleUpFrames;
+                case 1:
+                    return this.Sprite.CurrentAnimation == this.idleRightFrames;
+                case 2:
+                    return this.Sprite.CurrentAnimation == this.idleDownFrames;
+                case 3:
+                    return this.Sprite.CurrentAnimation == this.idleLeftFrames;
+            }
+
+            return false;
+        }
+
+        private void FlipDirection()
+        {
+            this.previousDirection.Value = this.FacingDirection;
+            this.FacingDirection = Utility.GetOppositeFacingDirection(this.FacingDirection);
         }
 
         internal void PlaceInEmptyTile()
@@ -633,6 +673,12 @@ namespace CustomCompanions.Framework.Companions
         internal void SetMotion(Vector2 motion)
         {
             this.motion.Value = motion;
+        }
+
+        internal void SetFacingDirection(int direction)
+        {
+            this.previousDirection.Value = this.FacingDirection;
+            this.FacingDirection = direction;
         }
 
         internal void SetMovingDirection(int direction)
