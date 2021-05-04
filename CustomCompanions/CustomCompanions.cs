@@ -86,6 +86,13 @@ namespace CustomCompanions
                 {
                     Monitor.Log($"Loading companions from pack: {contentPack.Manifest.Name} {contentPack.Manifest.Version} by {contentPack.Manifest.Author}", LogLevel.Debug);
 
+                    var companionFolders = new DirectoryInfo(Path.Combine(contentPack.DirectoryPath, "Companions")).GetDirectories();
+                    if (companionFolders.Count() == 0)
+                    {
+                        Monitor.Log($"No sub-folders found under Companions for the content pack {contentPack.Manifest.Name}!", LogLevel.Warn);
+                        continue;
+                    }
+
                     // Load in the companions
                     foreach (var companionFolder in new DirectoryInfo(Path.Combine(contentPack.DirectoryPath, "Companions")).GetDirectories())
                     {
@@ -287,6 +294,7 @@ namespace CustomCompanions
                 Monitor.Log($"There was more than one match to the companion name {companionKey}. Use exact name (UNIQUE_ID.COMPANION_NAME) to resolve this issue.", LogLevel.Warn);
                 return;
             }
+
 
             Monitor.Log($"Spawning {companionKey} x{amountToSummon} at {Game1.currentLocation} on tile {Game1.player.getTileLocation()}!", LogLevel.Debug);
             var companion = CompanionManager.companionModels.Where(c => String.Concat(c.Name) == companionKey).Count() > 1 ? CompanionManager.companionModels.First(c => String.Concat(c.Owner, ".", c.Name) == companionKey) : CompanionManager.companionModels.First(c => String.Concat(c.Name) == companionKey);
