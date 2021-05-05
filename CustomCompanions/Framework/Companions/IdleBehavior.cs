@@ -110,25 +110,42 @@ namespace CustomCompanions.Framework.Companions
             }
             else if (this.behavior == Behavior.HOVER)
             {
-                float hoverCycleTime = 1000;
-                if (arguments != null && arguments.Length >= 1)
+                var gravity = -0.5f;
+                if (arguments != null)
                 {
-                    hoverCycleTime = arguments[0];
+                    if (arguments.Length > 0)
+                    {
+                        gravity = arguments[0];
+                    }
                 }
 
-                behaviorTimer = (behaviorTimer + (float)time.ElapsedGameTime.TotalMilliseconds / hoverCycleTime) % 1;
-                companion.motion.Value = new Vector2(0f, 2f * ((float)Math.Sin(2 * Math.PI * behaviorTimer)));
+                if (companion.yJumpOffset == 0)
+                {
+                    companion.jumpWithoutSound(5);
+                    companion.yJumpGravity = Math.Abs(gravity) * -1;
+                }
 
                 return true;
             }
             else if (this.behavior == Behavior.JUMPER)
             {
-                float jumpScale = 10f;
-                float randomJumpBoostMultiplier = 2f;
-                if (arguments != null && arguments.Length >= 2)
+                var gravity = -0.5f;
+                var jumpScale = 10f;
+                var randomJumpBoostMultiplier = 2f;
+                if (arguments != null)
                 {
-                    jumpScale = arguments[0];
-                    randomJumpBoostMultiplier = arguments[1];
+                    if (arguments.Length > 0)
+                    {
+                        gravity = arguments[0];
+                    }
+                    if (arguments.Length > 1)
+                    {
+                        jumpScale = arguments[1];
+                    }
+                    if (arguments.Length > 2)
+                    {
+                        randomJumpBoostMultiplier = arguments[2];
+                    }
                 }
 
 
@@ -145,7 +162,7 @@ namespace CustomCompanions.Framework.Companions
 
                 Vector2 targetPosition = this.destinationTile;
                 Vector2 smoothedPosition = Vector2.Lerp(companion.position, targetPosition, 0.02f);
-                companion.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier, smoothedPosition);
+                companion.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier, gravity, smoothedPosition);
 
                 return true;
             }
