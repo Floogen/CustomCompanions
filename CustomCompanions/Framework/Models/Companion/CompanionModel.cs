@@ -46,11 +46,13 @@ namespace CustomCompanions.Framework.Models.Companion
                 $"\tOwner: {Owner} | Name: {Name} | Type: {Type} | EnableFarmerCollision: {EnableFarmerCollision}\n" +
                 $"\tEnableShadow: {EnableShadow} | Shadow: {Shadow} | EnableBreathing: {EnableBreathing}\n" +
                 $"\tTravelSpeed: {TravelSpeed} | SpawnDirection: {SpawnDirection} | SpawnOffsetX: {SpawnOffsetX} | SpawnOffsetY: {SpawnOffsetY}\n" +
+                $"\tDirectionChangeChanceWhileMoving: {DirectionChangeChanceWhileMoving} | DirectionChangeChanceWhileMoving: {DirectionChangeChanceWhileIdle}\n" +
+                $"\tInspectionDialogue: {InspectionDialogue}\n" +
                 $"\tMaxIdleDistance: {MaxIdleDistance} | MaxDistanceBeforeTeleport: {MaxDistanceBeforeTeleport} | IdleBehavior: {IdleBehavior} | IdleArguments: { (IdleArguments is null ? null : IdleArguments) }\n" +
                 $"\tColors: {string.Join(",", Colors.Select(c => "[" + string.Join(",", c) + "]"))} | IsPrismatic: {IsPrismatic}\n" +
                 $"\tLight: {(Light is null ? null : Light)}\n" +
                 $"\tSounds: {string.Join(",", Sounds)}\n" +
-                $"\tFrameSize: {FrameSizeWidth}x{FrameSizeHeight} | TileSheetPath: {TileSheetPath}\n" +
+                $"\tScale: {Scale} | FrameSize: {FrameSizeWidth}x{FrameSizeHeight} | TileSheetPath: {TileSheetPath}\n" +
                 $"\tUniformAnimation: {(UniformAnimation is null ? null : UniformAnimation)}\n" +
                 $"\tUpAnimation: {(UpAnimation is null ? null : UpAnimation)}\n" +
                 $"\tDownAnimation: {(DownAnimation is null ? null : DownAnimation)}\n" +
