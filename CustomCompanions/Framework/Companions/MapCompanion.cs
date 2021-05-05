@@ -144,7 +144,7 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
-        private void MovePositionViaSpeed(GameTime time, xTile.Dimensions.Rectangle viewport, GameLocation currentLocation)
+        private void MovePositionViaSpeed(GameTime time, GameLocation currentLocation)
         {
             if (this.pauseTimer > 0 && canHalt)
             {
@@ -238,7 +238,7 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
-        private void MovePositionViaMotion(GameTime time, xTile.Dimensions.Rectangle viewport, GameLocation currentLocation)
+        private void MovePositionViaMotion(GameTime time, GameLocation currentLocation, bool canCollide = false)
         {
             if (this.pauseTimer > 0 && canHalt)
             {
@@ -251,23 +251,91 @@ namespace CustomCompanions.Framework.Companions
 
             if (base.moveUp)
             {
-                base.motion.Y -= Game1.random.Next(1, 2) * 0.1f;
-                this.FaceAndMoveInDirection(0);
+                if (!canCollide || !currentLocation.isCollidingPosition(this.nextPosition(0), Game1.viewport, isFarmer: false, 0, glider: false, this, pathfinding: false))
+                {
+                    base.motion.Y -= Game1.random.Next(1, 2) * 0.1f;
+                    this.FaceAndMoveInDirection(0);
+                }
+                else if (!this.HandleCollision(this.nextPosition(0)))
+                {
+                    var oldMotion = base.motion.Y;
+
+                    base.motion.Y = 0;
+                    if (Game1.random.NextDouble() < 0.6)
+                    {
+                        this.FaceAndMoveInDirection(2);
+                        if (Game1.random.NextDouble() < 0.5)
+                        {
+                            base.motion.Y = Math.Abs(oldMotion / 2f);
+                        }
+                    }
+                }
             }
             else if (base.moveRight)
             {
-                base.motion.X += Game1.random.Next(1, 2) * 0.1f;
-                this.FaceAndMoveInDirection(1);
+                if (!canCollide || !currentLocation.isCollidingPosition(this.nextPosition(1), Game1.viewport, isFarmer: false, 0, glider: false, this, pathfinding: false))
+                {
+                    base.motion.X += Game1.random.Next(1, 2) * 0.1f;
+                    this.FaceAndMoveInDirection(1);
+                }
+                else if (!this.HandleCollision(this.nextPosition(1)))
+                {
+                    var oldMotion = base.motion.X;
+
+                    base.motion.X = 0;
+                    if (Game1.random.NextDouble() < 0.6)
+                    {
+                        this.FaceAndMoveInDirection(3);
+                        if (Game1.random.NextDouble() < 0.5)
+                        {
+                            base.motion.X = Math.Abs(oldMotion / 2f) * -1;
+                        }
+                    }
+                }
             }
             else if (base.moveDown)
             {
-                base.motion.Y += Game1.random.Next(1, 2) * 0.1f;
-                this.FaceAndMoveInDirection(2);
+                if (!canCollide || !currentLocation.isCollidingPosition(this.nextPosition(2), Game1.viewport, isFarmer: false, 0, glider: false, this, pathfinding: false))
+                {
+                    base.motion.Y += Game1.random.Next(1, 2) * 0.1f;
+                    this.FaceAndMoveInDirection(2);
+                }
+                else if (!this.HandleCollision(this.nextPosition(2)))
+                {
+                    var oldMotion = base.motion.Y;
+
+                    base.motion.Y = 0;
+                    if (Game1.random.NextDouble() < 0.6)
+                    {
+                        this.FaceAndMoveInDirection(0);
+                        if (Game1.random.NextDouble() < 0.5)
+                        {
+                            base.motion.Y = Math.Abs(oldMotion / 2f) * -1;
+                        }
+                    }
+                }
             }
             else if (base.moveLeft)
             {
-                base.motion.X -= Game1.random.Next(1, 2) * 0.1f;
-                this.FaceAndMoveInDirection(3);
+                if (!canCollide || !currentLocation.isCollidingPosition(this.nextPosition(3), Game1.viewport, isFarmer: false, 0, glider: false, this, pathfinding: false))
+                {
+                    base.motion.X -= Game1.random.Next(1, 2) * 0.1f;
+                    this.FaceAndMoveInDirection(3);
+                }
+                else if (!this.HandleCollision(this.nextPosition(3)))
+                {
+                    var oldMotion = base.motion.X;
+
+                    base.motion.X = 0;
+                    if (Game1.random.NextDouble() < 0.6)
+                    {
+                        this.FaceAndMoveInDirection(1);
+                        if (Game1.random.NextDouble() < 0.5)
+                        {
+                            base.motion.X = Math.Abs(oldMotion / 2f);
+                        }
+                    }
+                }
             }
 
             // Restrict motion
@@ -282,6 +350,16 @@ namespace CustomCompanions.Framework.Companions
             else if ((targetDistance > this.model.MaxIdleDistance && this.model.MaxIdleDistance != -1) || !currentLocation.isTileOnMap(new Vector2(next_tile.X, next_tile.Y)))
             {
                 this.FaceAndMoveInDirection(this.getGeneralDirectionTowards(this.GetTargetPosition(), 0, opposite: false, useTileCalculations: false));
+
+                if (canCollide)
+                {
+                    this.motion.Value = Vector2.Zero;
+                }
+            }
+            else if (canCollide && currentLocation.isCollidingPosition(this.GetBoundingBox(), Game1.viewport, isFarmer: false, 0, glider: false, this, pathfinding: false))
+            {
+                this.FaceAndMoveInDirection(this.getGeneralDirectionTowards(this.GetTargetPosition(), 0, opposite: false, useTileCalculations: false));
+                this.motion.Value = Vector2.Zero;
             }
 
             // Update position
@@ -330,6 +408,12 @@ namespace CustomCompanions.Framework.Companions
                 case Behavior.HOVER:
                     DoHover(time, location);
                     return true;
+                case Behavior.JUMPER:
+                    DoJump(time, location);
+                    return true;
+                default:
+                    DoNothing(time, location);
+                    return false;
             }
 
             return false;
@@ -345,7 +429,7 @@ namespace CustomCompanions.Framework.Companions
             base.update(time, location, -1, move: false);
             base.wasIdle.Value = !this.isMoving();
 
-            this.MovePositionViaMotion(time, Game1.viewport, location);
+            this.MovePositionViaMotion(time, location);
         }
 
         private void DoWanderWalk(GameTime time, GameLocation location)
@@ -358,7 +442,7 @@ namespace CustomCompanions.Framework.Companions
             base.update(time, location, -1, move: false);
             base.wasIdle.Value = !this.isMoving();
 
-            this.MovePositionViaSpeed(time, Game1.viewport, location);
+            this.MovePositionViaSpeed(time, location);
         }
 
         private void DoHover(GameTime time, GameLocation location)
@@ -380,6 +464,52 @@ namespace CustomCompanions.Framework.Companions
                 this.jumpWithoutSound(5);
                 this.yJumpGravity = Math.Abs(gravity) * -1;
             }
+        }
+
+        private void DoJump(GameTime time, GameLocation location)
+        {
+            // Handle random movement
+            this.AttemptRandomDirection(0.007f, 0.1f);
+
+            // Handle animating
+            base.Animate(time, !this.isMoving());
+            base.update(time, location, -1, move: false);
+            base.wasIdle.Value = !this.isMoving();
+
+            var gravity = -0.5f;
+            var jumpScale = 10f;
+            var randomJumpBoostMultiplier = 2f;
+            /*
+            if (arguments != null && arguments.Length >= 2)
+            {
+                jumpScale = arguments[0];
+                randomJumpBoostMultiplier = arguments[1];
+            }
+            */
+            if (this.yJumpOffset == 0)
+            {
+                this.jumpWithoutSound();
+                this.yJumpGravity = Math.Abs(gravity) * -1;
+                this.yJumpVelocity = (float)Game1.random.Next(50, 70) / jumpScale;
+
+                if (Game1.random.NextDouble() < 0.01)
+                {
+                    this.yJumpVelocity *= randomJumpBoostMultiplier;
+                }
+            }
+
+            this.MovePositionViaMotion(time, location, true);
+        }
+
+        private void DoNothing(GameTime time, GameLocation location)
+        {
+            // Handle random movement
+            this.AttemptRandomDirection(0.007f, 0.1f);
+
+            // Handle animating
+            base.Animate(time, true);
+            base.update(time, location, -1, move: false);
+            base.wasIdle.Value = true;
         }
     }
 }
