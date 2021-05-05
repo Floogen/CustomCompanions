@@ -30,6 +30,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public bool IsPrismatic { get; set; } = false;
         public LightModel Light { get; set; }
         public List<SoundModel> Sounds { get; set; } = new List<SoundModel>();
+        public float Scale { get; set; } = 1f;
         public int FrameSizeWidth { get; set; }
         public int FrameSizeHeight { get; set; }
         public string TileSheetPath { get; set; }

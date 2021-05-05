@@ -70,6 +70,7 @@ namespace CustomCompanions.Framework.Companions
             base.farmerPassesThrough = true;
             base.HideShadow = true; // Always hiding the default shadow, as we are allowing user to config beyond normal settings
             base.Sprite.loop = false;
+            base.Scale = model.Scale;
 
             this.model = model;
             this.hasShadow.Value = model.EnableShadow;
