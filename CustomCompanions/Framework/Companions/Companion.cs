@@ -353,7 +353,7 @@ namespace CustomCompanions.Framework.Companions
                                 randomJumpBoostMultiplier = this.model.IdleArguments[1];
                             }
 
-                            this.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier, this.GetTargetPosition());
+                            this.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier, -0.5f, this.GetTargetPosition());
                         }
                         else
                         {
@@ -632,11 +632,12 @@ namespace CustomCompanions.Framework.Companions
             return this.model.Type.ToUpper() == "JUMPING";
         }
 
-        internal void PerformJumpMovement(float jumpScale, float randomJumpBoostMultiplier, Vector2 targetTile)
+        internal void PerformJumpMovement(float jumpScale, float randomJumpBoostMultiplier, float gravity, Vector2 targetTile)
         {
             if (this.yJumpOffset == 0)
             {
                 this.jumpWithoutSound();
+                this.yJumpGravity = Math.Abs(gravity) * -1;
                 this.yJumpVelocity = (float)Game1.random.Next(50, 70) / jumpScale;
 
                 if (Game1.random.NextDouble() < 0.01)

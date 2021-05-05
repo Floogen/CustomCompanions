@@ -21,6 +21,8 @@ namespace CustomCompanions.Framework.Models.Companion
         public int SpawnOffsetY { get; set; }
         public float MaxIdleDistance { get; set; } = 128f;
         public float MaxDistanceBeforeTeleport { get; set; } = 512f;
+        public float DirectionChangeChanceWhileMoving { get; set; } = 0.007f;
+        public float DirectionChangeChanceWhileIdle { get; set; } = 0.1f;
         public string InspectionDialogue { get; set; }
         public string IdleBehavior { get; set; } = "NOTHING";
         public float[] IdleArguments { get; set; }

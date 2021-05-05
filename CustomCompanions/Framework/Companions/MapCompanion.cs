@@ -15,6 +15,7 @@ namespace CustomCompanions.Framework.Companions
         private int pauseTimer;
         private bool canHalt;
         private float motionMultiplier;
+        private float behaviorTimer;
 
         public MapCompanion(CompanionModel model, Vector2 targetTile, GameLocation location) : base(model, null, targetTile)
         {
@@ -51,7 +52,7 @@ namespace CustomCompanions.Framework.Companions
             }
 
             // Do Idle Behaviors
-            this.PerformBehavior(base.idleBehavior.behavior, time, location);
+            this.PerformBehavior(base.idleBehavior.behavior, base.model.IdleArguments, time, location);
 
             // Play any sound(s) that are required
             if (Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) != null)
@@ -391,38 +392,58 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
-        private bool PerformBehavior(Behavior behavior, GameTime time, GameLocation location)
+        private bool PerformBehavior(Behavior behavior, float[] arguments, GameTime time, GameLocation location)
         {
             switch (behavior)
             {
                 case Behavior.WANDER:
                     if (base.IsFlying())
                     {
-                        DoWanderFly(time, location);
+                        DoWanderFly(arguments, time, location);
                     }
                     else
                     {
-                        DoWanderWalk(time, location);
+                        DoWanderWalk(arguments, time, location);
                     }
                     return true;
                 case Behavior.HOVER:
-                    DoHover(time, location);
+                    DoHover(arguments, time, location);
                     return true;
                 case Behavior.JUMPER:
-                    DoJump(time, location);
+                    DoJump(arguments, time, location);
                     return true;
                 default:
-                    DoNothing(time, location);
+                    DoNothing(arguments, time, location);
                     return false;
             }
-
-            return false;
         }
 
-        private void DoWanderFly(GameTime time, GameLocation location)
+        private void DoWanderFly(float[] arguments, GameTime time, GameLocation location)
         {
+            // Handle arguments
+            float dashMultiplier = 1f;
+            int minTimeBetweenDash = 5000;
+            if (arguments != null)
+            {
+                if (arguments.Length > 0)
+                {
+                    dashMultiplier = arguments[0];
+                }
+                if (arguments.Length > 1)
+                {
+                    minTimeBetweenDash = (int)arguments[1];
+                }
+            }
+
             // Handle random directional changes
-            this.AttemptRandomDirection(0.007f, 0.1f);
+            this.AttemptRandomDirection(base.model.DirectionChangeChanceWhileMoving, base.model.DirectionChangeChanceWhileIdle);
+
+            this.behaviorTimer -= time.ElapsedGameTime.Milliseconds;
+            if (this.behaviorTimer <= 0)
+            {
+                this.motionMultiplier = dashMultiplier;
+                this.behaviorTimer = Game1.random.Next(minTimeBetweenDash, minTimeBetweenDash * 2);
+            }
 
             // Handle animating
             base.Animate(time, !this.isMoving());
@@ -432,10 +453,10 @@ namespace CustomCompanions.Framework.Companions
             this.MovePositionViaMotion(time, location);
         }
 
-        private void DoWanderWalk(GameTime time, GameLocation location)
+        private void DoWanderWalk(float[] arguments, GameTime time, GameLocation location)
         {
             // Handle random movement
-            this.AttemptRandomDirection(0.007f, 0.1f);
+            this.AttemptRandomDirection(base.model.DirectionChangeChanceWhileMoving, base.model.DirectionChangeChanceWhileIdle);
 
             // Handle animating
             base.Animate(time, !this.isMoving());
@@ -445,7 +466,7 @@ namespace CustomCompanions.Framework.Companions
             this.MovePositionViaSpeed(time, location);
         }
 
-        private void DoHover(GameTime time, GameLocation location)
+        private void DoHover(float[] arguments, GameTime time, GameLocation location)
         {
             // Handle animating
             base.Animate(time, false);
@@ -453,12 +474,14 @@ namespace CustomCompanions.Framework.Companions
             base.wasIdle.Value = false;
 
             var gravity = -0.5f;
-            /*
-            if (arguments != null && arguments.Length >= 1)
+            if (arguments != null)
             {
-                gravity = arguments[0];
+                if (arguments.Length > 0)
+                {
+                    gravity = arguments[0];
+                }
             }
-            */
+
             if (this.yJumpOffset == 0)
             {
                 this.jumpWithoutSound(5);
@@ -466,10 +489,10 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
-        private void DoJump(GameTime time, GameLocation location)
+        private void DoJump(float[] arguments, GameTime time, GameLocation location)
         {
             // Handle random movement
-            this.AttemptRandomDirection(0.007f, 0.1f);
+            this.AttemptRandomDirection(base.model.DirectionChangeChanceWhileMoving, base.model.DirectionChangeChanceWhileIdle);
 
             // Handle animating
             base.Animate(time, !this.isMoving());
@@ -479,13 +502,22 @@ namespace CustomCompanions.Framework.Companions
             var gravity = -0.5f;
             var jumpScale = 10f;
             var randomJumpBoostMultiplier = 2f;
-            /*
-            if (arguments != null && arguments.Length >= 2)
+            if (arguments != null)
             {
-                jumpScale = arguments[0];
-                randomJumpBoostMultiplier = arguments[1];
+                if (arguments.Length > 0)
+                {
+                    gravity = arguments[0];
+                }
+                if (arguments.Length > 1)
+                {
+                    jumpScale = arguments[1];
+                }
+                if (arguments.Length > 2)
+                {
+                    randomJumpBoostMultiplier = arguments[2];
+                }
             }
-            */
+
             if (this.yJumpOffset == 0)
             {
                 this.jumpWithoutSound();
@@ -501,10 +533,10 @@ namespace CustomCompanions.Framework.Companions
             this.MovePositionViaMotion(time, location, true);
         }
 
-        private void DoNothing(GameTime time, GameLocation location)
+        private void DoNothing(float[] arguments, GameTime time, GameLocation location)
         {
             // Handle random movement
-            this.AttemptRandomDirection(0.007f, 0.1f);
+            this.AttemptRandomDirection(base.model.DirectionChangeChanceWhileMoving, base.model.DirectionChangeChanceWhileIdle);
 
             // Handle animating
             base.Animate(time, true);
