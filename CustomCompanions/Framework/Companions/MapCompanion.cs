@@ -98,6 +98,24 @@ namespace CustomCompanions.Framework.Companions
             this.SetFacingDirection(direction);
             this.SetMovingDirection(direction);
         }
+
+        private bool IsCollidingPosition(Microsoft.Xna.Framework.Rectangle position, GameLocation location)
+        {
+            if (base.currentLocation.isCollidingPosition(position, Game1.viewport, isFarmer: false, 0, glider: false, this))
+            {
+                return true;
+            }
+
+            if (!String.IsNullOrEmpty(location.doesTileHaveProperty(position.X / 64, position.Y / 64, "NPCBarrier", "Back")))
+            {
+                CustomCompanions.monitor.Log("HERE", StardewModdingAPI.LogLevel.Debug);
+                return true;
+            }
+
+
+            return false;
+        }
+
         private bool HandleCollision(Microsoft.Xna.Framework.Rectangle next_position)
         {
             if (Game1.random.NextDouble() <= 0.25)
@@ -123,7 +141,7 @@ namespace CustomCompanions.Framework.Companions
                     if (newDirection < 4)
                     {
                         int oldDirection = this.FacingDirection;
-                        if (base.currentLocation.isCollidingPosition(this.nextPosition(newDirection), Game1.viewport, this) && !base.IsFlying())
+                        if (!base.IsFlying() && this.IsCollidingPosition(this.nextPosition(newDirection), this.currentLocation))
                         {
                             return;
                         }
@@ -164,7 +182,7 @@ namespace CustomCompanions.Framework.Companions
             }
             if (base.moveUp)
             {
-                if (!currentLocation.isCollidingPosition(this.nextPosition(0), Game1.viewport, isFarmer: false, 0, glider: false, this, pathfinding: false))
+                if (!this.IsCollidingPosition(this.nextPosition(0), currentLocation))
                 {
                     base.position.Y -= base.speed + base.addedSpeed;
                     this.FaceAndMoveInDirection(0);
@@ -179,7 +197,7 @@ namespace CustomCompanions.Framework.Companions
             }
             else if (base.moveRight)
             {
-                if (!currentLocation.isCollidingPosition(this.nextPosition(1), Game1.viewport, isFarmer: false, 0, glider: false, this))
+                if (!this.IsCollidingPosition(this.nextPosition(1), currentLocation))
                 {
                     base.position.X += base.speed + base.addedSpeed;
                     this.FaceAndMoveInDirection(1);
@@ -194,7 +212,7 @@ namespace CustomCompanions.Framework.Companions
             }
             else if (base.moveDown)
             {
-                if (!currentLocation.isCollidingPosition(this.nextPosition(2), Game1.viewport, isFarmer: false, 0, glider: false, this))
+                if (!this.IsCollidingPosition(this.nextPosition(2), currentLocation))
                 {
                     base.position.Y += base.speed + base.addedSpeed;
                     this.FaceAndMoveInDirection(2);
@@ -209,7 +227,7 @@ namespace CustomCompanions.Framework.Companions
             }
             else if (base.moveLeft)
             {
-                if (!currentLocation.isCollidingPosition(this.nextPosition(3), Game1.viewport, isFarmer: false, 0, glider: false, this))
+                if (!this.IsCollidingPosition(this.nextPosition(3), currentLocation))
                 {
                     base.position.X -= base.speed + base.addedSpeed;
                     this.FaceAndMoveInDirection(3);
@@ -252,7 +270,7 @@ namespace CustomCompanions.Framework.Companions
 
             if (base.moveUp)
             {
-                if (!canCollide || !currentLocation.isCollidingPosition(this.nextPosition(0), Game1.viewport, isFarmer: false, 0, glider: false, this, pathfinding: false))
+                if (!canCollide || !this.IsCollidingPosition(this.nextPosition(0), currentLocation))
                 {
                     base.motion.Y -= Game1.random.Next(1, 2) * 0.1f;
                     this.FaceAndMoveInDirection(0);
@@ -274,7 +292,7 @@ namespace CustomCompanions.Framework.Companions
             }
             else if (base.moveRight)
             {
-                if (!canCollide || !currentLocation.isCollidingPosition(this.nextPosition(1), Game1.viewport, isFarmer: false, 0, glider: false, this, pathfinding: false))
+                if (!canCollide || !this.IsCollidingPosition(this.nextPosition(1), currentLocation))
                 {
                     base.motion.X += Game1.random.Next(1, 2) * 0.1f;
                     this.FaceAndMoveInDirection(1);
@@ -296,7 +314,7 @@ namespace CustomCompanions.Framework.Companions
             }
             else if (base.moveDown)
             {
-                if (!canCollide || !currentLocation.isCollidingPosition(this.nextPosition(2), Game1.viewport, isFarmer: false, 0, glider: false, this, pathfinding: false))
+                if (!canCollide || !this.IsCollidingPosition(this.nextPosition(2), currentLocation))
                 {
                     base.motion.Y += Game1.random.Next(1, 2) * 0.1f;
                     this.FaceAndMoveInDirection(2);
@@ -318,7 +336,7 @@ namespace CustomCompanions.Framework.Companions
             }
             else if (base.moveLeft)
             {
-                if (!canCollide || !currentLocation.isCollidingPosition(this.nextPosition(3), Game1.viewport, isFarmer: false, 0, glider: false, this, pathfinding: false))
+                if (!canCollide || !this.IsCollidingPosition(this.nextPosition(3), currentLocation))
                 {
                     base.motion.X -= Game1.random.Next(1, 2) * 0.1f;
                     this.FaceAndMoveInDirection(3);
@@ -357,7 +375,7 @@ namespace CustomCompanions.Framework.Companions
                     this.motion.Value = Vector2.Zero;
                 }
             }
-            else if (canCollide && currentLocation.isCollidingPosition(this.GetBoundingBox(), Game1.viewport, isFarmer: false, 0, glider: false, this, pathfinding: false))
+            else if (canCollide && this.IsCollidingPosition(this.GetBoundingBox(), currentLocation))
             {
                 this.FaceAndMoveInDirection(this.getGeneralDirectionTowards(this.GetTargetPosition(), 0, opposite: false, useTileCalculations: false));
                 this.motion.Value = Vector2.Zero;
