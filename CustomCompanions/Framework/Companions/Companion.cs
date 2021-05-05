@@ -357,7 +357,7 @@ namespace CustomCompanions.Framework.Companions
                         }
                         else
                         {
-                            this.SetMotion(Utility.getVelocityTowardPoint(new Point((int)base.Position.X + this.model.SpawnOffsetX, (int)base.Position.Y + this.model.SpawnOffsetY), this.GetTargetPosition(), base.speed));
+                            this.SetMotion(Utility.getVelocityTowardPoint(base.Position, this.GetTargetPosition(), base.speed));
                         }
                     }
                 }
