@@ -2,6 +2,7 @@
   "Name": "ExampleWalkerCollisionTest",
   "Type": "Walking",
   "TravelSpeed": 2,
+  "Scale": 1.0,
   "FrameSizeWidth": 16,
   "FrameSizeHeight": 32,
   "TileSheetPath": "Characters\\Abigail", // Optional parameter, but needed if creating a companion with an existing in-game sprite (e.g. Animals\\Rabbit)
