@@ -560,6 +560,8 @@ namespace CustomCompanions.Framework.Companions
             base.Animate(time, true);
             base.update(time, location, -1, move: false);
             base.wasIdle.Value = true;
+
+            this.FaceAndMoveInDirection(this.FacingDirection);
         }
     }
 }
