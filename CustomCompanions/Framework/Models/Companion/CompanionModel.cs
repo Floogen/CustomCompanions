@@ -34,6 +34,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public LightModel Light { get; set; }
         public List<SoundModel> Sounds { get; set; } = new List<SoundModel>();
         public float Scale { get; set; } = 1f;
+        public bool AppearUnderwater { get; set; }
         public int FrameSizeWidth { get; set; }
         public int FrameSizeHeight { get; set; }
         public string TileSheetPath { get; set; }
@@ -56,7 +57,8 @@ namespace CustomCompanions.Framework.Models.Companion
                 $"\tColors: {string.Join(",", Colors.Select(c => "[" + string.Join(",", c) + "]"))} | IsPrismatic: {IsPrismatic}\n" +
                 $"\tLight: {(Light is null ? null : Light)}\n" +
                 $"\tSounds: {string.Join(",", Sounds)}\n" +
-                $"\tScale: {Scale} | FrameSize: {FrameSizeWidth}x{FrameSizeHeight} | TileSheetPath: {TileSheetPath}\n" +
+                $"\tScale: {Scale} | DrawUnderWater: {AppearUnderwater} | FrameSize: {FrameSizeWidth}x{FrameSizeHeight}\n" +
+                $"\tTileSheetPath: {TileSheetPath}\n" +
                 $"\tUniformAnimation: {(UniformAnimation is null ? null : UniformAnimation)}\n" +
                 $"\tUpAnimation: {(UpAnimation is null ? null : UpAnimation)}\n" +
                 $"\tDownAnimation: {(DownAnimation is null ? null : DownAnimation)}\n" +

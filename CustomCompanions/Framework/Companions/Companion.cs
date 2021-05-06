@@ -175,8 +175,19 @@ namespace CustomCompanions.Framework.Companions
 
         public override void draw(SpriteBatch b, float alpha = 1f)
         {
-            b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(this.GetSpriteWidthForPositioning() * 4 / 2, this.GetBoundingBox().Height / 2) + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), this.Sprite.SourceRect, this.isPrismatic ? Utility.GetPrismaticColor(348 + (int)this.specialNumber, 5f) : color, this.rotation, new Vector2(this.Sprite.SpriteWidth / 2, (float)this.Sprite.SpriteHeight * 3f / 4f), Math.Max(0.2f, base.scale) * 4f, (base.flip || (this.Sprite.CurrentAnimation != null && this.Sprite.CurrentAnimation[this.Sprite.currentAnimationIndex].flip)) ? SpriteEffects.FlipHorizontally : SpriteEffects.None, this.IsFlying() ? 0.991f : Math.Max(0f, base.drawOnTop ? 0.991f : ((float)base.getStandingY() / 10000f)));
+            if (this.model.AppearUnderwater)
+            {
+                return;
+            }
 
+            this.DoDraw(b, alpha);
+        }
+
+        internal void DoDraw(SpriteBatch b, float alpha = 1f)
+        {
+            var spriteLayerDepth = this.IsFlying() ? 0.991f : Math.Max(0f, base.drawOnTop ? 0.991f : ((float)base.getStandingY() / 10000f));
+
+            b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(this.GetSpriteWidthForPositioning() * 4 / 2, this.GetBoundingBox().Height / 2) + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), this.Sprite.SourceRect, this.isPrismatic ? Utility.GetPrismaticColor(348 + (int)this.specialNumber, 5f) : color, this.rotation, new Vector2(this.Sprite.SpriteWidth / 2, (float)this.Sprite.SpriteHeight * 3f / 4f), Math.Max(0.2f, base.scale) * 4f, (base.flip || (this.Sprite.CurrentAnimation != null && this.Sprite.CurrentAnimation[this.Sprite.currentAnimationIndex].flip)) ? SpriteEffects.FlipHorizontally : SpriteEffects.None, spriteLayerDepth);
             if (this.Breather && this.shakeTimer <= 0 && !this.isMoving())
             {
                 Rectangle chestBox = this.Sprite.SourceRect;
@@ -186,21 +197,27 @@ namespace CustomCompanions.Framework.Companions
                 chestBox.Width = this.Sprite.SpriteWidth / 2;
                 Vector2 chestPosition = new Vector2(this.Sprite.SpriteWidth * 4 / 2, 8f);
                 float breathScale = Math.Max(0f, (float)Math.Ceiling(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 600.0 + (double)(base.DefaultPosition.X * 20f))) / 4f);
-                b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + chestPosition + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), chestBox, Color.White * alpha, this.rotation, new Vector2(chestBox.Width / 2, chestBox.Height / 2 + 1), Math.Max(0.2f, base.scale) * 4f + breathScale, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.992f : ((float)base.getStandingY() / 10000f + 0.001f)));
+                b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + chestPosition + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), chestBox, Color.White * alpha, this.rotation, new Vector2(chestBox.Width / 2, chestBox.Height / 2 + 1), Math.Max(0.2f, base.scale) * 4f + breathScale, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, spriteLayerDepth);
             }
 
+            var shadowLayerDepth = Math.Max(0f, (float)this.getStandingY() / 10000f) - 1E-06f;
             if (this.hasShadow)
             {
                 if (this.model.Shadow != null)
                 {
-                    Game1.spriteBatch.Draw(Game1.shadowTexture, Game1.GlobalToLocal(Game1.viewport, new Vector2(this.model.Shadow.OffsetX, this.model.Shadow.OffsetY) + this.Position + new Vector2((float)(this.GetSpriteWidthForPositioning() * 4) / 2f, this.GetBoundingBox().Height + 12)), Game1.shadowTexture.Bounds, new Color(255, 255, 255, this.model.Shadow.Alpha), 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), Math.Max(0f, (4f + (float)this.yJumpOffset / 40f) * this.model.Shadow.Scale), SpriteEffects.None, Math.Max(0f, (float)this.getStandingY() / 10000f) - 1E-06f);
+                    Game1.spriteBatch.Draw(Game1.shadowTexture, Game1.GlobalToLocal(Game1.viewport, new Vector2(this.model.Shadow.OffsetX, this.model.Shadow.OffsetY) + this.Position + new Vector2((float)(this.GetSpriteWidthForPositioning() * 4) / 2f, this.GetBoundingBox().Height + 12)), Game1.shadowTexture.Bounds, new Color(255, 255, 255, this.model.Shadow.Alpha), 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), Math.Max(0f, (4f + (float)this.yJumpOffset / 40f) * this.model.Shadow.Scale), SpriteEffects.None, shadowLayerDepth);
                 }
                 else
                 {
                     // Default game shadow
-                    Game1.spriteBatch.Draw(Game1.shadowTexture, Game1.GlobalToLocal(Game1.viewport, this.GetShadowOffset() + this.Position + new Vector2((float)(this.GetSpriteWidthForPositioning() * 4) / 2f, this.GetBoundingBox().Height + 12)), Game1.shadowTexture.Bounds, Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), Math.Max(0f, (4f + (float)this.yJumpOffset / 40f) * (float)this.scale), SpriteEffects.None, Math.Max(0f, (float)this.getStandingY() / 10000f) - 1E-06f);
+                    Game1.spriteBatch.Draw(Game1.shadowTexture, Game1.GlobalToLocal(Game1.viewport, this.GetShadowOffset() + this.Position + new Vector2((float)(this.GetSpriteWidthForPositioning() * 4) / 2f, this.GetBoundingBox().Height + 12)), Game1.shadowTexture.Bounds, Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), Math.Max(0f, (4f + (float)this.yJumpOffset / 40f) * (float)this.scale), SpriteEffects.None, shadowLayerDepth);
                 }
             }
+        }
+
+        internal void DrawUnderwater(SpriteBatch b)
+        {
+            this.DoDraw(b, 1f);
         }
 
         internal void SetUpCompanion()
