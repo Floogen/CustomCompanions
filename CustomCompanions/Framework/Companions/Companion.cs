@@ -521,6 +521,16 @@ namespace CustomCompanions.Framework.Companions
             return frames;
         }
 
+        private int GetPitchRandomness(SoundModel sound)
+        {
+            if (sound.MinPitchRandomness > sound.MaxPitchRandomness)
+            {
+                return Game1.random.Next(sound.MinPitchRandomness < 0 ? 0 : sound.MinPitchRandomness);
+            }
+
+            return Game1.random.Next(sound.MinPitchRandomness, sound.MaxPitchRandomness);
+        }
+
         internal void UpdateLight(GameTime time)
         {
             if (light != null)
@@ -544,7 +554,7 @@ namespace CustomCompanions.Framework.Companions
                 {
                     if (Game1.random.NextDouble() <= alwaysSound.ChanceOfPlaying)
                     {
-                        this.currentLocation.localSound(alwaysSound.SoundName);
+                        this.currentLocation.netAudio.PlayLocal(alwaysSound.SoundName, alwaysSound.Pitch + this.GetPitchRandomness(alwaysSound));
                     }
                     soundAlwaysTimer = alwaysSound.TimeBetweenSound;
                 }
@@ -557,7 +567,7 @@ namespace CustomCompanions.Framework.Companions
                 {
                     if (Game1.random.NextDouble() <= movingSound.ChanceOfPlaying)
                     {
-                        this.currentLocation.localSound(movingSound.SoundName);
+                        this.currentLocation.netAudio.PlayLocal(movingSound.SoundName, movingSound.Pitch + this.GetPitchRandomness(movingSound));
                     }
                     soundMovingTimer = movingSound.TimeBetweenSound;
                 }
@@ -570,7 +580,7 @@ namespace CustomCompanions.Framework.Companions
                 {
                     if (Game1.random.NextDouble() <= idleSound.ChanceOfPlaying)
                     {
-                        this.currentLocation.localSound(idleSound.SoundName);
+                        this.currentLocation.netAudio.PlayLocal(idleSound.SoundName, idleSound.Pitch + this.GetPitchRandomness(idleSound));
                     }
                     soundIdleTimer = idleSound.TimeBetweenSound;
                 }

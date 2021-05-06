@@ -12,6 +12,18 @@
   "InspectionDialogue": "example.translation.string", // Optional parameter, determines what dialogue appears when interacting with the companion | NOTE: Only applicable for map-based spawns
   "IdleBehavior": "Wander", // Optional parameter, determines how the companion acts while idle | Options: [Nothing, Hover, Wander, Jumper]
 
+  "Sounds": [
+    {
+      "SoundName": "cow",
+      "WhenToPlay": "Idle",
+      "Pitch": 1200,
+      "MinPitchRandomness": -200,
+      "MaxPitchRandomness": 201,
+      "TimeBetweenSound": 5000,
+      "ChanceOfPlaying": 0.25
+    }
+  ],
+
   "FrameSizeWidth": 32, // Width of each frame / tile in pixels
   "FrameSizeHeight": 32, // Height of each frame / tile in pixels
   "TileSheetPath": "Animals\\White Cow", // Optional parameter, but needed if creating a companion with an existing in-game sprite (e.g. Animals\\Rabbit)
