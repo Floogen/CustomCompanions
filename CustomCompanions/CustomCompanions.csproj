@@ -78,6 +78,9 @@
     <None Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWanderWalkingChicken\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleFirefly\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWanderWalkingCow\companion.json" />
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleUnderwaterFish\companion.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkerCollisionTest\companion.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -103,6 +106,7 @@
   <ItemGroup />
   <ItemGroup>
     <Content Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWalkingCompanion\companion.png" />
+    <Content Include="Examples\[CC] Example Pack\Companions\ExampleUnderwaterFish\companion.png" />
     <Content Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCompanion\companion.png" />
     <Content Include="Examples\[CC] Example Pack\Companions\ExampleFirefly\companion.png" />
     <Content Include="Examples\[CC] Example Pack\Objects\ExampleWalkingGameCharacterRing\object.png" />
