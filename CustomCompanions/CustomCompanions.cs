@@ -68,69 +68,72 @@ namespace CustomCompanions
 
         private void OnGameLaunched(object sender, GameLaunchedEventArgs e)
         {
+            // Hook into the APIs we utilize
             if (Helper.ModRegistry.IsLoaded("bcmpinc.WearMoreRings") && ApiManager.HookIntoIWMR(Helper))
             {
                 RingManager.wearMoreRingsApi = ApiManager.GetIWMRApi();
             }
 
-            // Hook into the APIs we utilize
             if (Helper.ModRegistry.IsLoaded("spacechase0.JsonAssets") && ApiManager.HookIntoJsonAssets(Helper))
             {
                 _jsonAssetsApi = ApiManager.GetJsonAssetsApi();
 
                 // Hook into IdsAssigned
                 _jsonAssetsApi.IdsAssigned += this.IdsAssigned;
+            }
 
-                // Load any owned content packs
-                foreach (IContentPack contentPack in this.Helper.ContentPacks.GetOwned())
+            // Load any owned content packs
+            foreach (IContentPack contentPack in this.Helper.ContentPacks.GetOwned())
+            {
+                Monitor.Log($"Loading companions from pack: {contentPack.Manifest.Name} {contentPack.Manifest.Version} by {contentPack.Manifest.Author}", LogLevel.Debug);
+
+                var companionFolders = new DirectoryInfo(Path.Combine(contentPack.DirectoryPath, "Companions")).GetDirectories();
+                if (companionFolders.Count() == 0)
                 {
-                    Monitor.Log($"Loading companions from pack: {contentPack.Manifest.Name} {contentPack.Manifest.Version} by {contentPack.Manifest.Author}", LogLevel.Debug);
+                    Monitor.Log($"No sub-folders found under Companions for the content pack {contentPack.Manifest.Name}!", LogLevel.Warn);
+                    continue;
+                }
 
-                    var companionFolders = new DirectoryInfo(Path.Combine(contentPack.DirectoryPath, "Companions")).GetDirectories();
-                    if (companionFolders.Count() == 0)
+                // Load in the companions
+                foreach (var companionFolder in companionFolders)
+                {
+                    if (!File.Exists(Path.Combine(companionFolder.FullName, "companion.json")))
                     {
-                        Monitor.Log($"No sub-folders found under Companions for the content pack {contentPack.Manifest.Name}!", LogLevel.Warn);
+                        Monitor.Log($"Content pack {contentPack.Manifest.Name} is missing a companion.json under {companionFolder.Name}!", LogLevel.Warn);
                         continue;
                     }
 
-                    // Load in the companions
-                    foreach (var companionFolder in companionFolders)
+                    CompanionModel companion = contentPack.ReadJsonFile<CompanionModel>(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.json"));
+                    companion.Name = companion.Name.Replace(" ", "");
+                    companion.Owner = contentPack.Manifest.UniqueID;
+                    Monitor.Log(companion.ToString(), LogLevel.Trace);
+
+                    // Save the TileSheet, if one is given
+                    if (String.IsNullOrEmpty(companion.TileSheetPath) && !File.Exists(Path.Combine(companionFolder.FullName, "companion.png")))
                     {
-                        if (!File.Exists(Path.Combine(companionFolder.FullName, "companion.json")))
-                        {
-                            Monitor.Log($"Content pack {contentPack.Manifest.Name} is missing a companion.json under {companionFolder.Name}!", LogLevel.Warn);
-                            continue;
-                        }
-
-                        CompanionModel companion = contentPack.ReadJsonFile<CompanionModel>(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.json"));
-                        companion.Name = companion.Name.Replace(" ", "");
-                        companion.Owner = contentPack.Manifest.UniqueID;
-                        Monitor.Log(companion.ToString(), LogLevel.Trace);
-
-                        // Save the TileSheet, if one is given
-                        if (String.IsNullOrEmpty(companion.TileSheetPath) && !File.Exists(Path.Combine(companionFolder.FullName, "companion.png")))
-                        {
-                            Monitor.Log($"Unable to add companion {companion.Name} from {contentPack.Manifest.Name}: No associated companion.png or TileSheetPath given", LogLevel.Warn);
-                            continue;
-                        }
-                        else if (String.IsNullOrEmpty(companion.TileSheetPath))
-                        {
-                            companion.TileSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.png"));
-                        }
-
-                        if (contentPack.Translation != null)
-                        {
-                            companion.Translations = contentPack.Translation;
-                        }
-
-                        // Add the companion to our cache
-                        CompanionManager.companionModels.Add(companion);
+                        Monitor.Log($"Unable to add companion {companion.Name} from {contentPack.Manifest.Name}: No associated companion.png or TileSheetPath given", LogLevel.Warn);
+                        continue;
+                    }
+                    else if (String.IsNullOrEmpty(companion.TileSheetPath))
+                    {
+                        companion.TileSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.png"));
                     }
 
+                    if (contentPack.Translation != null)
+                    {
+                        companion.Translations = contentPack.Translation;
+                    }
+
+                    // Add the companion to our cache
+                    CompanionManager.companionModels.Add(companion);
+                }
+
+                if (_jsonAssetsApi != null)
+                {
                     // Load in the rings that will be paired to a companion
                     if (!Directory.Exists(Path.Combine(contentPack.DirectoryPath, "Objects")))
                     {
-                        Monitor.Log($"No summoning rings available from {contentPack.Manifest.Name}, this may be intended", LogLevel.Debug);
+                        Monitor.Log($"No summoning rings available from {contentPack.Manifest.Name}, this may be intended", LogLevel.Trace);
                         continue;
                     }
 
