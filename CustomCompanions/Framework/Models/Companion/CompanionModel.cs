@@ -23,6 +23,9 @@ namespace CustomCompanions.Framework.Models.Companion
         public float MaxDistanceBeforeTeleport { get; set; } = 512f;
         public float DirectionChangeChanceWhileMoving { get; set; } = 0.007f;
         public float DirectionChangeChanceWhileIdle { get; set; } = 0.1f;
+        public float ChanceForHalting { get; set; } = 1.0f;
+        public int MinHaltTime { get; set; } = 2000;
+        public int MaxHaltTime { get; set; } = 10000;
         public string InspectionDialogue { get; set; }
         public string IdleBehavior { get; set; } = "NOTHING";
         public float[] IdleArguments { get; set; }
@@ -47,6 +50,7 @@ namespace CustomCompanions.Framework.Models.Companion
                 $"\tEnableShadow: {EnableShadow} | Shadow: {Shadow} | EnableBreathing: {EnableBreathing}\n" +
                 $"\tTravelSpeed: {TravelSpeed} | SpawnDirection: {SpawnDirection} | SpawnOffsetX: {SpawnOffsetX} | SpawnOffsetY: {SpawnOffsetY}\n" +
                 $"\tDirectionChangeChanceWhileMoving: {DirectionChangeChanceWhileMoving} | DirectionChangeChanceWhileMoving: {DirectionChangeChanceWhileIdle}\n" +
+                $"\tChanceForHalting: {ChanceForHalting} | MinHaltTime: {MinHaltTime} | MaxHaltTime: {MaxHaltTime}\n" +
                 $"\tInspectionDialogue: {InspectionDialogue}\n" +
                 $"\tMaxIdleDistance: {MaxIdleDistance} | MaxDistanceBeforeTeleport: {MaxDistanceBeforeTeleport} | IdleBehavior: {IdleBehavior} | IdleArguments: { (IdleArguments is null ? null : IdleArguments) }\n" +
                 $"\tColors: {string.Join(",", Colors.Select(c => "[" + string.Join(",", c) + "]"))} | IsPrismatic: {IsPrismatic}\n" +

@@ -12,6 +12,9 @@
   "EnableFarmerCollision": true,
   "EnableShadow": true,
   "EnableBreathing": true,
+  "ChanceForHalting": 0.5,
+  "MinHaltTime": 1000,
+  "MaxHaltTime": 2000,
   "InspectionDialogue": "Boop!",
 
   // This plays when the companion travels upwards

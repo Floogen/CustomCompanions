@@ -108,7 +108,6 @@ namespace CustomCompanions.Framework.Companions
 
             if (!String.IsNullOrEmpty(location.doesTileHaveProperty(position.X / 64, position.Y / 64, "NPCBarrier", "Back")))
             {
-                CustomCompanions.monitor.Log("HERE", StardewModdingAPI.LogLevel.Debug);
                 return true;
             }
 
@@ -118,9 +117,9 @@ namespace CustomCompanions.Framework.Companions
 
         private bool HandleCollision(Microsoft.Xna.Framework.Rectangle next_position)
         {
-            if (Game1.random.NextDouble() <= 0.25)
+            if (Game1.random.NextDouble() < this.model.ChanceForHalting)
             {
-                this.pauseTimer = Game1.random.Next(2000, 10000);
+                this.pauseTimer = Game1.random.Next(this.model.MinHaltTime, this.model.MaxHaltTime);
             }
 
             return false;
@@ -140,7 +139,6 @@ namespace CustomCompanions.Framework.Companions
                 {
                     if (newDirection < 4)
                     {
-                        int oldDirection = this.FacingDirection;
                         if (!base.IsFlying() && this.IsCollidingPosition(this.nextPosition(newDirection), this.currentLocation))
                         {
                             return;
@@ -155,8 +153,11 @@ namespace CustomCompanions.Framework.Companions
                             this.FaceAndMoveInDirection(newDirection);
                             break;
                         default:
-                            this.Halt();
-                            this.pauseTimer = Game1.random.Next(2000, 10000);
+                            if (Game1.random.NextDouble() < this.model.ChanceForHalting)
+                            {
+                                this.Halt();
+                                this.pauseTimer = Game1.random.Next(this.model.MinHaltTime, this.model.MaxHaltTime);
+                            }
                             break;
                     }
                 }
@@ -250,9 +251,9 @@ namespace CustomCompanions.Framework.Companions
             {
                 this.FaceAndMoveInDirection(this.getGeneralDirectionTowards(this.GetTargetPosition(), 0, opposite: false, useTileCalculations: false));
 
-                if (Game1.random.NextDouble() <= 0.25)
+                if (Game1.random.NextDouble() < this.model.ChanceForHalting)
                 {
-                    this.pauseTimer = Game1.random.Next(2000, 10000);
+                    this.pauseTimer = Game1.random.Next(this.model.MinHaltTime, this.model.MaxHaltTime);
                 }
             }
         }
