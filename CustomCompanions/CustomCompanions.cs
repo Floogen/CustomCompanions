@@ -51,13 +51,14 @@ namespace CustomCompanions
             }
 
             // Add in our debug commands
-            helper.ConsoleCommands.Add("cc_spawnCompanion", "Spawns in a specific companion.\n\nUsage: cc_spawnCompanion [QUANTITY] UNIQUE_ID.COMPANION_NAME", this.DebugSpawnCompanion);
-            helper.ConsoleCommands.Add("cc_removeAll", "Removes all map-based custom companions at the current location.\n\nUsage: cc_removeAll", this.DebugRemoveAll);
+            helper.ConsoleCommands.Add("cc_spawn", "Spawns in a specific companion.\n\nUsage: cc_spawn [QUANTITY] UNIQUE_ID.COMPANION_NAME", this.DebugSpawnCompanion);
+            helper.ConsoleCommands.Add("cc_clear", "Removes all map-based custom companions at the current location.\n\nUsage: cc_clear", this.DebugClear);
+            helper.ConsoleCommands.Add("cc_reload", "Reloads all custom companion content packs. Note: This will remove all spawned companions.\n\nUsage: cc_reload", this.DebugReload);
 
             // Hook into GameLoop events
-            helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
-            helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.Saving += this.OnSaving;
+            helper.Events.GameLoop.DayStarted += this.OnDayStarted;
+            helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
 
             // Hook into Player events
@@ -87,8 +88,55 @@ namespace CustomCompanions
             }
 
             // Load any owned content packs
-            Dictionary<string, string> manifestToAssetToken = new Dictionary<string, string>();
-            foreach (IContentPack contentPack in this.Helper.ContentPacks.GetOwned())
+            this.LoadContentPacks();
+
+            // Load the assets
+            Helper.Content.AssetLoaders.Add(new AssetManager());
+        }
+
+        private void IdsAssigned(object sender, EventArgs e)
+        {
+            // Get the ring IDs loaded in by JA from our owned content packs
+            foreach (var ring in RingManager.rings)
+            {
+                int objectID = _jsonAssetsApi.GetObjectId(ring.Name);
+                if (objectID == -1)
+                {
+                    continue;
+                }
+
+                ring.ObjectID = objectID;
+            }
+        }
+
+        private void OnSaving(object sender, SavingEventArgs e)
+        {
+            // Go through all game locations and purge any of custom creatures
+            this.RemoveAllCompanions();
+        }
+
+        private void OnDayStarted(object sender, DayStartedEventArgs e)
+        {
+            RingManager.LoadWornRings();
+        }
+
+        private void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
+        {
+            this.Reset();
+        }
+
+        private void OnWarped(object sender, WarpedEventArgs e)
+        {
+            // Spawn any map-based companions that are located in this new area
+            this.SpawnSceneryCompanions(e.NewLocation);
+        }
+
+        private void LoadContentPacks(bool isReload = false)
+        {
+            this.Reset(false, isReload);
+
+            // Load the owned content packs
+            foreach (IContentPack contentPack in Helper.ContentPacks.GetOwned())
             {
                 Monitor.Log($"Loading companions from pack: {contentPack.Manifest.Name} {contentPack.Manifest.Version} by {contentPack.Manifest.Author}", LogLevel.Debug);
 
@@ -136,10 +184,10 @@ namespace CustomCompanions
                 // Cache the manifest's unique id, so that it can be reference by a Content Patcher token
                 if (_contentPatcherApi != null)
                 {
-                    manifestToAssetToken.Add(contentPack.Manifest.UniqueID, String.Concat("CustomCompanions/Companions/", contentPack.Manifest.UniqueID));
+                    AssetManager.manifestIdToAssetToken.Add(contentPack.Manifest.UniqueID, String.Concat("CustomCompanions/Companions/", contentPack.Manifest.UniqueID));
                 }
 
-                if (_jsonAssetsApi != null)
+                if (_jsonAssetsApi != null && !isReload)
                 {
                     // Load in the rings that will be paired to a companion
                     if (!Directory.Exists(Path.Combine(contentPack.DirectoryPath, "Objects")))
@@ -177,56 +225,33 @@ namespace CustomCompanions
                     _jsonAssetsApi.LoadAssets(contentPack.DirectoryPath);
                 }
             }
-
-            // Load the assets
-            Helper.Content.AssetLoaders.Add(new AssetManager(CompanionManager.companionModels, manifestToAssetToken));
         }
 
-        private void IdsAssigned(object sender, EventArgs e)
+        private void Reset(bool isFirstRun = false, bool isReload = false)
         {
-            // Get the ring IDs loaded in by JA from our owned content packs
-            foreach (var ring in RingManager.rings)
+            if (isFirstRun)
             {
-                int objectID = _jsonAssetsApi.GetObjectId(ring.Name);
-                if (objectID == -1)
-                {
-                    continue;
-                }
-
-                ring.ObjectID = objectID;
-            }
-        }
-
-        private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
-        {
-            RingManager.LoadWornRings();
-        }
-
-        private void OnSaving(object sender, SavingEventArgs e)
-        {
-            // Go through all game locations and purge any of custom creatures
-            foreach (GameLocation location in Game1.locations.Where(l => l != null))
-            {
-                if (location.characters != null)
-                {
-                    foreach (var creature in location.characters.Where(c => CompanionManager.IsCustomCompanion(c)).ToList())
-                    {
-                        location.characters.Remove(creature);
-                    }
-                }
+                // Set up the RingManager
+                RingManager.rings = new List<RingModel>();
             }
 
+            if (isFirstRun || isReload)
+            {
+                // Set up the companion models
+                CompanionManager.companionModels = new List<CompanionModel>();
+
+                // Set up the dictionary between content pack's manifest IDs to their asset names
+                AssetManager.manifestIdToAssetToken = new Dictionary<string, string>();
+            }
+
+            // Set up the CompanionManager
+            CompanionManager.activeCompanions = new List<BoundCompanions>();
             CompanionManager.sceneryCompanions = new List<SceneryCompanions>();
         }
 
-        private void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
+        private void SpawnSceneryCompanions(GameLocation location)
         {
-            this.Reset();
-        }
-
-        private void OnWarped(object sender, WarpedEventArgs e)
-        {
-            var backLayer = e.NewLocation.map.GetLayer("Back");
+            var backLayer = location.map.GetLayer("Back");
             for (int x = 0; x < backLayer.LayerWidth; x++)
             {
                 for (int y = 0; y < backLayer.LayerHeight; y++)
@@ -244,7 +269,7 @@ namespace CustomCompanions
                         {
                             if (!String.IsNullOrEmpty(command))
                             {
-                                Monitor.Log($"Unknown CustomCompanions command ({command.Split(' ')[0]}) given on tile ({x}, {y}) for map {e.NewLocation.NameOrUniqueName}!", LogLevel.Warn);
+                                Monitor.Log($"Unknown CustomCompanions command ({command.Split(' ')[0]}) given on tile ({x}, {y}) for map {location.NameOrUniqueName}!", LogLevel.Warn);
                             }
                             continue;
                         }
@@ -259,12 +284,12 @@ namespace CustomCompanions
                         var companion = CompanionManager.companionModels.FirstOrDefault(c => String.Concat(c.Owner, ".", c.Name) == companionKey);
                         if (companion is null)
                         {
-                            Monitor.Log($"Unable to find companion match for {companionKey} given on tile ({x}, {y}) for map {e.NewLocation.NameOrUniqueName}!", LogLevel.Warn);
+                            Monitor.Log($"Unable to find companion match for {companionKey} given on tile ({x}, {y}) for map {location.NameOrUniqueName}!", LogLevel.Warn);
                             continue;
                         }
 
-                        Monitor.Log($"Spawning [{companionKey}] x{amountToSummon} on tile ({x}, {y}) for map {e.NewLocation.NameOrUniqueName}");
-                        CompanionManager.SummonCompanions(companion, amountToSummon, new Vector2(x, y), e.NewLocation);
+                        Monitor.Log($"Spawning [{companionKey}] x{amountToSummon} on tile ({x}, {y}) for map {location.NameOrUniqueName}");
+                        CompanionManager.SummonCompanions(companion, amountToSummon, new Vector2(x, y), location);
                     }
                 }
             }
@@ -272,23 +297,20 @@ namespace CustomCompanions
             CompanionManager.RefreshLights();
         }
 
-        private void Reset(bool isFirstRun = false)
+        private void RemoveAllCompanions(GameLocation targetLocation = null)
         {
-            if (isFirstRun)
+            foreach (GameLocation location in Game1.locations.Where(l => l != null && (targetLocation is null || l == targetLocation)))
             {
-                // Set up the companion models
-                CompanionManager.companionModels = new List<CompanionModel>();
-
-                // Set up the RingManager
-                RingManager.rings = new List<RingModel>();
-
-                // Set up the dictionary between content pack's manifest IDs to their asset names
-                AssetManager.manifestIdToAssetToken = new Dictionary<string, string>();
+                if (location.characters != null)
+                {
+                    foreach (var creature in location.characters.Where(c => CompanionManager.IsCustomCompanion(c)).ToList())
+                    {
+                        location.characters.Remove(creature);
+                    }
+                }
             }
 
-            // Set up the CompanionManager
-            CompanionManager.activeCompanions = new List<BoundCompanions>();
-            CompanionManager.sceneryCompanions = new List<SceneryCompanions>();
+            this.Reset();
         }
 
         private void DebugSpawnCompanion(string command, string[] args)
@@ -328,15 +350,19 @@ namespace CustomCompanions
             CompanionManager.SummonCompanions(companion, amountToSummon, Game1.player.getTileLocation(), Game1.currentLocation);
         }
 
-        private void DebugRemoveAll(string command, string[] args)
+        private void DebugClear(string command, string[] args)
         {
-            var currentLocation = Game1.player.currentLocation;
-            foreach (var companion in currentLocation.characters.Where(c => CompanionManager.IsCustomCompanion(c)).ToList())
-            {
-                currentLocation.characters.Remove(companion);
-            }
+            this.RemoveAllCompanions(Game1.player.currentLocation);
+        }
 
-            CompanionManager.sceneryCompanions.Clear();
+        private void DebugReload(string command, string[] args)
+        {
+            this.RemoveAllCompanions();
+            this.LoadContentPacks(true);
+
+            // Respawn any previously active companions
+            RingManager.LoadWornRings();
+            this.SpawnSceneryCompanions(Game1.player.currentLocation);
         }
 
         internal static bool IsSoundValid(string soundName, bool logFailure = false)
