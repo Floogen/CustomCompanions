@@ -11,25 +11,18 @@ namespace CustomCompanions.Framework.Managers
 {
     internal class AssetManager : IAssetLoader
     {
-        private List<CompanionModel> models;
 
-        internal static Dictionary<string, string> manifestIdToAssetToken = new Dictionary<string, string>();
-
-        public AssetManager(List<CompanionModel> models, Dictionary<string, string> uniqueIdToAsset)
-        {
-            this.models = models;
-            manifestIdToAssetToken = uniqueIdToAsset;
-        }
+        internal static Dictionary<string, string> manifestIdToAssetToken;
 
         public bool CanLoad<T>(IAssetInfo asset)
         {
-            return asset.AssetNameEquals("CustomCompanions/Companions/ExampleAuthor.ExamplePack");
+            return manifestIdToAssetToken.Keys.Any(i => asset.AssetNameEquals($"CustomCompanions/Companions/{i}"));
         }
 
         public T Load<T>(IAssetInfo asset)
         {
             var namesToModelData = new Dictionary<string, object>();
-            foreach (var model in models.Where(m => !namesToModelData.ContainsKey(m.Name)))
+            foreach (var model in CompanionManager.companionModels.Where(m => !namesToModelData.ContainsKey(m.Name)))
             {
                 namesToModelData.Add(model.Name, JsonParser.Serialize<object>(model));
             }
