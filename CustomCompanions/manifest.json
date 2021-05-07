@@ -11,6 +11,10 @@
     {
       "UniqueID": "spacechase0.JsonAssets",
       "IsRequired": false
+    },
+    {
+      "UniqueID": "Pathoschild.ContentPatcher",
+      "IsRequired": false
     }
   ]
 }

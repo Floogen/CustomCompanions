@@ -6,6 +6,7 @@ namespace CustomCompanions.Framework.Managers
     internal static class ApiManager
     {
         private static IMonitor monitor = CustomCompanions.monitor;
+        private static IContentPatcherAPI contentPatcherApi;
         private static IJsonAssetsApi jsonAssetsApi;
         private static IWearMoreRingsApi wearMoreRingsApi;
 
@@ -35,6 +36,25 @@ namespace CustomCompanions.Framework.Managers
 
             monitor.Log("Successfully hooked into bcmpinc.WearMoreRings.", LogLevel.Debug);
             return true;
+        }
+
+        internal static bool HookIntoContentPatcher(IModHelper helper)
+        {
+            contentPatcherApi = helper.ModRegistry.GetApi<IContentPatcherAPI>("Pathoschild.ContentPatcher");
+
+            if (contentPatcherApi is null)
+            {
+                monitor.Log("Failed to hook into Pathoschild.ContentPatcher.", LogLevel.Error);
+                return false;
+            }
+
+            monitor.Log("Successfully hooked into Pathoschild.ContentPatcher.", LogLevel.Debug);
+            return true;
+        }
+
+        public static IContentPatcherAPI GetContentPatcherInterface()
+        {
+            return contentPatcherApi;
         }
 
         internal static IJsonAssetsApi GetJsonAssetsApi()

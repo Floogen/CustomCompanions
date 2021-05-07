@@ -1,23 +1,19 @@
-﻿using CustomCompanions.Framework;
-using CustomCompanions.Framework.Companions;
+﻿using CustomCompanions.Framework.External.ContentPatcher;
 using CustomCompanions.Framework.Interfaces;
 using CustomCompanions.Framework.Managers;
 using CustomCompanions.Framework.Models;
 using CustomCompanions.Framework.Models.Companion;
 using CustomCompanions.Framework.Patches;
+using CustomCompanions.Framework.Utilities;
 using Harmony;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
-using StardewValley.Objects;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CustomCompanions
 {
@@ -27,12 +23,13 @@ namespace CustomCompanions
         internal static IModHelper modHelper;
 
         private IJsonAssetsApi _jsonAssetsApi;
+        private IContentPatcherAPI _contentPatcherApi;
 
         public override void Entry(IModHelper helper)
         {
             // Set up the monitor and helper
             monitor = Monitor;
-            modHelper = helper;
+            modHelper = Helper;
 
             // Set up the mod's resources
             this.Reset(true);
@@ -83,7 +80,14 @@ namespace CustomCompanions
                 _jsonAssetsApi.IdsAssigned += this.IdsAssigned;
             }
 
+            if (Helper.ModRegistry.IsLoaded("Pathoschild.ContentPatcher") && ApiManager.HookIntoContentPatcher(Helper))
+            {
+                _contentPatcherApi = ApiManager.GetContentPatcherInterface();
+                _contentPatcherApi.RegisterToken(ModManifest, "Companions", new CompanionToken());
+            }
+
             // Load any owned content packs
+            Dictionary<string, string> manifestToAssetToken = new Dictionary<string, string>();
             foreach (IContentPack contentPack in this.Helper.ContentPacks.GetOwned())
             {
                 Monitor.Log($"Loading companions from pack: {contentPack.Manifest.Name} {contentPack.Manifest.Version} by {contentPack.Manifest.Author}", LogLevel.Debug);
@@ -129,6 +133,12 @@ namespace CustomCompanions
                     CompanionManager.companionModels.Add(companion);
                 }
 
+                // Cache the manifest's unique id, so that it can be reference by a Content Patcher token
+                if (_contentPatcherApi != null)
+                {
+                    manifestToAssetToken.Add(contentPack.Manifest.UniqueID, String.Concat("CustomCompanions/Companions/", contentPack.Manifest.UniqueID));
+                }
+
                 if (_jsonAssetsApi != null)
                 {
                     // Load in the rings that will be paired to a companion
@@ -167,6 +177,9 @@ namespace CustomCompanions
                     _jsonAssetsApi.LoadAssets(contentPack.DirectoryPath);
                 }
             }
+
+            // Load the assets
+            Helper.Content.AssetLoaders.Add(new AssetManager(CompanionManager.companionModels, manifestToAssetToken));
         }
 
         private void IdsAssigned(object sender, EventArgs e)
@@ -268,6 +281,9 @@ namespace CustomCompanions
 
                 // Set up the RingManager
                 RingManager.rings = new List<RingModel>();
+
+                // Set up the dictionary between content pack's manifest IDs to their asset names
+                AssetManager.manifestIdToAssetToken = new Dictionary<string, string>();
             }
 
             // Set up the CompanionManager

@@ -39,6 +39,10 @@
     <Reference Include="Microsoft.Build" />
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Build.Utilities.v4.0" />
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression" />
@@ -54,10 +58,13 @@
     <Compile Include="CustomCompanions.cs" />
     <Compile Include="Framework\Companions\IdleBehavior.cs" />
     <Compile Include="Framework\Companions\MapCompanion.cs" />
+    <Compile Include="Framework\External\ContentPatcher\CompanionToken.cs" />
+    <Compile Include="Framework\Interfaces\IContentPatcherAPI.cs" />
     <Compile Include="Framework\Managers\ApiManager.cs" />
     <Compile Include="Framework\Companions\Companion.cs" />
     <Compile Include="Framework\Interfaces\IJsonAssetsApi.cs" />
     <Compile Include="Framework\Interfaces\IWearMoreRingsApi.cs" />
+    <Compile Include="Framework\Managers\AssetManager.cs" />
     <Compile Include="Framework\Managers\CompanionManager.cs" />
     <Compile Include="Framework\Models\Companion\ShadowModel.cs" />
     <Compile Include="Framework\Models\Companion\ManualFrameModel.cs" />
@@ -72,6 +79,7 @@
     <Compile Include="Framework\Patches\GameLocationPatch.cs" />
     <Compile Include="Framework\Patches\UtilityPatch.cs" />
     <Compile Include="Framework\Managers\RingManager.cs" />
+    <Compile Include="Framework\Utilities\JsonParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
