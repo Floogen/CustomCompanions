@@ -121,9 +121,32 @@ namespace CustomCompanions.Framework.Managers
             }
         }
 
-        internal static void UpdateCompanions()
+        internal static bool UpdateCompanionModel(CompanionModel model)
         {
-            // TODO: Implement game tick updates
+            var cachedModel = companionModels.FirstOrDefault(c => c.GetId() == model.GetId());
+            if (cachedModel is null)
+            {
+                CustomCompanions.monitor.Log($"No companion match found for {model.GetId()}; Did a content patch update the name?", StardewModdingAPI.LogLevel.Trace);
+                return false;
+            }
+
+            // Update our cached model
+            companionModels[companionModels.IndexOf(cachedModel)] = model;
+
+            // Update any existing companions using this model
+            foreach (var activeCompanion in activeCompanions.SelectMany(c => c.Companions).Where(c => c.model.GetId() == model.GetId()))
+            {
+                // Do model update
+                activeCompanion.UpdateModel(model);
+            }
+
+            foreach (var sceneryCompanion in sceneryCompanions.SelectMany(c => c.Companions).Where(c => c.model.GetId() == model.GetId()))
+            {
+                // Do model update
+                sceneryCompanion.UpdateModel(model);
+            }
+
+            return true;
         }
 
         internal static void RefreshLights()

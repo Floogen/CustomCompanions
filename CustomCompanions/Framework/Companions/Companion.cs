@@ -52,15 +52,6 @@ namespace CustomCompanions.Framework.Companions
         internal readonly NetVector2 motion = new NetVector2(Vector2.Zero);
         internal new readonly NetRectangle nextPosition = new NetRectangle();
 
-        public Companion(CompanionModel model, Vector2 targetTile, GameLocation location) : this(model, null, targetTile)
-        {
-            this.targetTile = targetTile * 64f;
-            this.currentLocation = location;
-            this.motion.Value = Vector2.Zero;
-            base.farmerPassesThrough = model.EnableFarmerCollision ? false : true;
-            this.SetUpCompanion();
-        }
-
         public Companion(CompanionModel model, Farmer owner, Vector2? targetTile = null) : base(new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight), (owner is null ? (Vector2)targetTile : owner.getTileLocation()) * 64f + new Vector2(model.SpawnOffsetX, model.SpawnOffsetY), model.SpawnDirection == -1 ? Game1.random.Next(4) : model.SpawnDirection, model.Name)
         {
             base.Breather = model.EnableBreathing;
@@ -250,17 +241,24 @@ namespace CustomCompanions.Framework.Companions
 
             // Pick a random color (Color.White if none given) or use prismatic if IsPrismatic is true
             color.Value = Color.White;
-            if (this.model.Colors.Count > 0)
+            if (this.model.Colors.Count > 0 || this.model.IsPrismatic)
             {
-                int randomColorIndex = Game1.random.Next(this.model.Colors.Count + (this.model.IsPrismatic ? 1 : 0));
-                if (randomColorIndex > this.model.Colors.Count - 1)
+                if (this.model.Colors.Count == 0 && this.model.IsPrismatic)
                 {
-                    // Primsatic color has been selected
                     this.isPrismatic.Value = true;
                 }
-                else
+                else if (this.model.Colors.Count > 0)
                 {
-                    this.color.Value = CustomCompanions.GetColorFromArray(this.model.Colors[randomColorIndex]);
+                    int randomColorIndex = Game1.random.Next(this.model.Colors.Count + (this.model.IsPrismatic ? 1 : 0));
+                    if (randomColorIndex > this.model.Colors.Count - 1)
+                    {
+                        // Primsatic color has been selected
+                        this.isPrismatic.Value = true;
+                    }
+                    else
+                    {
+                        this.color.Value = CustomCompanions.GetColorFromArray(this.model.Colors[randomColorIndex]);
+                    }
                 }
             }
 
@@ -756,6 +754,134 @@ namespace CustomCompanions.Framework.Companions
             {
                 Game1.currentLightSources.Remove(this.light);
             }
+        }
+
+        internal virtual void UpdateModel(CompanionModel updatedModel)
+        {
+            // Update sounds
+            if (this.idleSound is null || this.idleSound != updatedModel.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "IDLE"))
+            {
+                this.idleSound = updatedModel.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "IDLE");
+                if (this.idleSound != null && CustomCompanions.IsSoundValid(this.idleSound.SoundName, true))
+                {
+                    this.soundIdleTimer = this.idleSound.TimeBetweenSound;
+                }
+            }
+            if (this.movingSound is null || this.movingSound != updatedModel.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "MOVING"))
+            {
+                this.movingSound = updatedModel.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "MOVING");
+                if (this.movingSound != null && CustomCompanions.IsSoundValid(this.movingSound.SoundName, true))
+                {
+                    this.soundMovingTimer = this.movingSound.TimeBetweenSound;
+                }
+            }
+            if (this.alwaysSound is null || this.alwaysSound != updatedModel.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "ALWAYS"))
+            {
+                this.alwaysSound = updatedModel.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "ALWAYS");
+                if (this.alwaysSound != null && CustomCompanions.IsSoundValid(this.alwaysSound.SoundName, true))
+                {
+                    this.soundMovingTimer = this.alwaysSound.TimeBetweenSound;
+                }
+            }
+
+            // Update color
+            if (!updatedModel.ContainsColor(this.color.Value) || this.model.IsPrismatic != updatedModel.IsPrismatic)
+            {
+                this.isPrismatic.Value = false;
+                if (updatedModel.Colors.Count == 0 && updatedModel.IsPrismatic)
+                {
+                    this.isPrismatic.Value = true;
+                }
+                else if (updatedModel.Colors.Count > 0 && !updatedModel.ContainsColor(this.color.Value))
+                {
+                    int randomColorIndex = Game1.random.Next(updatedModel.Colors.Count + (updatedModel.IsPrismatic ? 1 : 0));
+                    if (randomColorIndex > updatedModel.Colors.Count - 1)
+                    {
+                        // Primsatic color has been selected
+                        this.isPrismatic.Value = true;
+                    }
+                    else
+                    {
+                        this.color.Value = CustomCompanions.GetColorFromArray(updatedModel.Colors[randomColorIndex]);
+                    }
+                }
+                else if (updatedModel.Colors.Count == 0 && !updatedModel.IsPrismatic)
+                {
+                    this.color.Value = Color.White;
+                }
+            }
+
+            // Set up the light to give off, if any
+            if (this.model.Light != updatedModel.Light)
+            {
+                if (this.light != null)
+                {
+                    Game1.currentLightSources.Remove(this.light);
+                    this.light = null;
+                }
+
+                if (updatedModel.Light != null)
+                {
+                    this.lightPulseTimer = this.model.Light.PulseSpeed;
+
+                    this.light = new LightSource(1, new Vector2(this.position.X + this.model.Light.OffsetX, this.position.Y + this.model.Light.OffsetY), this.model.Light.Radius, CustomCompanions.GetColorFromArray(this.model.Light.Color), this.id, LightSource.LightContext.None, 0L);
+                    Game1.currentLightSources.Add(this.light);
+                }
+            }
+
+            // Clear previous animation data
+            idleUniformFrames = null;
+            activeUniformFrames = null;
+            idleUpFrames = null;
+            activeUpFrames = null;
+            idleRightFrames = null;
+            activeRightFrames = null;
+            idleDownFrames = null;
+            activeDownFrames = null;
+            idleLeftFrames = null;
+            activeLeftFrames = null;
+
+            // Set up uniform frames
+            if (updatedModel.UniformAnimation != null && !CustomCompanions.CompanionHasFullMovementSet(updatedModel))
+            {
+                idleUniformFrames = (updatedModel.UniformAnimation.IdleAnimation.ManualFrames != null) ? GetManualFrames(updatedModel.UniformAnimation.IdleAnimation.ManualFrames) : GetManualFrames(updatedModel.UniformAnimation.IdleAnimation.StartingFrame, updatedModel.UniformAnimation.IdleAnimation.NumberOfFrames, updatedModel.UniformAnimation.IdleAnimation.Duration);
+                activeUniformFrames = (updatedModel.UniformAnimation.ManualFrames != null) ? GetManualFrames(updatedModel.UniformAnimation.ManualFrames) : GetManualFrames(updatedModel.UniformAnimation.StartingFrame, updatedModel.UniformAnimation.NumberOfFrames, updatedModel.UniformAnimation.Duration);
+            }
+            else
+            {
+                // Up frames
+                idleUpFrames = (updatedModel.UpAnimation.IdleAnimation.ManualFrames != null) ? GetManualFrames(updatedModel.UpAnimation.IdleAnimation.ManualFrames) : GetManualFrames(updatedModel.UpAnimation.IdleAnimation.StartingFrame, updatedModel.UpAnimation.IdleAnimation.NumberOfFrames, updatedModel.UpAnimation.IdleAnimation.Duration);
+                activeUpFrames = (updatedModel.UpAnimation.ManualFrames != null) ? GetManualFrames(updatedModel.UpAnimation.ManualFrames) : GetManualFrames(updatedModel.UpAnimation.StartingFrame, updatedModel.UpAnimation.NumberOfFrames, updatedModel.UpAnimation.Duration);
+
+                // Right frames
+                idleRightFrames = (updatedModel.RightAnimation.IdleAnimation.ManualFrames != null) ? GetManualFrames(updatedModel.RightAnimation.IdleAnimation.ManualFrames) : GetManualFrames(updatedModel.RightAnimation.IdleAnimation.StartingFrame, updatedModel.RightAnimation.IdleAnimation.NumberOfFrames, updatedModel.RightAnimation.IdleAnimation.Duration);
+                activeRightFrames = (updatedModel.RightAnimation.ManualFrames != null) ? GetManualFrames(updatedModel.RightAnimation.ManualFrames) : GetManualFrames(updatedModel.RightAnimation.StartingFrame, updatedModel.RightAnimation.NumberOfFrames, updatedModel.RightAnimation.Duration);
+
+                // Down frames
+                idleDownFrames = (updatedModel.DownAnimation.IdleAnimation.ManualFrames != null) ? GetManualFrames(updatedModel.DownAnimation.IdleAnimation.ManualFrames) : GetManualFrames(updatedModel.DownAnimation.IdleAnimation.StartingFrame, updatedModel.DownAnimation.IdleAnimation.NumberOfFrames, updatedModel.DownAnimation.IdleAnimation.Duration);
+                activeDownFrames = (updatedModel.DownAnimation.ManualFrames != null) ? GetManualFrames(updatedModel.DownAnimation.ManualFrames) : GetManualFrames(updatedModel.DownAnimation.StartingFrame, updatedModel.DownAnimation.NumberOfFrames, updatedModel.DownAnimation.Duration);
+
+                // Left frames
+                idleLeftFrames = (updatedModel.LeftAnimation.IdleAnimation.ManualFrames != null) ? GetManualFrames(updatedModel.LeftAnimation.IdleAnimation.ManualFrames) : GetManualFrames(updatedModel.LeftAnimation.IdleAnimation.StartingFrame, updatedModel.LeftAnimation.IdleAnimation.NumberOfFrames, updatedModel.LeftAnimation.IdleAnimation.Duration);
+                activeLeftFrames = (updatedModel.LeftAnimation.ManualFrames != null) ? GetManualFrames(updatedModel.LeftAnimation.ManualFrames) : GetManualFrames(updatedModel.LeftAnimation.StartingFrame, updatedModel.LeftAnimation.NumberOfFrames, updatedModel.LeftAnimation.Duration);
+            }
+
+            // Update the model itself
+            this.model = updatedModel;
+
+            // Leftover settings
+            base.collidesWithOtherCharacters.Value = (model.Type.ToUpper() == "FLYING" ? false : true);
+            base.Breather = model.EnableBreathing;
+            base.speed = model.TravelSpeed;
+            base.Scale = model.Scale;
+
+            if (base.Sprite.loadedTexture != model.TileSheetPath || base.Sprite.SpriteWidth != model.FrameSizeWidth || base.Sprite.SpriteHeight != model.FrameSizeHeight)
+            {
+                base.Sprite = new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight);
+            }
+
+            this.idleBehavior = new IdleBehavior(this, model.IdleBehavior);
+            this.hasShadow.Value = model.EnableShadow;
         }
     }
 }

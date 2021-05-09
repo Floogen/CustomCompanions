@@ -1,9 +1,6 @@
-﻿using CustomCompanions.Framework.Managers;
+﻿using CustomCompanions.Framework.Assets;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CustomCompanions.Framework.External.ContentPatcher
 {
@@ -26,7 +23,7 @@ namespace CustomCompanions.Framework.External.ContentPatcher
         /// <remarks>Default unrestricted.</remarks>
         public IEnumerable<string> GetValidInputs()
         {
-            return AssetManager.manifestIdToAssetToken.Keys;
+            return AssetManager.idToAssetToken.Keys;
         }
 
         /// <summary>Validate that the provided input arguments are valid.</summary>
@@ -38,9 +35,9 @@ namespace CustomCompanions.Framework.External.ContentPatcher
         {
             error = String.Empty;
 
-            if (!AssetManager.manifestIdToAssetToken.ContainsKey(input))
+            if (!AssetManager.idToAssetToken.ContainsKey(input))
             {
-                error = $"No matching content pack found for the given UniqueID: {input}";
+                error = $"No matching companion found for the given UNIQUE_ID.COMPANION_NAME: {input}";
                 return false;
             }
 
@@ -57,17 +54,17 @@ namespace CustomCompanions.Framework.External.ContentPatcher
         /// <summary>Get whether the token is available for use.</summary>
         public bool IsReady()
         {
-            return AssetManager.manifestIdToAssetToken.Count > 0;
+            return AssetManager.idToAssetToken.Count > 0;
         }
 
         /// <summary>Get the current values.</summary>
         /// <param name="input">The input arguments, if any.</param>
         public IEnumerable<string> GetValues(string input)
         {
-            if (!IsReady() || !AssetManager.manifestIdToAssetToken.ContainsKey(input))
+            if (!IsReady() || !AssetManager.idToAssetToken.ContainsKey(input))
                 yield break;
 
-            yield return AssetManager.manifestIdToAssetToken[input];
+            yield return AssetManager.idToAssetToken[input];
         }
     }
 }

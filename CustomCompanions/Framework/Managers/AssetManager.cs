@@ -1,34 +1,38 @@
-﻿using CustomCompanions.Framework.Models.Companion;
+﻿using CustomCompanions.Framework.Managers;
+using CustomCompanions.Framework.Models.Companion;
 using CustomCompanions.Framework.Utilities;
 using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace CustomCompanions.Framework.Managers
+namespace CustomCompanions.Framework.Assets
 {
     internal class AssetManager : IAssetLoader
     {
-
-        internal static Dictionary<string, string> manifestIdToAssetToken;
+        internal static Dictionary<string, string> idToAssetToken;
 
         public bool CanLoad<T>(IAssetInfo asset)
         {
-            return manifestIdToAssetToken.Keys.Any(i => asset.AssetNameEquals($"CustomCompanions/Companions/{i}"));
+            return idToAssetToken.Keys.Any(i => asset.AssetNameEquals($"{CustomCompanions.TOKEN_HEADER}{i}"));
         }
 
         public T Load<T>(IAssetInfo asset)
         {
-            var namesToModelData = new Dictionary<string, object>();
-            foreach (var model in CompanionManager.companionModels.Where(m => !namesToModelData.ContainsKey(m.Name)))
+            var model = CompanionManager.companionModels.First(c => asset.AssetNameEquals($"{CustomCompanions.TOKEN_HEADER}{c.GetId()}"));
+
+            //CustomCompanions.monitor.Log($"TEST: {JsonParser.Serialize<object>(model).ToString()}", LogLevel.Warn);
+            return (T)(object)new Dictionary<string, object>() { { CustomCompanions.COMPANION_KEY, JsonParser.Serialize<object>(model) } };
+        }
+
+        internal static object GetCompanionModelObject(Dictionary<string, object> companionModelAsset)
+        {
+            if (!companionModelAsset.ContainsKey(CustomCompanions.COMPANION_KEY))
             {
-                namesToModelData.Add(model.Name, JsonParser.Serialize<object>(model));
+                return null;
             }
 
-            //var model = JsonParser.Serialize(new Dictionary<string, object>() { { "testKey", new CompanionModel { Name = "test" } } });
-            return (T)(object)namesToModelData;
+            return companionModelAsset[CustomCompanions.COMPANION_KEY];
         }
     }
 }

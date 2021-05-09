@@ -93,6 +93,13 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
+        internal override void UpdateModel(CompanionModel updatedModel)
+        {
+            base.UpdateModel(updatedModel);
+
+            base.farmerPassesThrough = updatedModel.EnableFarmerCollision ? false : true;
+        }
+
         internal void FaceAndMoveInDirection(int direction)
         {
             this.SetFacingDirection(direction);

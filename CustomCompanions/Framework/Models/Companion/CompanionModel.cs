@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,6 +44,16 @@ namespace CustomCompanions.Framework.Models.Companion
         public AnimationModel DownAnimation { get; set; }
         public AnimationModel LeftAnimation { get; set; }
         public AnimationModel RightAnimation { get; set; }
+
+        public string GetId()
+        {
+            return $"{Owner}.{Name}";
+        }
+
+        public bool ContainsColor(Color color)
+        {
+            return Colors.Any(c => c.SequenceEqual(new int[] { color.R, color.G, color.B, color.A }));
+        }
 
         public override string ToString()
         {

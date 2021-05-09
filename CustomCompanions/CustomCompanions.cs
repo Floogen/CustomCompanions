@@ -1,4 +1,5 @@
-﻿using CustomCompanions.Framework.External.ContentPatcher;
+﻿using CustomCompanions.Framework.Assets;
+using CustomCompanions.Framework.External.ContentPatcher;
 using CustomCompanions.Framework.Interfaces;
 using CustomCompanions.Framework.Managers;
 using CustomCompanions.Framework.Models;
@@ -22,8 +23,12 @@ namespace CustomCompanions
         internal static IMonitor monitor;
         internal static IModHelper modHelper;
 
+        internal const string COMPANION_KEY = "Companion";
+        internal const string TOKEN_HEADER = "CustomCompanions/Companions/";
+
         private IJsonAssetsApi _jsonAssetsApi;
         private IContentPatcherAPI _contentPatcherApi;
+        private Dictionary<string, object> trackedModels = new Dictionary<string, object>();
 
         public override void Entry(IModHelper helper)
         {
@@ -60,9 +65,13 @@ namespace CustomCompanions
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
+            helper.Events.GameLoop.OneSecondUpdateTicked += this.OnOneSecondUpdateTicked;
 
             // Hook into Player events
             helper.Events.Player.Warped += this.OnWarped;
+
+            // Load the asset manager
+            Helper.Content.AssetLoaders.Add(new AssetManager());
         }
 
         private void OnGameLaunched(object sender, GameLaunchedEventArgs e)
@@ -89,9 +98,6 @@ namespace CustomCompanions
 
             // Load any owned content packs
             this.LoadContentPacks();
-
-            // Load the assets
-            Helper.Content.AssetLoaders.Add(new AssetManager());
         }
 
         private void IdsAssigned(object sender, EventArgs e)
@@ -125,10 +131,48 @@ namespace CustomCompanions
             this.Reset();
         }
 
+        private void OnOneSecondUpdateTicked(object sender, OneSecondUpdateTickedEventArgs e)
+        {
+            if (!Context.IsWorldReady)
+            {
+                return;
+            }
+
+            // Check for any content patcher changes
+            this.ValidateModelCache();
+        }
+
         private void OnWarped(object sender, WarpedEventArgs e)
         {
+            // Check for any content patcher changes
+            this.ValidateModelCache();
+
             // Spawn any map-based companions that are located in this new area
             this.SpawnSceneryCompanions(e.NewLocation);
+        }
+
+        private void ValidateModelCache()
+        {
+            // Have to load each asset every second, as we don't have a way to track content patcher changes (except for comparing changes to our cache)
+            foreach (var idToToken in AssetManager.idToAssetToken)
+            {
+                var asset = AssetManager.GetCompanionModelObject(Helper.Content.Load<Dictionary<string, object>>(idToToken.Value, ContentSource.GameContent));
+                if (asset != null)
+                {
+                    var trackedModel = trackedModels[idToToken.Key];
+                    var updatedModel = JsonParser.GetUpdatedModel(trackedModel, asset);
+                    if (!JsonParser.CompareSerializedObjects(updatedModel, trackedModel))// && idToToken.Value == "CustomCompanions/Companions/ExampleAuthor.ExamplePack.ExampleAlternativeWanderWalkingCow")
+                    {
+                        // Update the existing model object
+                        if (CompanionManager.UpdateCompanionModel(JsonParser.Deserialize<CompanionModel>(updatedModel)))
+                        {
+                            trackedModels[idToToken.Key] = updatedModel;
+                        }
+
+                        //Monitor.Log($"TEST: {updatedModel}", LogLevel.Warn);
+                    }
+                }
+            }
         }
 
         private void LoadContentPacks(bool isReload = false)
@@ -179,12 +223,16 @@ namespace CustomCompanions
 
                     // Add the companion to our cache
                     CompanionManager.companionModels.Add(companion);
-                }
 
-                // Cache the manifest's unique id, so that it can be reference by a Content Patcher token
-                if (_contentPatcherApi != null)
-                {
-                    AssetManager.manifestIdToAssetToken.Add(contentPack.Manifest.UniqueID, String.Concat("CustomCompanions/Companions/", contentPack.Manifest.UniqueID));
+                    // Cache the full name of the companion, so that it can be reference by a Content Patcher token
+                    if (_contentPatcherApi != null)
+                    {
+                        var assetToken = $"{TOKEN_HEADER}{companion.GetId()}";
+                        AssetManager.idToAssetToken.Add(companion.GetId(), assetToken);
+
+                        var modelObject = AssetManager.GetCompanionModelObject(Helper.Content.Load<Dictionary<string, object>>(assetToken, ContentSource.GameContent));
+                        trackedModels.Add(companion.GetId(), modelObject);
+                    }
                 }
 
                 if (_jsonAssetsApi != null && !isReload)
@@ -241,7 +289,7 @@ namespace CustomCompanions
                 CompanionManager.companionModels = new List<CompanionModel>();
 
                 // Set up the dictionary between content pack's manifest IDs to their asset names
-                AssetManager.manifestIdToAssetToken = new Dictionary<string, string>();
+                AssetManager.idToAssetToken = new Dictionary<string, string>();
             }
 
             // Set up the CompanionManager
