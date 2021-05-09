@@ -1,4 +1,5 @@
 ﻿using CustomCompanions.Framework.Assets;
+using CustomCompanions.Framework.Companions;
 using CustomCompanions.Framework.External.ContentPatcher;
 using CustomCompanions.Framework.Interfaces;
 using CustomCompanions.Framework.Managers;
@@ -140,8 +141,11 @@ namespace CustomCompanions
                 return;
             }
 
-            // Check for any content patcher changes
-            this.ValidateModelCache();
+            // Check for any content patcher changes every 5 seconds
+            if (e.IsMultipleOf(300))
+            {
+                this.ValidateModelCache(Game1.player.currentLocation);
+            }
         }
 
         private void OnWarped(object sender, WarpedEventArgs e)
