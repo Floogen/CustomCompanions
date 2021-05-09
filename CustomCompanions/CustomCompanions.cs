@@ -151,7 +151,7 @@ namespace CustomCompanions
         private void OnWarped(object sender, WarpedEventArgs e)
         {
             // Check for any content patcher changes
-            this.ValidateModelCache();
+            this.ValidateModelCache(e.NewLocation);
 
             // Spawn any map-based companions that are located in this new area
             this.SpawnSceneryCompanions(e.NewLocation);
@@ -160,17 +160,17 @@ namespace CustomCompanions
             this.RemoveOrphanCompanions(e.NewLocation);
         }
 
-        private void ValidateModelCache()
+        private void ValidateModelCache(GameLocation location)
         {
             // Have to load each asset every second, as we don't have a way to track content patcher changes (except for comparing changes to our cache)
-            foreach (var idToToken in AssetManager.idToAssetToken)
+            foreach (var idToToken in AssetManager.idToAssetToken.Where(p => location.characters.Any(c => CompanionManager.IsCustomCompanion(c) && (c as Companion).model.GetId() == p.Key)))
             {
                 var asset = AssetManager.GetCompanionModelObject(Helper.Content.Load<Dictionary<string, object>>(idToToken.Value, ContentSource.GameContent));
                 if (asset != null)
                 {
                     var trackedModel = trackedModels[idToToken.Key];
                     var updatedModel = JsonParser.GetUpdatedModel(trackedModel, asset);
-                    if (!JsonParser.CompareSerializedObjects(updatedModel, trackedModel))// && idToToken.Value == "CustomCompanions/Companions/ExampleAuthor.ExamplePack.ExampleAlternativeWanderWalkingCow")
+                    if (!JsonParser.CompareSerializedObjects(updatedModel, trackedModel))
                     {
                         // Update the existing model object
                         if (CompanionManager.UpdateCompanionModel(JsonParser.Deserialize<CompanionModel>(updatedModel)))
