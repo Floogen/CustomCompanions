@@ -1,0 +1,17 @@
+{
+  "Name": "Content Patcher Tests For Custom Companions",
+  "Author": "PeacefulEnd",
+  "Version": "1.0.0",
+  "Description": "Tests for using Content Patcher to modify Custom Companion packs.",
+  "UniqueID": "PeacefulEnd.ContentPatcherForCustomCompanions",
+  "UpdateKeys": [ "Nexus:???" ],
+  "ContentPackFor": {
+    "UniqueID": "Pathoschild.ContentPatcher"
+  },
+  "Dependencies": [
+    {
+      "UniqueID": "PeacefulEnd.CustomCompanions",
+      "IsRequired": true
+    }
+  ]
+}

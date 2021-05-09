@@ -86,12 +86,8 @@
     <None Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWanderWalkingChicken\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleFirefly\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWanderWalkingCow\companion.json" />
-    <None Include="Examples\[CC] Example Pack\Companions\ExampleUnderwaterFish\companion.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkerCollisionTest\companion.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleUnderwaterFish\companion.json" />
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkerCollisionTest\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWanderWalkingChicken\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWanderWalkingCow\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleFlyingCompanion\companion.json" />
@@ -99,13 +95,13 @@
     <None Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWalkingCompanion\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkingGameCharacter\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCompanion\companion.json" />
-    <None Include="Examples\[CC] Example Pack\i18n\default.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <None Include="Examples\[CC] Example Pack\i18n\default.json" />
     <None Include="Examples\[CC] Example Pack\manifest.json" />
     <None Include="Examples\[CC] Example Pack\Objects\ExampleWalkingGameCharacterRing\object.json" />
     <None Include="Examples\[CC] Example Pack\Objects\ExampleFlyingRing\object.json" />
     <None Include="Examples\[CC] Example Pack\Objects\ExampleWalkingRing\object.json" />
+    <None Include="Examples\[CP] Content Patcher Tests\content.json" />
+    <None Include="Examples\[CP] Content Patcher Tests\manifest.json" />
     <None Include="manifest.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
