@@ -65,13 +65,22 @@ namespace CustomCompanions.Framework.Managers
             }
 
             var sceneryCompanion = new SceneryCompanions() { Location = location, Tile = tile, Companions = companions };
-            if (!sceneryCompanions.Any(s => s.Tile == tile && s.Location == location))
+            if (sceneryCompanions.Any(s => s.Tile == tile && s.Location == location))
             {
-                companions.ForEach(c => location.characters.Add(c));
+                // Clear out old companions, add in the new ones
+                foreach (var scenery in sceneryCompanions.Where(s => s.Tile == tile && s.Location == location))
+                {
+                    scenery.Companions.ForEach(c => location.characters.Remove(c));
+                    scenery.Companions = companions;
+                }
+            }
+            else
+            {
                 sceneryCompanions.Add(sceneryCompanion);
             }
 
             // Ensures each collision based companion is moved to an empty tile
+            companions.ForEach(c => location.characters.Add(c));
             foreach (var companion in companions.Where(c => c.collidesWithOtherCharacters))
             {
                 companion.PlaceInEmptyTile();
@@ -121,6 +130,11 @@ namespace CustomCompanions.Framework.Managers
             }
         }
 
+        internal static void RemoveSceneryCompanionsAtTile(GameLocation location, Vector2 tile)
+        {
+            sceneryCompanions = sceneryCompanions.Where(s => !(s.Location == location && s.Tile == tile)).ToList();
+        }
+
         internal static bool UpdateCompanionModel(CompanionModel model)
         {
             var cachedModel = companionModels.FirstOrDefault(c => c.GetId() == model.GetId());
@@ -165,6 +179,27 @@ namespace CustomCompanions.Framework.Managers
             if (follower != null && follower is Companion)
             {
                 return true;
+            }
+
+            return false;
+        }
+
+        internal static bool IsSceneryCompanion(Character follower)
+        {
+            if (follower != null && follower is MapCompanion)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        internal static bool IsOrphan(Character follower, GameLocation location)
+        {
+            if (follower != null && follower is MapCompanion)
+            {
+                MapCompanion companion = follower as MapCompanion;
+                return !sceneryCompanions.Any(c => c.Location == location && c.Tile == companion.targetTile / 64f && c.Companions.Contains(companion));
             }
 
             return false;

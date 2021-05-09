@@ -11,6 +11,8 @@ using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Buildings;
+using StardewValley.Locations;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -149,6 +151,9 @@ namespace CustomCompanions
 
             // Spawn any map-based companions that are located in this new area
             this.SpawnSceneryCompanions(e.NewLocation);
+
+            // Remove companions that no longer have an existing map tile property
+            this.RemoveOrphanCompanions(e.NewLocation);
         }
 
         private void ValidateModelCache()
@@ -168,8 +173,38 @@ namespace CustomCompanions
                         {
                             trackedModels[idToToken.Key] = updatedModel;
                         }
+                    }
+                }
+            }
+        }
 
-                        //Monitor.Log($"TEST: {updatedModel}", LogLevel.Warn);
+        private void RemoveOrphanCompanions(GameLocation location)
+        {
+            if (location.characters != null)
+            {
+                foreach (var creature in location.characters.Where(c => CompanionManager.IsOrphan(c, location)).ToList())
+                {
+                    Monitor.Log($"Removing orphan scenery companion {creature.Name} from {location.Name}", LogLevel.Trace);
+                    location.characters.Remove(creature);
+                }
+            }
+
+            if (location is BuildableGameLocation)
+            {
+                foreach (Building building in (location as BuildableGameLocation).buildings)
+                {
+                    GameLocation indoorLocation = building.indoors.Value;
+                    if (indoorLocation is null)
+                    {
+                        continue;
+                    }
+
+                    if (indoorLocation.characters != null)
+                    {
+                        foreach (var creature in indoorLocation.characters.Where(c => CompanionManager.IsOrphan(c, location)).ToList())
+                        {
+                            indoorLocation.characters.Remove(creature);
+                        }
                     }
                 }
             }
@@ -312,6 +347,16 @@ namespace CustomCompanions
 
                     if (tile.Properties.ContainsKey("CustomCompanions"))
                     {
+                        if (String.IsNullOrEmpty(tile.Properties["CustomCompanions"]))
+                        {
+                            if (CompanionManager.sceneryCompanions.Any(s => s.Location == location && s.Tile == new Vector2(x, y)))
+                            {
+                                Monitor.Log($"Removing cached SceneryCompanions on tile ({x}, {y}) for map {location.NameOrUniqueName}!", LogLevel.Trace);
+                                CompanionManager.RemoveSceneryCompanionsAtTile(location, new Vector2(x, y));
+                            }
+                            continue;
+                        }
+
                         string command = tile.Properties["CustomCompanions"].ToString();
                         if (command.Split(' ')[0].ToUpper() != "SPAWN")
                         {
@@ -354,6 +399,27 @@ namespace CustomCompanions
                     foreach (var creature in location.characters.Where(c => CompanionManager.IsCustomCompanion(c)).ToList())
                     {
                         location.characters.Remove(creature);
+                    }
+                }
+
+
+                if (location is BuildableGameLocation)
+                {
+                    foreach (Building building in (location as BuildableGameLocation).buildings)
+                    {
+                        GameLocation indoorLocation = building.indoors.Value;
+                        if (indoorLocation is null)
+                        {
+                            continue;
+                        }
+
+                        if (indoorLocation.characters != null)
+                        {
+                            foreach (var creature in indoorLocation.characters.Where(c => CompanionManager.IsCustomCompanion(c)).ToList())
+                            {
+                                indoorLocation.characters.Remove(creature);
+                            }
+                        }
                     }
                 }
             }
@@ -410,7 +476,11 @@ namespace CustomCompanions
 
             // Respawn any previously active companions
             RingManager.LoadWornRings();
+
             this.SpawnSceneryCompanions(Game1.player.currentLocation);
+
+            // Remove companions that no longer have an existing map tile property
+            this.RemoveOrphanCompanions(Game1.player.currentLocation);
         }
 
         internal static bool IsSoundValid(string soundName, bool logFailure = false)
