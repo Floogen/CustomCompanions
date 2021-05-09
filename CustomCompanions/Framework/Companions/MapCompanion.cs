@@ -21,6 +21,7 @@ namespace CustomCompanions.Framework.Companions
         {
             base.targetTile = targetTile * 64f;
             base.currentLocation = location;
+            base.willDestroyObjectsUnderfoot = false;
 
             base.farmerPassesThrough = model.EnableFarmerCollision ? false : true;
             base.SetUpCompanion();
@@ -109,6 +110,11 @@ namespace CustomCompanions.Framework.Companions
         private bool IsCollidingPosition(Microsoft.Xna.Framework.Rectangle position, GameLocation location)
         {
             if (base.currentLocation.isCollidingPosition(position, Game1.viewport, isFarmer: true, 0, glider: false, this))
+            {
+                return true;
+            }
+
+            if (!base.farmerPassesThrough && base.currentLocation.isTileOccupiedByFarmer(new Vector2(position.X / 64, position.Y / 64)) != null)
             {
                 return true;
             }
