@@ -822,9 +822,9 @@ namespace CustomCompanions.Framework.Companions
 
                 if (updatedModel.Light != null)
                 {
-                    this.lightPulseTimer = this.model.Light.PulseSpeed;
+                    this.lightPulseTimer = updatedModel.Light.PulseSpeed;
 
-                    this.light = new LightSource(1, new Vector2(this.position.X + this.model.Light.OffsetX, this.position.Y + this.model.Light.OffsetY), this.model.Light.Radius, CustomCompanions.GetColorFromArray(this.model.Light.Color), this.id, LightSource.LightContext.None, 0L);
+                    this.light = new LightSource(1, new Vector2(this.position.X + updatedModel.Light.OffsetX, this.position.Y + updatedModel.Light.OffsetY), updatedModel.Light.Radius, CustomCompanions.GetColorFromArray(updatedModel.Light.Color), this.id, LightSource.LightContext.None, 0L);
                     Game1.currentLightSources.Add(this.light);
                 }
             }
