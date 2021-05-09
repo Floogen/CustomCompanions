@@ -191,7 +191,7 @@ namespace CustomCompanions.Framework.Companions
                 b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + chestPosition + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), chestBox, Color.White * alpha, this.rotation, new Vector2(chestBox.Width / 2, chestBox.Height / 2 + 1), Math.Max(0.2f, base.scale) * 4f + breathScale, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, spriteLayerDepth + 0.001f);
             }
 
-            var shadowLayerDepth = Math.Max(0f, (float)this.getStandingY() / 10000f) - 1E-06f;
+            var shadowLayerDepth = spriteLayerDepth - 0.001f;
             if (this.hasShadow)
             {
                 if (this.model.Shadow != null)
