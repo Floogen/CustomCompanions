@@ -270,7 +270,7 @@ namespace CustomCompanions
                         AssetManager.idToAssetToken.Add(companion.GetId(), assetToken);
 
                         var modelObject = AssetManager.GetCompanionModelObject(Helper.Content.Load<Dictionary<string, object>>(assetToken, ContentSource.GameContent));
-                        trackedModels.Add(companion.GetId(), modelObject);
+                        trackedModels[companion.GetId()] = modelObject;
                     }
                 }
 
