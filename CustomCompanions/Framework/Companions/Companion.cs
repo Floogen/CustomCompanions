@@ -880,6 +880,12 @@ namespace CustomCompanions.Framework.Companions
                 base.Sprite = new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight);
             }
 
+            // Avoid issue where MaxHaltTime may be higher than MinHaltTime
+            if (this.model.MinHaltTime > this.model.MaxHaltTime)
+            {
+                this.model.MinHaltTime = this.model.MaxHaltTime;
+            }
+
             this.idleBehavior = new IdleBehavior(this, model.IdleBehavior);
             this.hasShadow.Value = model.EnableShadow;
         }

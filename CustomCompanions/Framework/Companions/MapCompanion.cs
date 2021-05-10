@@ -26,6 +26,12 @@ namespace CustomCompanions.Framework.Companions
             base.farmerPassesThrough = model.EnableFarmerCollision ? false : true;
             base.SetUpCompanion();
 
+            // Avoid issue where MaxHaltTime may be higher than MinHaltTime
+            if (this.model.MinHaltTime > this.model.MaxHaltTime)
+            {
+                this.model.MinHaltTime = this.model.MaxHaltTime;
+            }
+
             this.canHalt = !base.IsFlying();
             this.motionMultiplier = 1f;
         }
