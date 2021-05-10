@@ -115,6 +115,11 @@ namespace CustomCompanions.Framework.Companions
 
         private bool IsCollidingPosition(Microsoft.Xna.Framework.Rectangle position, GameLocation location)
         {
+            if (base.currentLocation.isCollidingPosition(position, Game1.viewport, isFarmer: false, 0, glider: false, this))
+            {
+                return true;
+            }
+
             if (base.currentLocation.isCollidingPosition(position, Game1.viewport, isFarmer: true, 0, glider: false, this))
             {
                 return true;
