@@ -12,6 +12,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public string Name { get; set; }
         public ITranslationHelper Translations { get; set; }
         public string Type { get; set; }
+        public bool EnablePeriodicPatchCheck { get; set; }
         public bool EnableFarmerCollision { get; set; }
         public bool EnableShadow { get; set; }
         public ShadowModel Shadow { get; set; }
