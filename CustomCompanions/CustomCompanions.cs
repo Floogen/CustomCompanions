@@ -26,11 +26,15 @@ namespace CustomCompanions
         internal static IMonitor monitor;
         internal static IModHelper modHelper;
 
+        internal const int PERIODIC_CHECK_INTERVAL = 300;
         internal const string COMPANION_KEY = "Companion";
         internal const string TOKEN_HEADER = "CustomCompanions/Companions/";
 
         private IJsonAssetsApi _jsonAssetsApi;
         private IContentPatcherAPI _contentPatcherApi;
+
+        private bool areAllModelsValidated;
+        private int modelValidationIndex;
         private Dictionary<string, object> trackedModels = new Dictionary<string, object>();
 
         public override void Entry(IModHelper helper)
@@ -127,6 +131,10 @@ namespace CustomCompanions
         private void OnDayStarted(object sender, DayStartedEventArgs e)
         {
             RingManager.LoadWornRings();
+
+            // Reset the tracked validation counter
+            this.modelValidationIndex = 0;
+            this.areAllModelsValidated = false;
         }
 
         private void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
@@ -141,17 +149,20 @@ namespace CustomCompanions
                 return;
             }
 
-            // Check for any content patcher changes every 5 seconds
-            if (e.IsMultipleOf(300))
+            // Check for any content patcher changes every second, but iterate through list based on PERIODIC_CHECK_INTERVAL
+            if (e.IsMultipleOf(PERIODIC_CHECK_INTERVAL) || !this.areAllModelsValidated)
             {
-                this.ValidateModelCache(Game1.player.currentLocation);
+                this.areAllModelsValidated = this.ValidateModelCache(Game1.player.currentLocation, PERIODIC_CHECK_INTERVAL / 60);
             }
         }
 
         private void OnWarped(object sender, WarpedEventArgs e)
         {
+            // Reset the tracked validation counter
+            this.modelValidationIndex = 0;
+
             // Check for any content patcher changes
-            this.ValidateModelCache(e.NewLocation);
+            this.areAllModelsValidated = this.ValidateModelCache(e.NewLocation);
 
             // Spawn any map-based companions that are located in this new area
             this.SpawnSceneryCompanions(e.NewLocation);
@@ -160,11 +171,19 @@ namespace CustomCompanions
             this.RemoveOrphanCompanions(e.NewLocation);
         }
 
-        private void ValidateModelCache(GameLocation location)
+        private bool ValidateModelCache(GameLocation location, int workingPeriod = -1)
         {
             // Have to load each asset every second, as we don't have a way to track content patcher changes (except for comparing changes to our cache)
-            foreach (var idToToken in AssetManager.idToAssetToken.Where(p => location.characters.Any(c => CompanionManager.IsCustomCompanion(c) && (c as Companion).model.GetId() == p.Key)))
+            var validCompanionIdToTokens = AssetManager.idToAssetToken.Where(p => location.characters.Any(c => CompanionManager.IsCustomCompanion(c) && (c as Companion).model.GetId() == p.Key && (c as Companion).model.EnablePeriodicPatchCheck)).ToList();
+            if (validCompanionIdToTokens.Count() == 0)
             {
+                return true;
+            }
+
+            var quantityToCheck = workingPeriod == -1 ? validCompanionIdToTokens.Count() : (validCompanionIdToTokens.Count() / workingPeriod) + (validCompanionIdToTokens.Count() % workingPeriod);
+            for (int x = 0; x < quantityToCheck && modelValidationIndex < validCompanionIdToTokens.Count(); x++)
+            {
+                var idToToken = validCompanionIdToTokens[modelValidationIndex];
                 var asset = AssetManager.GetCompanionModelObject(Helper.Content.Load<Dictionary<string, object>>(idToToken.Value, ContentSource.GameContent));
                 if (asset != null)
                 {
@@ -179,7 +198,17 @@ namespace CustomCompanions
                         }
                     }
                 }
+
+                modelValidationIndex++;
             }
+
+            if (modelValidationIndex == validCompanionIdToTokens.Count())
+            {
+                modelValidationIndex = 0;
+                return true;
+            }
+
+            return false;
         }
 
         private void RemoveOrphanCompanions(GameLocation location)
@@ -330,6 +359,9 @@ namespace CustomCompanions
                 // Set up the dictionary between content pack's manifest IDs to their asset names
                 AssetManager.idToAssetToken = new Dictionary<string, string>();
             }
+
+            // Reset the tracked validation counter
+            this.modelValidationIndex = 0;
 
             // Set up the CompanionManager
             CompanionManager.activeCompanions = new List<BoundCompanions>();
