@@ -385,6 +385,12 @@ namespace CustomCompanions
                             continue;
                         }
 
+                        // Check if it is already spawned
+                        if (CompanionManager.sceneryCompanions.Any(s => s.Location == location && s.Tile == new Vector2(x, y) && s.Companions.Any(c => c.model.GetId() == companion.GetId())))
+                        {
+                            continue;
+                        }
+
                         Monitor.Log($"Spawning [{companionKey}] x{amountToSummon} on tile ({x}, {y}) for map {location.NameOrUniqueName}");
                         CompanionManager.SummonCompanions(companion, amountToSummon, new Vector2(x, y), location);
                     }
