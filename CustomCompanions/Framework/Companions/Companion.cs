@@ -866,6 +866,9 @@ namespace CustomCompanions.Framework.Companions
                 activeLeftFrames = (updatedModel.LeftAnimation.ManualFrames != null) ? GetManualFrames(updatedModel.LeftAnimation.ManualFrames) : GetManualFrames(updatedModel.LeftAnimation.StartingFrame, updatedModel.LeftAnimation.NumberOfFrames, updatedModel.LeftAnimation.Duration);
             }
 
+            // Preserve the translations
+            updatedModel.Translations = this.model.Translations;
+
             // Update the model itself
             this.model = updatedModel;
 
