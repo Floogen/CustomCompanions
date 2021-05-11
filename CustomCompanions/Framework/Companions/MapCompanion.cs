@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using xTile.Dimensions;
 
 namespace CustomCompanions.Framework.Companions
 {
@@ -34,11 +33,6 @@ namespace CustomCompanions.Framework.Companions
 
             this.canHalt = !base.IsFlying();
             this.motionMultiplier = 1f;
-
-            if (this.idleBehavior.behavior == Behavior.WALK_SQUARE)
-            {
-                this.StartActivityWalkInSquare(2, 2, 0);
-            }
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -118,19 +112,38 @@ namespace CustomCompanions.Framework.Companions
             this.SetMovingDirection(direction);
         }
 
-        private bool IsCollidingPosition(Microsoft.Xna.Framework.Rectangle position, GameLocation location)
+        internal void RotateDirectionClockwise(int direction, bool reverse = false)
         {
-            if (base.currentLocation.isCollidingPosition(position, Game1.viewport, isFarmer: false, 0, glider: false, this))
+            if (direction >= 3 && !reverse)
+            {
+                direction = -1;
+            }
+            else if (direction <= 0 && reverse)
+            {
+                direction = 4;
+            }
+
+            FaceAndMoveInDirection(direction + (reverse ? -1 : 1));
+        }
+
+        private bool IsCollidingWithFarmer(GameLocation location, Rectangle position)
+        {
+            return location.farmers.Any(f => f != null && f.GetBoundingBox().Intersects(position));
+        }
+
+        private bool IsCollidingPosition(Rectangle position, GameLocation location)
+        {
+            if (location.isCollidingPosition(position, Game1.viewport, isFarmer: false, 0, glider: false, this))
             {
                 return true;
             }
 
-            if (base.currentLocation.isCollidingPosition(position, Game1.viewport, isFarmer: true, 0, glider: false, this))
+            if (location.isCollidingPosition(position, Game1.viewport, isFarmer: true, 0, glider: false, this))
             {
                 return true;
             }
 
-            if (!base.farmerPassesThrough && base.currentLocation.isTileOccupiedByFarmer(new Vector2(position.X / 64, position.Y / 64)) != null)
+            if (!base.farmerPassesThrough && location.isTileOccupiedByFarmer(new Vector2(position.X / 64f, position.Y / 64f)) != null)
             {
                 return true;
             }
@@ -143,13 +156,23 @@ namespace CustomCompanions.Framework.Companions
             return false;
         }
 
-        private bool HandleCollision(Microsoft.Xna.Framework.Rectangle next_position)
+        private bool HandleCollision(GameLocation location, Rectangle next_position)
         {
             if (Game1.random.NextDouble() < this.model.ChanceForHalting)
             {
                 this.pauseTimer = Game1.random.Next(this.model.MinHaltTime, this.model.MaxHaltTime);
             }
 
+            if (base.idleBehavior.behavior == Behavior.WALK_SQUARE)
+            {
+                if (!this.IsCollidingWithFarmer(location, next_position))
+                {
+                    this.RotateDirectionClockwise(this.FacingDirection);
+                    base.lastCrossroad = new Rectangle(base.getTileX() * 64, base.getTileY() * 64, 64, 64);
+                }
+
+                return true;
+            }
             return false;
         }
 
@@ -203,7 +226,7 @@ namespace CustomCompanions.Framework.Companions
                 return;
             }
 
-            Location next_tile = base.nextPositionTile();
+            xTile.Dimensions.Location next_tile = base.nextPositionTile();
             if (!currentLocation.isTileOnMap(new Vector2(next_tile.X, next_tile.Y)))
             {
                 this.FaceAndMoveInDirection(Utility.GetOppositeFacingDirection(base.FacingDirection));
@@ -216,7 +239,7 @@ namespace CustomCompanions.Framework.Companions
                     base.position.Y -= base.speed + base.addedSpeed;
                     this.FaceAndMoveInDirection(0);
                 }
-                else if (!this.HandleCollision(this.nextPosition(0)))
+                else if (!this.HandleCollision(currentLocation, this.nextPosition(0)))
                 {
                     if (Game1.random.NextDouble() < 0.6)
                     {
@@ -231,7 +254,7 @@ namespace CustomCompanions.Framework.Companions
                     base.position.X += base.speed + base.addedSpeed;
                     this.FaceAndMoveInDirection(1);
                 }
-                else if (!this.HandleCollision(this.nextPosition(1)))
+                else if (!this.HandleCollision(currentLocation, this.nextPosition(1)))
                 {
                     if (Game1.random.NextDouble() < 0.6)
                     {
@@ -246,7 +269,7 @@ namespace CustomCompanions.Framework.Companions
                     base.position.Y += base.speed + base.addedSpeed;
                     this.FaceAndMoveInDirection(2);
                 }
-                else if (!this.HandleCollision(this.nextPosition(2)))
+                else if (!this.HandleCollision(currentLocation, this.nextPosition(2)))
                 {
                     if (Game1.random.NextDouble() < 0.6)
                     {
@@ -261,7 +284,7 @@ namespace CustomCompanions.Framework.Companions
                     base.position.X -= base.speed + base.addedSpeed;
                     this.FaceAndMoveInDirection(3);
                 }
-                else if (!this.HandleCollision(this.nextPosition(3)))
+                else if (!this.HandleCollision(currentLocation, this.nextPosition(3)))
                 {
                     if (Game1.random.NextDouble() < 0.6)
                     {
@@ -304,7 +327,7 @@ namespace CustomCompanions.Framework.Companions
                     base.motion.Y -= Game1.random.Next(1, 2) * 0.1f;
                     this.FaceAndMoveInDirection(0);
                 }
-                else if (!this.HandleCollision(this.nextPosition(0)))
+                else if (!this.HandleCollision(currentLocation, this.nextPosition(0)))
                 {
                     var oldMotion = base.motion.Y;
 
@@ -326,7 +349,7 @@ namespace CustomCompanions.Framework.Companions
                     base.motion.X += Game1.random.Next(1, 2) * 0.1f;
                     this.FaceAndMoveInDirection(1);
                 }
-                else if (!this.HandleCollision(this.nextPosition(1)))
+                else if (!this.HandleCollision(currentLocation, this.nextPosition(1)))
                 {
                     var oldMotion = base.motion.X;
 
@@ -348,7 +371,7 @@ namespace CustomCompanions.Framework.Companions
                     base.motion.Y += Game1.random.Next(1, 2) * 0.1f;
                     this.FaceAndMoveInDirection(2);
                 }
-                else if (!this.HandleCollision(this.nextPosition(2)))
+                else if (!this.HandleCollision(currentLocation, this.nextPosition(2)))
                 {
                     var oldMotion = base.motion.Y;
 
@@ -370,7 +393,7 @@ namespace CustomCompanions.Framework.Companions
                     base.motion.X -= Game1.random.Next(1, 2) * 0.1f;
                     this.FaceAndMoveInDirection(3);
                 }
-                else if (!this.HandleCollision(this.nextPosition(3)))
+                else if (!this.HandleCollision(currentLocation, this.nextPosition(3)))
                 {
                     var oldMotion = base.motion.X;
 
@@ -389,7 +412,7 @@ namespace CustomCompanions.Framework.Companions
             // Restrict motion
             this.KeepMotionWithinBounds(1f, 1f);
 
-            Location next_tile = base.nextPositionTile();
+            var next_tile = base.nextPositionTile();
             var targetDistance = Vector2.Distance(base.Position, this.GetTargetPosition());
             if (targetDistance > this.model.MaxDistanceBeforeTeleport && this.model.MaxDistanceBeforeTeleport != -1)
             {
@@ -416,6 +439,21 @@ namespace CustomCompanions.Framework.Companions
             if (this.motionMultiplier < 1f)
             {
                 this.motionMultiplier = 1f;
+            }
+        }
+
+        private void MoveInSquare(GameTime time, GameLocation currentLocation, int width, int length)
+        {
+            var distance = Vector2.Distance(this.position, new Vector2(this.lastCrossroad.X, this.lastCrossroad.Y));
+            if (distance > width * 64f && this.getVerticalMovement() == 0)
+            {
+                this.RotateDirectionClockwise(this.FacingDirection);
+                base.lastCrossroad = new Rectangle(base.getTileX() * 64, base.getTileY() * 64, 64, 64);
+            }
+            else if (distance > length * 64f && this.getHorizontalMovement() == 0)
+            {
+                this.RotateDirectionClockwise(this.FacingDirection);
+                base.lastCrossroad = new Rectangle(base.getTileX() * 64, base.getTileY() * 64, 64, 64);
             }
         }
 
@@ -460,7 +498,7 @@ namespace CustomCompanions.Framework.Companions
                     DoJump(arguments, time, location);
                     return true;
                 case Behavior.WALK_SQUARE:
-                    DoWalkInSquare(arguments, time, location);
+                    DoWalkSquare(arguments, time, location);
                     return true;
                 default:
                     DoNothing(arguments, time, location);
@@ -583,10 +621,33 @@ namespace CustomCompanions.Framework.Companions
             this.MovePositionViaMotion(time, location, true);
         }
 
-        private void DoWalkInSquare(float[] arguments, GameTime time, GameLocation location)
+        private void DoWalkSquare(float[] arguments, GameTime time, GameLocation location)
         {
-            base.Animate(time, true);
-            base.update(time, location);
+            var squareWidth = 2;
+            var squareHeight = 2;
+            if (arguments != null)
+            {
+                if (arguments.Length > 0)
+                {
+                    squareWidth = (int)arguments[0];
+                }
+                if (arguments.Length > 1)
+                {
+                    squareHeight = (int)arguments[1];
+                }
+            }
+
+            if (base.lastCrossroad == Rectangle.Empty)
+            {
+                base.lastCrossroad = new Rectangle(base.getTileX() * 64, base.getTileY() * 64, 64, 64);
+            }
+
+            this.MoveInSquare(time, location, squareWidth, squareHeight);
+
+            base.Animate(time, false);
+            base.update(time, location, -1, move: false);
+
+            this.MovePositionViaSpeed(time, location);
         }
 
         private void DoNothing(float[] arguments, GameTime time, GameLocation location)
