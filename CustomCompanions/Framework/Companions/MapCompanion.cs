@@ -34,6 +34,11 @@ namespace CustomCompanions.Framework.Companions
 
             this.canHalt = !base.IsFlying();
             this.motionMultiplier = 1f;
+
+            if (this.idleBehavior.behavior == Behavior.WALK_SQUARE)
+            {
+                this.StartActivityWalkInSquare(2, 2, 0);
+            }
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -454,6 +459,9 @@ namespace CustomCompanions.Framework.Companions
                 case Behavior.JUMPER:
                     DoJump(arguments, time, location);
                     return true;
+                case Behavior.WALK_SQUARE:
+                    DoWalkInSquare(arguments, time, location);
+                    return true;
                 default:
                     DoNothing(arguments, time, location);
                     return false;
@@ -573,6 +581,12 @@ namespace CustomCompanions.Framework.Companions
             }
 
             this.MovePositionViaMotion(time, location, true);
+        }
+
+        private void DoWalkInSquare(float[] arguments, GameTime time, GameLocation location)
+        {
+            base.Animate(time, true);
+            base.update(time, location);
         }
 
         private void DoNothing(float[] arguments, GameTime time, GameLocation location)

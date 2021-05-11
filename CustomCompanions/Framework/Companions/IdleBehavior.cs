@@ -14,7 +14,8 @@ namespace CustomCompanions.Framework.Companions
         NOTHING,
         HOVER,
         WANDER,
-        JUMPER
+        JUMPER,
+        WALK_SQUARE
     }
 
     internal class IdleBehavior
@@ -44,6 +45,9 @@ namespace CustomCompanions.Framework.Companions
                 case "JUMPER":
                     this.behavior = Behavior.JUMPER;
                     destinationTile = companion.targetTile;
+                    break;
+                case "WALK_SQUARE":
+                    this.behavior = Behavior.WALK_SQUARE;
                     break;
                 default:
                     this.behavior = Behavior.NOTHING;
