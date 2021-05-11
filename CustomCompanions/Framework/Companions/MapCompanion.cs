@@ -17,6 +17,11 @@ namespace CustomCompanions.Framework.Companions
         private float motionMultiplier;
         private float behaviorTimer;
 
+        public MapCompanion()
+        {
+
+        }
+
         public MapCompanion(CompanionModel model, Vector2 targetTile, GameLocation location) : base(model, null, targetTile)
         {
             base.targetTile = targetTile * 64f;

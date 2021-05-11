@@ -52,6 +52,11 @@ namespace CustomCompanions.Framework.Companions
         internal readonly NetVector2 motion = new NetVector2(Vector2.Zero);
         internal new readonly NetRectangle nextPosition = new NetRectangle();
 
+        public Companion()
+        {
+
+        }
+
         public Companion(CompanionModel model, Farmer owner, Vector2? targetTile = null) : base(new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight), (owner is null ? (Vector2)targetTile : owner.getTileLocation()) * 64f + new Vector2(model.SpawnOffsetX, model.SpawnOffsetY), model.SpawnDirection == -1 ? Game1.random.Next(4) : model.SpawnDirection, model.Name)
         {
             base.Breather = model.EnableBreathing;
