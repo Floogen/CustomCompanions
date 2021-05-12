@@ -26,6 +26,7 @@ namespace CustomCompanions.Framework.Managers
 
     internal static class CompanionManager
     {
+        // TODO: Make these NetFields
         internal static List<CompanionModel> companionModels;
         internal static List<BoundCompanions> activeCompanions;
         internal static List<SceneryCompanions> sceneryCompanions;
@@ -199,7 +200,7 @@ namespace CustomCompanions.Framework.Managers
             if (follower != null && follower is MapCompanion)
             {
                 MapCompanion companion = follower as MapCompanion;
-                return !sceneryCompanions.Any(c => c.Location == location && c.Tile == companion.targetTile / 64f && c.Companions.Contains(companion));
+                return !sceneryCompanions.Any(c => c.Location == location && c.Tile == companion.targetTile.Value / 64f && c.Companions.Contains(companion));
             }
 
             return false;
