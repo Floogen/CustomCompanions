@@ -3,6 +3,7 @@ using CustomCompanions.Framework.Models.Companion;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
+using StardewModdingAPI;
 using StardewValley;
 using System;
 using System.Collections.Generic;
@@ -64,7 +65,7 @@ namespace CustomCompanions.Framework.Companions
         protected override void initNetFields()
         {
             base.initNetFields();
-            base.NetFields.AddFields(this.companionKey, this.ownerId, this.targetTile, this.hasShadow, this.hasReachedPlayer, this.specialNumber, this.isPrismatic, this.previousDirection, this.isIdle, this.color, this.modData, this.nextPosition);
+            base.NetFields.AddFields(this.companionKey, this.ownerId, this.targetTile, this.hasShadow, this.hasReachedPlayer, this.specialNumber, this.isPrismatic, this.previousDirection, this.isIdle, this.color, this.motion, this.nextPosition);
 
             // TODO: See if this field is needed
             if (this.model != null)
@@ -173,6 +174,10 @@ namespace CustomCompanions.Framework.Companions
             }
             else
             {
+                if ((this.yJumpOffset == 0 && this.IsHovering() && this.isIdle) || this.IsJumper())
+                {
+                    this.idleBehavior.PerformIdleBehavior(this, time, this.model.IdleArguments);
+                }
                 this.Animate(time, this.isIdle);
                 this.wasIdle = this.isIdle;
             }
@@ -390,50 +395,49 @@ namespace CustomCompanions.Framework.Companions
                 }
                 else if ((targetDistance >= 64f && ((owner != null && owner.isMoving()) || !this.hasReachedPlayer.Value)) || (targetDistance >= this.model.MaxIdleDistance && this.model.MaxIdleDistance != -1))
                 {
-                    if (owner is null && targetDistance > this.model.MaxIdleDistance)
+                    this.hasReachedPlayer.Value = false;
+                    this.motion.Value = Vector2.Zero;
+                    this.SetMovingDirection(-1);
+
+                    base.Speed = model.TravelSpeed;
+                    if (targetDistance > this.model.MaxIdleDistance)
                     {
-                        if (this.IsFlying())
-                        {
-                            Vector2 targetPosition = this.GetTargetPosition() + new Vector2(this.model.SpawnOffsetX, this.model.SpawnOffsetY);
-                            base.position.Value = Vector2.Lerp(base.position, targetPosition, this.model.TravelSpeed / 400f);
-                            this.motion.Value *= -1;
-                        }
-                        else
-                        {
-                            this.Halt();
-                            this.FlipDirection();
-                            this.SetMovingDirection(this.FacingDirection);
-                        }
+                        base.Speed = model.TravelSpeed + (int)(targetDistance / 64f) - 1;
                     }
-                    else
+
+                    if (IsJumper())
                     {
-                        this.hasReachedPlayer.Value = false;
-                        this.motion.Value = Vector2.Zero;
-                        this.SetMovingDirection(-1);
-
-                        base.Speed = model.TravelSpeed;
-                        if (targetDistance > this.model.MaxIdleDistance)
+                        var gravity = -0.5f;
+                        var jumpScale = 10f;
+                        var randomJumpBoostMultiplier = 2f;
+                        if (this.model.IdleArguments != null)
                         {
-                            base.Speed = model.TravelSpeed + (int)(targetDistance / 64f) - 1;
-                        }
-
-                        if (IsJumper())
-                        {
-                            float jumpScale = 10f;
-                            float randomJumpBoostMultiplier = 2f;
-                            if (this.model.IdleArguments != null && this.model.IdleArguments.Length >= 2)
+                            if (this.model.IdleArguments.Length > 0)
                             {
-                                jumpScale = this.model.IdleArguments[0];
-                                randomJumpBoostMultiplier = this.model.IdleArguments[1];
+                                gravity = this.model.IdleArguments[0];
                             }
-
-                            this.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier, -0.5f, this.GetTargetPosition());
+                            if (this.model.IdleArguments.Length > 1)
+                            {
+                                jumpScale = this.model.IdleArguments[1];
+                            }
+                            if (this.model.IdleArguments.Length > 2)
+                            {
+                                randomJumpBoostMultiplier = this.model.IdleArguments[2];
+                            }
                         }
-                        else
+                        if (this.yJumpOffset == 0)
                         {
-                            this.SetMotion(Utility.getVelocityTowardPoint(base.Position, this.GetTargetPosition(), base.speed));
+                            this.jumpWithoutSound();
+                            this.yJumpGravity = Math.Abs(gravity) * -1;
+                            this.yJumpVelocity = (float)Game1.random.Next(50, 70) / jumpScale;
+
+                            if (Game1.random.NextDouble() < 0.01)
+                            {
+                                this.yJumpVelocity *= randomJumpBoostMultiplier;
+                            }
                         }
                     }
+                    this.SetMotion(Utility.getVelocityTowardPoint(base.Position, this.GetTargetPosition(), base.speed));
                 }
                 else if (this.owner is null || (!this.hasReachedPlayer.Value && !this.owner.isMoving()))
                 {
