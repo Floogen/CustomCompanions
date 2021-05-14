@@ -68,7 +68,7 @@ namespace CustomCompanions.Framework.Managers
 
             // Create a new Companion and add it to the player's location
             CustomCompanions.monitor.Log($"Spawning [{selectedCompanionData}] x{selectedCompanionData.Value.NumberToSummon} via the summoning ring [{ring.Name}]");
-            CustomCompanions.companionManager.SummonCompanions(companion, selectedCompanionData.Value.NumberToSummon, summoningRing, who, location);
+            CompanionManager.SummonCompanions(companion, selectedCompanionData.Value.NumberToSummon, summoningRing, who, location);
         }
 
         internal static void HandleUnequip(Farmer who, GameLocation location, Ring ring)
@@ -82,7 +82,7 @@ namespace CustomCompanions.Framework.Managers
 
             // Despawn the summoned companion(s) bound to this ring
             CustomCompanions.monitor.Log($"Despawning companions bound to the summoning ring [{ring.Name}]");
-            CustomCompanions.companionManager.RemoveCompanions(summoningRing, location);
+            CompanionManager.RemoveCompanions(summoningRing, location);
         }
 
         internal static void HandleNewLocation(Farmer who, GameLocation location, Ring ring)
@@ -96,7 +96,7 @@ namespace CustomCompanions.Framework.Managers
 
             // Create a new Companion and add it to the player's location
             CustomCompanions.monitor.Log($"Respawning companions bound to the summoning ring [{ring.Name}]");
-            CustomCompanions.companionManager.RespawnCompanions(summoningRing, who, location);
+            CompanionManager.RespawnCompanions(summoningRing, who, location);
         }
 
         internal static void HandleLeaveLocation(Farmer who, GameLocation location, Ring ring)
@@ -110,7 +110,7 @@ namespace CustomCompanions.Framework.Managers
 
             // Despawn the summoned companion(s) bound to this ring
             CustomCompanions.monitor.Log($"Despawning companions bound to the summoning ring [{ring.Name}]");
-            CustomCompanions.companionManager.RemoveCompanions(summoningRing, location, false);
+            CompanionManager.RemoveCompanions(summoningRing, location, false);
         }
     }
 }

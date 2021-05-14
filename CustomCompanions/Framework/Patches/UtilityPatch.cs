@@ -32,7 +32,7 @@ namespace CustomCompanions.Framework.Patches
 
         private static void IsThereAFarmerOrCharacterWithinDistancePostfix(Utility __instance, ref Character __result, Vector2 tileLocation, int tilesAway, GameLocation environment)
         {
-            if (environment is Town && __result != null && CustomCompanions.companionManager.IsCustomCompanion(__result))
+            if (environment is Town && __result != null && CompanionManager.IsCustomCompanion(__result))
             {
                 __result = null;
             }
@@ -41,7 +41,7 @@ namespace CustomCompanions.Framework.Patches
         private static void CheckForCharacterInteractionAtTilePostfix(Utility __instance, Vector2 tileLocation, Farmer who)
         {
             NPC character = Game1.currentLocation.isCharacterAtTile(tileLocation);
-            if (CustomCompanions.companionManager.IsCustomCompanion(character))
+            if (CompanionManager.IsCustomCompanion(character))
             {
                 Companion companion = character as Companion;
                 if (companion.owner is null && companion.model != null && !String.IsNullOrEmpty(companion.model.InspectionDialogue))

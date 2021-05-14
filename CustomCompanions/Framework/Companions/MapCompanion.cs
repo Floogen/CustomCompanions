@@ -57,7 +57,6 @@ namespace CustomCompanions.Framework.Companions
 
             if (this.model is null)
             {
-                CustomCompanions.monitor.Log(this.companionKey.Value, StardewModdingAPI.LogLevel.Warn);
                 this.model = CompanionManager.companionModels.First(c => c.GetId() == this.companionKey.Value);
                 this.SetUpCompanion();
                 this.UpdateModel(this.model);
@@ -481,6 +480,7 @@ namespace CustomCompanions.Framework.Companions
 
         private bool PerformBehavior(Behavior behavior, float[] arguments, GameTime time, GameLocation location)
         {
+            // TODO: Add multiplayer support for other behaviors (only implemented for DoWanderWalk currently)
             switch (behavior)
             {
                 case Behavior.WANDER:
