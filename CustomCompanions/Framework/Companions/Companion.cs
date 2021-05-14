@@ -80,6 +80,7 @@ namespace CustomCompanions.Framework.Companions
             base.Scale = model.Scale;
             base.collidesWithOtherCharacters.Value = (model.Type.ToUpper() == "FLYING" ? false : true);
             base.Breather = model.EnableBreathing;
+            base.displayName = null;
 
             this.model = model;
             this.companionKey.Value = model.GetId();
@@ -936,6 +937,7 @@ namespace CustomCompanions.Framework.Companions
             this.model = updatedModel;
 
             // Leftover settings
+            base.displayName = null;
             base.Breather = model.EnableBreathing;
             base.speed = model.TravelSpeed;
             base.Scale = model.Scale;
