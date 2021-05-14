@@ -67,7 +67,6 @@ namespace CustomCompanions.Framework.Companions
             base.initNetFields();
             base.NetFields.AddFields(this.companionKey, this.ownerId, this.targetTile, this.hasShadow, this.hasReachedPlayer, this.specialNumber, this.isPrismatic, this.previousDirection, this.isIdle, this.color, this.motion, this.nextPosition);
 
-            // TODO: See if this field is needed
             if (this.model != null)
             {
                 this.companionKey.Value = this.model.GetId();
@@ -112,28 +111,19 @@ namespace CustomCompanions.Framework.Companions
                 }
             }
 
-            // Set up the light to give off, if any
-            if (model.Light != null)
-            {
-                this.lightPulseTimer = model.Light.PulseSpeed;
-
-                this.light = new LightSource(1, new Vector2(this.position.X + model.Light.OffsetX, this.position.Y + model.Light.OffsetY), model.Light.Radius, CustomCompanions.GetColorFromArray(model.Light.Color), this.id, LightSource.LightContext.None, 0L);
-                Game1.currentLightSources.Add(this.light);
-            }
-
             if (owner != null)
             {
                 this.owner = owner;
                 this.ownerId = owner.uniqueMultiplayerID;
                 this.currentLocation = owner.currentLocation;
-            }
 
-            // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)
-            if (this.collidesWithOtherCharacters)
-            {
-                this.PlaceInEmptyTile();
+                // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)
+                if (this.collidesWithOtherCharacters)
+                {
+                    this.PlaceInEmptyTile();
+                }
+                this.nextPosition.Value = this.GetBoundingBox();
             }
-            this.nextPosition.Value = this.GetBoundingBox();
 
             this.SetUpCompanion();
         }
@@ -147,7 +137,6 @@ namespace CustomCompanions.Framework.Companions
 
             if (this.model is null)
             {
-                CustomCompanions.monitor.Log(this.companionKey.Value, StardewModdingAPI.LogLevel.Warn);
                 this.owner = Game1.getAllFarmers().FirstOrDefault(f => f.uniqueMultiplayerID == this.ownerId);
                 this.model = CompanionManager.companionModels.First(c => c.GetId() == this.companionKey.Value);
                 this.SetUpCompanion();
@@ -332,6 +321,15 @@ namespace CustomCompanions.Framework.Companions
             if (this.alwaysSound != null && CustomCompanions.IsSoundValid(this.alwaysSound.SoundName, true))
             {
                 this.soundAlwaysTimer = this.alwaysSound.TimeBetweenSound;
+            }
+
+            // Set up the light to give off, if any
+            if (model.Light != null)
+            {
+                this.lightPulseTimer = model.Light.PulseSpeed;
+
+                this.light = new LightSource(1, new Vector2(this.position.X + model.Light.OffsetX, this.position.Y + model.Light.OffsetY), model.Light.Radius, CustomCompanions.GetColorFromArray(model.Light.Color), this.id, LightSource.LightContext.None, 0L);
+                Game1.currentLightSources.Add(this.light);
             }
 
             // Set up uniform frames

@@ -17,5 +17,10 @@ namespace CustomCompanions.Framework.Models
         public int ObjectID { get; set; }
         public string Owner { get; set; }
         public Dictionary<string, CompanionData> Companions { get; set; }
+
+        public string GetId()
+        {
+            return $"{this.Name}.{this.ObjectID}";
+        }
     }
 }

@@ -32,7 +32,7 @@ namespace CustomCompanions.Framework.Patches
 
         private static bool DrawWaterPostfix(GameLocation __instance, SpriteBatch b)
         {
-            foreach (var companion in CompanionManager.sceneryCompanions.Where(c => c.Location == __instance).SelectMany(c => c.Companions))
+            foreach (var companion in CustomCompanions.companionManager.sceneryCompanions.Where(c => c.Location.Value == __instance).SelectMany(c => c.Companions))
             {
                 if (companion.model.AppearUnderwater)
                 {

@@ -25,6 +25,7 @@ namespace CustomCompanions
     {
         internal static IMonitor monitor;
         internal static IModHelper modHelper;
+        internal static CompanionManager companionManager;
 
         internal const int PERIODIC_CHECK_INTERVAL = 300;
         internal const string COMPANION_KEY = "Companion";
@@ -45,6 +46,8 @@ namespace CustomCompanions
 
             // Set up the mod's resources
             this.Reset(true);
+
+            companionManager = new CompanionManager();
 
             // Load our Harmony patches
             try
@@ -174,7 +177,7 @@ namespace CustomCompanions
         private bool ValidateModelCache(GameLocation location, int workingPeriod = -1)
         {
             // Have to load each asset every second, as we don't have a way to track content patcher changes (except for comparing changes to our cache)
-            var validCompanionIdToTokens = AssetManager.idToAssetToken.Where(p => location.characters.Any(c => CompanionManager.IsCustomCompanion(c) && (c as Companion).model.GetId() == p.Key && (c as Companion).model.EnablePeriodicPatchCheck)).ToList();
+            var validCompanionIdToTokens = AssetManager.idToAssetToken.Where(p => location.characters.Any(c => companionManager.IsCustomCompanion(c) && (c as Companion).model != null && (c as Companion).model.GetId() == p.Key && (c as Companion).model.EnablePeriodicPatchCheck)).ToList();
             if (validCompanionIdToTokens.Count() == 0)
             {
                 return true;
@@ -192,7 +195,7 @@ namespace CustomCompanions
                     if (!JsonParser.CompareSerializedObjects(updatedModel, trackedModel))
                     {
                         // Update the existing model object
-                        if (CompanionManager.UpdateCompanionModel(JsonParser.Deserialize<CompanionModel>(updatedModel)))
+                        if (companionManager.UpdateCompanionModel(JsonParser.Deserialize<CompanionModel>(updatedModel)))
                         {
                             trackedModels[idToToken.Key] = updatedModel;
                         }
@@ -215,7 +218,7 @@ namespace CustomCompanions
         {
             if (location.characters != null)
             {
-                foreach (var creature in location.characters.Where(c => CompanionManager.IsOrphan(c, location)).ToList())
+                foreach (var creature in location.characters.Where(c => companionManager.IsOrphan(c, location)).ToList())
                 {
                     Monitor.Log($"Removing orphan scenery companion {creature.Name} from {location.Name}", LogLevel.Trace);
                     location.characters.Remove(creature);
@@ -234,7 +237,7 @@ namespace CustomCompanions
 
                     if (indoorLocation.characters != null)
                     {
-                        foreach (var creature in indoorLocation.characters.Where(c => CompanionManager.IsOrphan(c, location)).ToList())
+                        foreach (var creature in indoorLocation.characters.Where(c => companionManager.IsOrphan(c, location)).ToList())
                         {
                             indoorLocation.characters.Remove(creature);
                         }
@@ -364,8 +367,11 @@ namespace CustomCompanions
             this.modelValidationIndex = 0;
 
             // Set up the CompanionManager
-            CompanionManager.activeCompanions = new List<BoundCompanions>();
-            CompanionManager.sceneryCompanions = new List<SceneryCompanions>();
+            if (companionManager != null)
+            {
+                companionManager.activeCompanions.Clear();
+                companionManager.sceneryCompanions.Clear();
+            }
         }
 
         private void SpawnSceneryCompanions(GameLocation location)
@@ -385,10 +391,10 @@ namespace CustomCompanions
                     {
                         if (String.IsNullOrEmpty(tile.Properties["CustomCompanions"]))
                         {
-                            if (CompanionManager.sceneryCompanions.Any(s => s.Location == location && s.Tile == new Vector2(x, y)))
+                            if (companionManager.sceneryCompanions.Any(s => s.Location.Value == location && s.Tile == new Vector2(x, y)))
                             {
                                 Monitor.Log($"Removing cached SceneryCompanions on tile ({x}, {y}) for map {location.NameOrUniqueName}!", LogLevel.Trace);
-                                CompanionManager.RemoveSceneryCompanionsAtTile(location, new Vector2(x, y));
+                                companionManager.RemoveSceneryCompanionsAtTile(location, new Vector2(x, y));
                             }
                             continue;
                         }
@@ -418,18 +424,18 @@ namespace CustomCompanions
                         }
 
                         // Check if it is already spawned
-                        if (CompanionManager.sceneryCompanions.Any(s => s.Location == location && s.Tile == new Vector2(x, y) && s.Companions.Any(c => c.model.GetId() == companion.GetId())))
+                        if (location.characters.Any(c => companionManager.IsSceneryCompanion(c) && (c as MapCompanion).targetTile == new Vector2(x, y) * 64f && (c as MapCompanion).companionKey == companion.GetId()))
                         {
                             continue;
                         }
 
                         Monitor.Log($"Spawning [{companionKey}] x{amountToSummon} on tile ({x}, {y}) for map {location.NameOrUniqueName}");
-                        CompanionManager.SummonCompanions(companion, amountToSummon, new Vector2(x, y), location);
+                        companionManager.SummonCompanions(companion, amountToSummon, new Vector2(x, y), location);
                     }
                 }
             }
 
-            CompanionManager.RefreshLights();
+            companionManager.RefreshLights();
         }
 
         private void RemoveAllCompanions(GameLocation targetLocation = null)
@@ -438,7 +444,7 @@ namespace CustomCompanions
             {
                 if (location.characters != null)
                 {
-                    foreach (var creature in location.characters.Where(c => CompanionManager.IsCustomCompanion(c)).ToList())
+                    foreach (var creature in location.characters.Where(c => companionManager.IsCustomCompanion(c)).ToList())
                     {
                         location.characters.Remove(creature);
                     }
@@ -457,7 +463,7 @@ namespace CustomCompanions
 
                         if (indoorLocation.characters != null)
                         {
-                            foreach (var creature in indoorLocation.characters.Where(c => CompanionManager.IsCustomCompanion(c)).ToList())
+                            foreach (var creature in indoorLocation.characters.Where(c => companionManager.IsCustomCompanion(c)).ToList())
                             {
                                 indoorLocation.characters.Remove(creature);
                             }
@@ -503,7 +509,7 @@ namespace CustomCompanions
             }
 
             Monitor.Log($"Spawning {companionKey} x{amountToSummon} at {Game1.currentLocation} on tile {Game1.player.getTileLocation()}!", LogLevel.Debug);
-            CompanionManager.SummonCompanions(companion, amountToSummon, Game1.player.getTileLocation(), Game1.currentLocation);
+            companionManager.SummonCompanions(companion, amountToSummon, Game1.player.getTileLocation(), Game1.currentLocation);
         }
 
         private void DebugClear(string command, string[] args)

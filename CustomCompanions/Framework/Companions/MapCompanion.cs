@@ -1,4 +1,5 @@
-﻿using CustomCompanions.Framework.Models.Companion;
+﻿using CustomCompanions.Framework.Managers;
+using CustomCompanions.Framework.Models.Companion;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using System;
@@ -24,12 +25,11 @@ namespace CustomCompanions.Framework.Companions
 
         public MapCompanion(CompanionModel model, Vector2 targetTile, GameLocation location) : base(model, null, targetTile)
         {
-            base.targetTile = targetTile * 64f;
+            base.targetTile.Value = targetTile * 64f;
             base.currentLocation = location;
             base.willDestroyObjectsUnderfoot = false;
 
             base.farmerPassesThrough = model.EnableFarmerCollision ? false : true;
-            base.SetUpCompanion();
 
             // Avoid issue where MaxHaltTime may be higher than MinHaltTime
             if (this.model.MinHaltTime > this.model.MaxHaltTime)
@@ -39,6 +39,13 @@ namespace CustomCompanions.Framework.Companions
 
             this.canHalt = !base.IsFlying();
             this.motionMultiplier = 1f;
+
+            // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)
+            if (this.collidesWithOtherCharacters)
+            {
+                this.PlaceInEmptyTile();
+            }
+            this.nextPosition.Value = this.GetBoundingBox();
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -48,10 +55,39 @@ namespace CustomCompanions.Framework.Companions
                 return;
             }
 
+            if (this.model is null)
+            {
+                CustomCompanions.monitor.Log(this.companionKey.Value, StardewModdingAPI.LogLevel.Warn);
+                this.model = CompanionManager.companionModels.First(c => c.GetId() == this.companionKey.Value);
+                this.SetUpCompanion();
+                this.UpdateModel(this.model);
+
+                base.currentLocation = location;
+                base.willDestroyObjectsUnderfoot = false;
+
+                base.farmerPassesThrough = model.EnableFarmerCollision ? false : true;
+
+                // Avoid issue where MaxHaltTime may be higher than MinHaltTime
+                if (this.model.MinHaltTime > this.model.MaxHaltTime)
+                {
+                    this.model.MinHaltTime = this.model.MaxHaltTime;
+                }
+
+                this.canHalt = !base.IsFlying();
+                this.motionMultiplier = 1f;
+
+                // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)
+                if (this.collidesWithOtherCharacters)
+                {
+                    this.PlaceInEmptyTile();
+                }
+                this.nextPosition.Value = this.GetBoundingBox();
+            }
+
             base.currentLocation = location;
 
-            // Update light location, if applicable
-            base.UpdateLight(time);
+            // Do Idle Behaviors
+            this.PerformBehavior(base.idleBehavior.behavior, base.model.IdleArguments, time, location);
 
             // Timers
             if (this.pauseTimer > 0)
@@ -63,13 +99,16 @@ namespace CustomCompanions.Framework.Companions
                 this.shakeTimer -= time.ElapsedGameTime.Milliseconds;
             }
 
-            // Do Idle Behaviors
-            this.PerformBehavior(base.idleBehavior.behavior, base.model.IdleArguments, time, location);
-
-            // Play any sound(s) that are required
-            if (Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) != null)
+            if (Game1.IsMasterGame)
             {
-                base.PlayRequiredSounds(time, this.isMoving());
+                // Update light location, if applicable
+                base.UpdateLight(time);
+
+                // Play any sound(s) that are required
+                if (Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) != null)
+                {
+                    base.PlayRequiredSounds(time, this.isMoving());
+                }
             }
         }
 
@@ -157,6 +196,7 @@ namespace CustomCompanions.Framework.Companions
         {
             if (this.pauseTimer > 0 && canHalt)
             {
+                this.FaceAndMoveInDirection(this.FacingDirection);
                 return;
             }
 
@@ -495,7 +535,7 @@ namespace CustomCompanions.Framework.Companions
             // Handle animating
             base.Animate(time, !this.isMoving());
             base.update(time, location, -1, move: false);
-            base.wasIdle.Value = !this.isMoving();
+            base.wasIdle = !this.isMoving();
 
             this.MovePositionViaMotion(time, location);
         }
@@ -503,14 +543,23 @@ namespace CustomCompanions.Framework.Companions
         private void DoWanderWalk(float[] arguments, GameTime time, GameLocation location)
         {
             // Handle random movement
-            this.AttemptRandomDirection(base.model.DirectionChangeChanceWhileMoving, base.model.DirectionChangeChanceWhileIdle);
+            if (Game1.IsMasterGame)
+            {
+                this.AttemptRandomDirection(base.model.DirectionChangeChanceWhileMoving, base.model.DirectionChangeChanceWhileIdle);
 
-            // Handle animating
-            base.Animate(time, !this.isMoving());
-            base.update(time, location, -1, move: false);
-            base.wasIdle.Value = !this.isMoving();
+                // Handle animating
+                base.isIdle.Value = !this.isMoving();
+                base.Animate(time, base.isIdle);
+                base.update(time, location, -1, move: false);
+                base.wasIdle = base.isIdle;
 
-            this.MovePositionViaSpeed(time, location);
+                this.MovePositionViaSpeed(time, location);
+            }
+            else
+            {
+                this.Animate(time, this.isIdle);
+                this.wasIdle = this.isIdle;
+            }
         }
 
         private void DoHover(float[] arguments, GameTime time, GameLocation location)
@@ -518,7 +567,7 @@ namespace CustomCompanions.Framework.Companions
             // Handle animating
             base.Animate(time, false);
             base.update(time, location, -1, move: false);
-            base.wasIdle.Value = false;
+            base.wasIdle = false;
 
             var gravity = -0.5f;
             if (arguments != null)
@@ -544,7 +593,7 @@ namespace CustomCompanions.Framework.Companions
             // Handle animating
             base.Animate(time, !this.isMoving());
             base.update(time, location, -1, move: false);
-            base.wasIdle.Value = !this.isMoving();
+            base.wasIdle = !this.isMoving();
 
             var gravity = -0.5f;
             var jumpScale = 10f;
@@ -588,7 +637,7 @@ namespace CustomCompanions.Framework.Companions
             // Handle animating
             base.Animate(time, true);
             base.update(time, location, -1, move: false);
-            base.wasIdle.Value = true;
+            base.wasIdle = true;
 
             this.FaceAndMoveInDirection(this.FacingDirection);
         }
