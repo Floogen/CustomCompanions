@@ -5,8 +5,7 @@ using StardewValley;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using static StardewValley.PathFindController;
 
 namespace CustomCompanions.Framework.Companions
 {
@@ -16,6 +15,10 @@ namespace CustomCompanions.Framework.Companions
         private bool canHalt;
         private float motionMultiplier;
         private float behaviorTimer;
+
+        // Path finder related
+        private bool hasReachedDestination;
+        private Stack<Point> activePath;
 
         public MapCompanion()
         {
@@ -45,6 +48,8 @@ namespace CustomCompanions.Framework.Companions
                 this.PlaceInEmptyTile();
             }
             this.nextPosition.Value = this.GetBoundingBox();
+
+            this.activePath = new Stack<Point>();
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -167,6 +172,12 @@ namespace CustomCompanions.Framework.Companions
             }
 
             FaceAndMoveInDirection(direction + (reverse ? -1 : 1));
+        }
+
+        internal Vector2 GetTargetTile()
+        {
+            return new Vector2(base.targetTile.X / 64, base.targetTile.Y / 64);
+
         }
 
         private bool IsCollidingWithFarmer(GameLocation location, Rectangle position)
@@ -501,6 +512,61 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
+        private void FollowActivePath()
+        {
+            if (activePath is null)
+            {
+                return;
+            }
+
+            Point peek = activePath.Peek();
+            Rectangle targetTile = new Rectangle(peek.X * 64, peek.Y * 64, 64, 64);
+            targetTile.Inflate(-2, 0);
+            Rectangle bbox = base.GetBoundingBox();
+            if ((targetTile.Contains(bbox) || (bbox.Width > targetTile.Width && targetTile.Contains(bbox.Center))) && targetTile.Bottom - bbox.Bottom >= 2)
+            {
+                activePath.Pop();
+                //base.stopWithoutChangingFrame();
+                if (activePath.Count == 0)
+                {
+                    /*
+                    this.Halt();
+                    if (this.endBehaviorFunction != null)
+                    {
+                        this.endBehaviorFunction(this.character, this.location);
+                    }
+                    */
+                }
+                return;
+            }
+
+            string name = base.Name;
+            foreach (NPC c in base.currentLocation.characters)
+            {
+                if (!c.Equals(this) && c.GetBoundingBox().Intersects(bbox) && c.isMoving() && string.Compare(c.Name, name, StringComparison.Ordinal) < 0)
+                {
+                    //this.Halt();
+                    return;
+                }
+            }
+            if (bbox.Left < targetTile.Left && bbox.Right < targetTile.Right)
+            {
+                this.FaceAndMoveInDirection(1);
+            }
+            else if (bbox.Right > targetTile.Right && bbox.Left > targetTile.Left)
+            {
+                this.FaceAndMoveInDirection(3);
+            }
+            else if (bbox.Top <= targetTile.Top)
+            {
+                this.FaceAndMoveInDirection(2);
+            }
+            else if (bbox.Bottom >= targetTile.Bottom - 2)
+            {
+                this.FaceAndMoveInDirection(0);
+            }
+        }
+
         private void KeepMotionWithinBounds(float xBounds, float yBounds)
         {
             if (base.motion.X < Math.Abs(xBounds) * -1)
@@ -543,6 +609,9 @@ namespace CustomCompanions.Framework.Companions
                     return true;
                 case Behavior.WALK_SQUARE:
                     DoWalkSquare(arguments, time, location);
+                    return true;
+                case Behavior.PACING:
+                    DoPacing(arguments, time, location);
                     return true;
                 default:
                     DoNothing(arguments, time, location);
@@ -739,6 +808,63 @@ namespace CustomCompanions.Framework.Companions
                 this.wasIdle = this.isIdle;
             }
 
+        }
+
+        private void DoPacing(float[] arguments, GameTime time, GameLocation location)
+        {
+            if (Game1.IsMasterGame)
+            {
+                var xPacingTiles = 5;
+                var yPacingTiles = 0;
+                if (arguments != null)
+                {
+                    if (arguments.Length > 0)
+                    {
+                        xPacingTiles = (int)arguments[0];
+                    }
+                    if (arguments.Length > 1)
+                    {
+                        yPacingTiles = (int)arguments[1];
+                    }
+                }
+
+                var destinationTile = this.GetTargetTile() + new Vector2(xPacingTiles, yPacingTiles);//new Point((int)Game1.player.getTileLocation().X, (int)Game1.player.getTileLocation().Y);//;
+                CustomCompanions.monitor.Log($"Target tile location: ({destinationTile.X}, {destinationTile.Y})", StardewModdingAPI.LogLevel.Warn);
+                if (activePath is null || activePath.Count == 0)
+                {
+                    if (base.getTileLocation() == destinationTile)
+                    {
+                        this.hasReachedDestination = true;
+                    }
+                    else if (base.getTileLocation() == this.GetTargetTile())
+                    {
+                        this.hasReachedDestination = false;
+                    }
+
+                    if (this.hasReachedDestination)
+                    {
+                        destinationTile = this.GetTargetTile();
+                    }
+
+                    //base.stopWithoutChangingFrame();
+                    //base.SetFacingDirection(this.getGeneralDirectionTowards(destinationTile, 0, opposite: false, useTileCalculations: true));
+                    activePath = PathFindController.findPath(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), new isAtEnd(isAtEndPoint), base.currentLocation, this, 300);
+                }
+
+                this.FollowActivePath();
+
+                this.isIdle.Value = false;
+                base.Animate(time, this.isIdle);
+                base.update(time, location, -1, move: false);
+                this.wasIdle = this.isIdle;
+
+                this.MovePositionViaSpeed(time, location);
+            }
+            else
+            {
+                this.Animate(time, this.isIdle);
+                this.wasIdle = this.isIdle;
+            }
         }
 
         private void DoNothing(float[] arguments, GameTime time, GameLocation location)
