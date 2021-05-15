@@ -1,12 +1,12 @@
 {
-  "Name": "ExampleWalkerWalkSquareTest",
+  "Name": "ExampleWalkerPacingTest",
   "Type": "Walking",
   "TravelSpeed": 2,
   "FrameSizeWidth": 16,
   "FrameSizeHeight": 32,
   "TileSheetPath": "Characters\\Abigail", // Optional parameter, but needed if creating a companion with an existing in-game sprite (e.g. Animals\\Rabbit)
-  "MaxHaltTime": 1000,
-  "IdleBehavior": "Walk_Square",
+  "CanHalt": false,
+  "IdleBehavior": "Pacing",
   "MaxIdleDistance": "640",
   "MaxDistanceBeforeTeleport": "4000",
   "EnableFarmerCollision": true,
