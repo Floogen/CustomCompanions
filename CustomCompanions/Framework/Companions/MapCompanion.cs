@@ -1,4 +1,5 @@
-﻿using CustomCompanions.Framework.Models.Companion;
+﻿using CustomCompanions.Framework.Managers;
+using CustomCompanions.Framework.Models.Companion;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using System;
@@ -16,14 +17,18 @@ namespace CustomCompanions.Framework.Companions
         private float motionMultiplier;
         private float behaviorTimer;
 
+        public MapCompanion()
+        {
+
+        }
+
         public MapCompanion(CompanionModel model, Vector2 targetTile, GameLocation location) : base(model, null, targetTile)
         {
-            base.targetTile = targetTile * 64f;
+            base.targetTile.Value = targetTile * 64f;
             base.currentLocation = location;
             base.willDestroyObjectsUnderfoot = false;
 
             base.farmerPassesThrough = model.EnableFarmerCollision ? false : true;
-            base.SetUpCompanion();
 
             // Avoid issue where MaxHaltTime may be higher than MinHaltTime
             if (this.model.MinHaltTime > this.model.MaxHaltTime)
@@ -33,6 +38,13 @@ namespace CustomCompanions.Framework.Companions
 
             this.canHalt = !base.IsFlying();
             this.motionMultiplier = 1f;
+
+            // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)
+            if (this.collidesWithOtherCharacters)
+            {
+                this.PlaceInEmptyTile();
+            }
+            this.nextPosition.Value = this.GetBoundingBox();
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -42,10 +54,38 @@ namespace CustomCompanions.Framework.Companions
                 return;
             }
 
+            if (this.model is null)
+            {
+                this.model = CompanionManager.companionModels.First(c => c.GetId() == this.companionKey.Value);
+                this.SetUpCompanion();
+                this.UpdateModel(this.model);
+
+                base.currentLocation = location;
+                base.willDestroyObjectsUnderfoot = false;
+
+                base.farmerPassesThrough = model.EnableFarmerCollision ? false : true;
+
+                // Avoid issue where MaxHaltTime may be higher than MinHaltTime
+                if (this.model.MinHaltTime > this.model.MaxHaltTime)
+                {
+                    this.model.MinHaltTime = this.model.MaxHaltTime;
+                }
+
+                this.canHalt = !base.IsFlying();
+                this.motionMultiplier = 1f;
+
+                // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)
+                if (this.collidesWithOtherCharacters)
+                {
+                    this.PlaceInEmptyTile();
+                }
+                this.nextPosition.Value = this.GetBoundingBox();
+            }
+
             base.currentLocation = location;
 
-            // Update light location, if applicable
-            base.UpdateLight(time);
+            // Do Idle Behaviors
+            this.PerformBehavior(base.idleBehavior.behavior, base.model.IdleArguments, time, location);
 
             // Timers
             if (this.pauseTimer > 0)
@@ -57,13 +97,16 @@ namespace CustomCompanions.Framework.Companions
                 this.shakeTimer -= time.ElapsedGameTime.Milliseconds;
             }
 
-            // Do Idle Behaviors
-            this.PerformBehavior(base.idleBehavior.behavior, base.model.IdleArguments, time, location);
-
-            // Play any sound(s) that are required
-            if (Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) != null)
+            if (Game1.IsMasterGame)
             {
-                base.PlayRequiredSounds(time, this.isMoving());
+                // Update light location, if applicable
+                base.UpdateLight(time);
+
+                // Play any sound(s) that are required
+                if (Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) != null)
+                {
+                    base.PlayRequiredSounds(time, this.isMoving());
+                }
             }
         }
 
@@ -180,6 +223,7 @@ namespace CustomCompanions.Framework.Companions
         {
             if (this.pauseTimer > 0 && canHalt)
             {
+                this.FaceAndMoveInDirection(this.FacingDirection);
                 return;
             }
 
@@ -509,116 +553,152 @@ namespace CustomCompanions.Framework.Companions
         private void DoWanderFly(float[] arguments, GameTime time, GameLocation location)
         {
             // Handle arguments
-            float dashMultiplier = 1f;
-            int minTimeBetweenDash = 5000;
-            if (arguments != null)
+            if (Game1.IsMasterGame)
             {
-                if (arguments.Length > 0)
+                float dashMultiplier = 1f;
+                int minTimeBetweenDash = 5000;
+                if (arguments != null)
                 {
-                    dashMultiplier = arguments[0];
+                    if (arguments.Length > 0)
+                    {
+                        dashMultiplier = arguments[0];
+                    }
+                    if (arguments.Length > 1)
+                    {
+                        minTimeBetweenDash = (int)arguments[1];
+                    }
                 }
-                if (arguments.Length > 1)
+
+                // Handle random directional changes
+                this.AttemptRandomDirection(base.model.DirectionChangeChanceWhileMoving, base.model.DirectionChangeChanceWhileIdle);
+
+                this.behaviorTimer -= time.ElapsedGameTime.Milliseconds;
+                if (this.behaviorTimer <= 0)
                 {
-                    minTimeBetweenDash = (int)arguments[1];
+                    this.motionMultiplier = dashMultiplier;
+                    this.behaviorTimer = Game1.random.Next(minTimeBetweenDash, minTimeBetweenDash * 2);
                 }
+
+                // Handle animating
+                base.isIdle.Value = !this.isMoving();
+                base.Animate(time, base.isIdle);
+                base.update(time, location, -1, move: false);
+                base.wasIdle = base.isIdle;
+
+                this.MovePositionViaMotion(time, location);
             }
-
-            // Handle random directional changes
-            this.AttemptRandomDirection(base.model.DirectionChangeChanceWhileMoving, base.model.DirectionChangeChanceWhileIdle);
-
-            this.behaviorTimer -= time.ElapsedGameTime.Milliseconds;
-            if (this.behaviorTimer <= 0)
+            else
             {
-                this.motionMultiplier = dashMultiplier;
-                this.behaviorTimer = Game1.random.Next(minTimeBetweenDash, minTimeBetweenDash * 2);
+                this.Animate(time, this.isIdle);
+                this.wasIdle = this.isIdle;
             }
-
-            // Handle animating
-            base.Animate(time, !this.isMoving());
-            base.update(time, location, -1, move: false);
-            base.wasIdle.Value = !this.isMoving();
-
-            this.MovePositionViaMotion(time, location);
         }
 
         private void DoWanderWalk(float[] arguments, GameTime time, GameLocation location)
         {
             // Handle random movement
-            this.AttemptRandomDirection(base.model.DirectionChangeChanceWhileMoving, base.model.DirectionChangeChanceWhileIdle);
+            if (Game1.IsMasterGame)
+            {
+                this.AttemptRandomDirection(base.model.DirectionChangeChanceWhileMoving, base.model.DirectionChangeChanceWhileIdle);
 
-            // Handle animating
-            base.Animate(time, !this.isMoving());
-            base.update(time, location, -1, move: false);
-            base.wasIdle.Value = !this.isMoving();
+                // Handle animating
+                base.isIdle.Value = !this.isMoving();
+                base.Animate(time, base.isIdle);
+                base.update(time, location, -1, move: false);
+                base.wasIdle = base.isIdle;
 
-            this.MovePositionViaSpeed(time, location);
+                this.MovePositionViaSpeed(time, location);
+            }
+            else
+            {
+                this.Animate(time, this.isIdle);
+                this.wasIdle = this.isIdle;
+            }
         }
 
         private void DoHover(float[] arguments, GameTime time, GameLocation location)
         {
             // Handle animating
-            base.Animate(time, false);
-            base.update(time, location, -1, move: false);
-            base.wasIdle.Value = false;
-
-            var gravity = -0.5f;
-            if (arguments != null)
+            if (Game1.IsMasterGame)
             {
-                if (arguments.Length > 0)
+                base.isIdle.Value = false;
+                base.Animate(time, base.isIdle);
+                base.update(time, location, -1, move: false);
+                base.wasIdle = base.isIdle;
+
+                var gravity = -0.5f;
+                if (arguments != null)
                 {
-                    gravity = arguments[0];
+                    if (arguments.Length > 0)
+                    {
+                        gravity = arguments[0];
+                    }
+                }
+
+                if (this.yJumpOffset == 0)
+                {
+                    this.jumpWithoutSound(5);
+                    this.yJumpGravity = Math.Abs(gravity) * -1;
                 }
             }
-
-            if (this.yJumpOffset == 0)
+            else
             {
-                this.jumpWithoutSound(5);
-                this.yJumpGravity = Math.Abs(gravity) * -1;
+                this.Animate(time, this.isIdle);
+                this.wasIdle = this.isIdle;
             }
         }
 
         private void DoJump(float[] arguments, GameTime time, GameLocation location)
         {
             // Handle random movement
-            this.AttemptRandomDirection(base.model.DirectionChangeChanceWhileMoving, base.model.DirectionChangeChanceWhileIdle);
-
-            // Handle animating
-            base.Animate(time, !this.isMoving());
-            base.update(time, location, -1, move: false);
-            base.wasIdle.Value = !this.isMoving();
-
-            var gravity = -0.5f;
-            var jumpScale = 10f;
-            var randomJumpBoostMultiplier = 2f;
-            if (arguments != null)
+            if (Game1.IsMasterGame)
             {
-                if (arguments.Length > 0)
-                {
-                    gravity = arguments[0];
-                }
-                if (arguments.Length > 1)
-                {
-                    jumpScale = arguments[1];
-                }
-                if (arguments.Length > 2)
-                {
-                    randomJumpBoostMultiplier = arguments[2];
-                }
-            }
+                this.AttemptRandomDirection(base.model.DirectionChangeChanceWhileMoving, base.model.DirectionChangeChanceWhileIdle);
 
-            if (this.yJumpOffset == 0)
+                // Handle animating
+                base.isIdle.Value = !this.isMoving();
+                base.Animate(time, base.isIdle);
+                base.update(time, location, -1, move: false);
+                base.wasIdle = base.isIdle;
+
+                var gravity = -0.5f;
+                var jumpScale = 10f;
+                var randomJumpBoostMultiplier = 2f;
+                if (arguments != null)
+                {
+                    if (arguments.Length > 0)
+                    {
+                        gravity = arguments[0];
+                    }
+                    if (arguments.Length > 1)
+                    {
+                        jumpScale = arguments[1];
+                    }
+                    if (arguments.Length > 2)
+                    {
+                        randomJumpBoostMultiplier = arguments[2];
+                    }
+                }
+
+                if (this.yJumpOffset == 0)
+                {
+                    this.jumpWithoutSound();
+                    this.yJumpGravity = Math.Abs(gravity) * -1;
+                    this.yJumpVelocity = (float)Game1.random.Next(50, 70) / jumpScale;
+
+                    if (Game1.random.NextDouble() < 0.01)
+                    {
+                        this.yJumpVelocity *= randomJumpBoostMultiplier;
+                    }
+                }
+
+                this.MovePositionViaMotion(time, location, true);
+            }
+            else
             {
-                this.jumpWithoutSound();
-                this.yJumpGravity = Math.Abs(gravity) * -1;
-                this.yJumpVelocity = (float)Game1.random.Next(50, 70) / jumpScale;
-
-                if (Game1.random.NextDouble() < 0.01)
-                {
-                    this.yJumpVelocity *= randomJumpBoostMultiplier;
-                }
+                this.Animate(time, this.isIdle);
+                this.wasIdle = this.isIdle;
             }
-
-            this.MovePositionViaMotion(time, location, true);
         }
 
         private void DoWalkSquare(float[] arguments, GameTime time, GameLocation location)
@@ -653,14 +733,23 @@ namespace CustomCompanions.Framework.Companions
         private void DoNothing(float[] arguments, GameTime time, GameLocation location)
         {
             // Handle random movement
-            this.AttemptRandomDirection(base.model.DirectionChangeChanceWhileMoving, base.model.DirectionChangeChanceWhileIdle);
+            if (Game1.IsMasterGame)
+            {
+                this.AttemptRandomDirection(base.model.DirectionChangeChanceWhileMoving, base.model.DirectionChangeChanceWhileIdle);
 
-            // Handle animating
-            base.Animate(time, true);
-            base.update(time, location, -1, move: false);
-            base.wasIdle.Value = true;
+                // Handle animating
+                base.isIdle.Value = true;
+                base.Animate(time, base.isIdle);
+                base.update(time, location, -1, move: false);
+                base.wasIdle = base.isIdle;
 
-            this.FaceAndMoveInDirection(this.FacingDirection);
+                this.FaceAndMoveInDirection(this.FacingDirection);
+            }
+            else
+            {
+                this.Animate(time, this.isIdle);
+                this.wasIdle = this.isIdle;
+            }
         }
     }
 }

@@ -129,7 +129,7 @@ namespace CustomCompanions.Framework.Companions
                     companion.yJumpGravity = Math.Abs(gravity) * -1;
                 }
 
-                return true;
+                return false;
             }
             else if (this.behavior == Behavior.JUMPER)
             {

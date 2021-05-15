@@ -32,8 +32,17 @@ namespace CustomCompanions.Framework.Patches
 
         private static void IsThereAFarmerOrCharacterWithinDistancePostfix(Utility __instance, ref Character __result, Vector2 tileLocation, int tilesAway, GameLocation environment)
         {
-            if (environment is Town && __result != null && CompanionManager.IsCustomCompanion(__result))
+            if (__result != null && CompanionManager.IsCustomCompanion(__result))
             {
+                foreach (NPC c in environment.characters.Where(c => !CompanionManager.IsCustomCompanion(c)))
+                {
+                    if (Vector2.Distance(c.getTileLocation(), tileLocation) <= tilesAway)
+                    {
+                        __result = c;
+                        return;
+                    }
+                }
+
                 __result = null;
             }
         }
@@ -44,7 +53,7 @@ namespace CustomCompanions.Framework.Patches
             if (CompanionManager.IsCustomCompanion(character))
             {
                 Companion companion = character as Companion;
-                if (companion.owner is null && !String.IsNullOrEmpty(companion.model.InspectionDialogue))
+                if (companion.owner is null && companion.model != null && !String.IsNullOrEmpty(companion.model.InspectionDialogue))
                 {
                     Game1.mouseCursor = 4;
                     Game1.mouseCursorTransparency = Utility.tileWithinRadiusOfPlayer((int)tileLocation.X, (int)tileLocation.Y, 1, who) ? 1f : 0.5f;
