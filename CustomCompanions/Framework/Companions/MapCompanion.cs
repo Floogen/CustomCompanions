@@ -480,7 +480,6 @@ namespace CustomCompanions.Framework.Companions
 
         private bool PerformBehavior(Behavior behavior, float[] arguments, GameTime time, GameLocation location)
         {
-            // TODO: Add multiplayer support for other behaviors (only implemented for DoWanderWalk currently)
             switch (behavior)
             {
                 case Behavior.WANDER:

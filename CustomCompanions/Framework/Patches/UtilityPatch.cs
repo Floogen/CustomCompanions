@@ -34,7 +34,14 @@ namespace CustomCompanions.Framework.Patches
         {
             if (environment is Town && __result != null && CompanionManager.IsCustomCompanion(__result))
             {
-                __result = null;
+                foreach (NPC c in environment.characters.Where(c => !CompanionManager.IsCustomCompanion(c)))
+                {
+                    if (Vector2.Distance(c.getTileLocation(), tileLocation) <= tilesAway)
+                    {
+                        __result = c;
+                        break;
+                    }
+                }
             }
         }
 
