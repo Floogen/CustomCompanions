@@ -174,7 +174,7 @@ namespace CustomCompanions
         private bool ValidateModelCache(GameLocation location, int workingPeriod = -1)
         {
             // Have to load each asset every second, as we don't have a way to track content patcher changes (except for comparing changes to our cache)
-            var validCompanionIdToTokens = AssetManager.idToAssetToken.Where(p => location.characters.Any(c => CompanionManager.IsCustomCompanion(c) && (c as Companion).model.GetId() == p.Key && (c as Companion).model.EnablePeriodicPatchCheck)).ToList();
+            var validCompanionIdToTokens = AssetManager.idToAssetToken.Where(p => location.characters.Any(c => CompanionManager.IsCustomCompanion(c) && (c as Companion).model != null && (c as Companion).model.GetId() == p.Key && (c as Companion).model.EnablePeriodicPatchCheck)).ToList();
             if (validCompanionIdToTokens.Count() == 0)
             {
                 return true;
@@ -418,7 +418,7 @@ namespace CustomCompanions
                         }
 
                         // Check if it is already spawned
-                        if (CompanionManager.sceneryCompanions.Any(s => s.Location == location && s.Tile == new Vector2(x, y) && s.Companions.Any(c => c.model.GetId() == companion.GetId())))
+                        if (location.characters.Any(c => CompanionManager.IsSceneryCompanion(c) && (c as MapCompanion).targetTile == new Vector2(x, y) * 64f && (c as MapCompanion).companionKey == companion.GetId()))
                         {
                             continue;
                         }
@@ -429,7 +429,7 @@ namespace CustomCompanions
                 }
             }
 
-            CompanionManager.RefreshLights();
+            CompanionManager.RefreshLights(location);
         }
 
         private void RemoveAllCompanions(GameLocation targetLocation = null)

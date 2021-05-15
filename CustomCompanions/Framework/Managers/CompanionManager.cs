@@ -2,7 +2,9 @@
 using CustomCompanions.Framework.Models;
 using CustomCompanions.Framework.Models.Companion;
 using Microsoft.Xna.Framework;
+using Netcode;
 using StardewValley;
+using StardewValley.Network;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +17,12 @@ namespace CustomCompanions.Framework.Managers
     {
         public RingModel SummoningRing { get; set; }
         public List<Companion> Companions { get; set; }
+
+        public BoundCompanions(RingModel ring, List<Companion> companions)
+        {
+            SummoningRing = ring;
+            Companions = companions;
+        }
     }
 
     internal class SceneryCompanions
@@ -22,9 +30,26 @@ namespace CustomCompanions.Framework.Managers
         public GameLocation Location { get; set; }
         public Vector2 Tile { get; set; }
         public List<Companion> Companions { get; set; }
+
+        public SceneryCompanions(GameLocation location, Vector2 tile, List<Companion> companions)
+        {
+            Location = location;
+            Tile = tile;
+            Companions = companions;
+        }
+
+        internal void ReplaceAssociatedCompanions(List<Companion> companions, GameLocation location)
+        {
+            foreach (var companion in this.Companions)
+            {
+                location.characters.Remove(companion);
+            }
+
+            Companions = companions;
+        }
     }
 
-    internal static class CompanionManager
+    internal class CompanionManager
     {
         internal static List<CompanionModel> companionModels;
         internal static List<BoundCompanions> activeCompanions;
@@ -46,7 +71,7 @@ namespace CustomCompanions.Framework.Managers
                 companions.Add(companion);
             }
 
-            activeCompanions.Add(new BoundCompanions() { SummoningRing = summoningRing, Companions = companions });
+            activeCompanions.Add(new BoundCompanions(summoningRing, companions));
         }
 
         internal static void SummonCompanions(CompanionModel model, int numberToSummon, Vector2 tile, GameLocation location)
@@ -64,14 +89,13 @@ namespace CustomCompanions.Framework.Managers
                 companions.Add(companion);
             }
 
-            var sceneryCompanion = new SceneryCompanions() { Location = location, Tile = tile, Companions = companions };
+            var sceneryCompanion = new SceneryCompanions(location, tile, companions);
             if (sceneryCompanions.Any(s => s.Tile == tile && s.Location == location))
             {
                 // Clear out old companions, add in the new ones
                 foreach (var scenery in sceneryCompanions.Where(s => s.Tile == tile && s.Location == location))
                 {
-                    scenery.Companions.ForEach(c => location.characters.Remove(c));
-                    scenery.Companions = companions;
+                    scenery.ReplaceAssociatedCompanions(companions, location);
                 }
             }
             else
@@ -132,7 +156,10 @@ namespace CustomCompanions.Framework.Managers
 
         internal static void RemoveSceneryCompanionsAtTile(GameLocation location, Vector2 tile)
         {
-            sceneryCompanions = sceneryCompanions.Where(s => !(s.Location == location && s.Tile == tile)).ToList();
+            foreach (var sceneryCompanion in sceneryCompanions.Where(s => !(s.Location == location && s.Tile == tile)).ToList())
+            {
+                sceneryCompanions.Remove(sceneryCompanion);
+            }
         }
 
         internal static bool UpdateCompanionModel(CompanionModel model)
@@ -163,13 +190,14 @@ namespace CustomCompanions.Framework.Managers
             return true;
         }
 
-        internal static void RefreshLights()
+        internal static void RefreshLights(GameLocation location)
         {
-            foreach (var companion in sceneryCompanions.SelectMany(c => c.Companions).Where(c => c.light != null))
+            foreach (var companion in location.characters.Where(c => IsSceneryCompanion(c) && (c as MapCompanion).light != null))
             {
-                if (!Game1.currentLightSources.Contains(companion.light))
+                MapCompanion mapCompanion = companion as MapCompanion;
+                if (!Game1.currentLightSources.Contains(mapCompanion.light))
                 {
-                    Game1.currentLightSources.Add(companion.light);
+                    Game1.currentLightSources.Add(mapCompanion.light);
                 }
             }
         }
@@ -198,8 +226,51 @@ namespace CustomCompanions.Framework.Managers
         {
             if (follower != null && follower is MapCompanion)
             {
-                MapCompanion companion = follower as MapCompanion;
-                return !sceneryCompanions.Any(c => c.Location == location && c.Tile == companion.targetTile / 64f && c.Companions.Contains(companion));
+                MapCompanion mapCompanion = follower as MapCompanion;
+
+                var companionTile = mapCompanion.targetTile.Value / 64f;
+                var backLayer = location.map.GetLayer("Back");
+                if (backLayer.Tiles.Array.GetLength(0) < companionTile.X || backLayer.Tiles.Array.GetLength(1) < companionTile.Y)
+                {
+                    return true;
+                }
+
+                var mapTile = backLayer.Tiles[(int)companionTile.X, (int)companionTile.Y];
+                if (mapTile is null || !mapTile.Properties.ContainsKey("CustomCompanions"))
+                {
+                    return true;
+                }
+
+                if (String.IsNullOrEmpty(mapTile.Properties["CustomCompanions"]))
+                {
+                    return true;
+                }
+
+                string command = mapTile.Properties["CustomCompanions"].ToString();
+                if (command.Split(' ')[0].ToUpper() != "SPAWN")
+                {
+                    return true;
+                }
+
+                string companionKey = command.Substring(command.IndexOf(' ') + 2).TrimStart();
+                if (!Int32.TryParse(command.Split(' ')[1], out int amountToSummon))
+                {
+                    amountToSummon = 1;
+                    companionKey = command.Substring(command.IndexOf(' ') + 1);
+                }
+
+                var companion = companionModels.FirstOrDefault(c => String.Concat(c.Owner, ".", c.Name) == companionKey);
+                if (companion is null)
+                {
+                    return true;
+                }
+
+                if (companion.GetId() != mapCompanion.companionKey)
+                {
+                    return true;
+                }
+
+                return false;
             }
 
             return false;

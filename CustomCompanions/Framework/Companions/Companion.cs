@@ -1,7 +1,9 @@
-﻿using CustomCompanions.Framework.Models.Companion;
+﻿using CustomCompanions.Framework.Managers;
+using CustomCompanions.Framework.Models.Companion;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
+using StardewModdingAPI;
 using StardewValley;
 using System;
 using System.Collections.Generic;
@@ -13,8 +15,10 @@ namespace CustomCompanions.Framework.Companions
 {
     public class Companion : NPC
     {
+        internal NetString companionKey = new NetString();
+        internal NetVector2 targetTile = new NetVector2();
+        internal NetLong ownerId = new NetLong();
         internal Farmer owner;
-        internal Vector2 targetTile;
         internal CompanionModel model;
         internal IdleBehavior idleBehavior;
 
@@ -29,6 +33,7 @@ namespace CustomCompanions.Framework.Companions
         private SoundModel alwaysSound;
 
         internal LightSource light;
+        internal bool wasIdle;
 
         internal List<FarmerSprite.AnimationFrame> idleUniformFrames;
         internal List<FarmerSprite.AnimationFrame> idleUpFrames;
@@ -47,35 +52,81 @@ namespace CustomCompanions.Framework.Companions
         internal readonly NetInt specialNumber = new NetInt();
         internal readonly NetBool isPrismatic = new NetBool();
         internal readonly NetInt previousDirection = new NetInt();
-        internal readonly NetBool wasIdle = new NetBool();
+        internal readonly NetBool isIdle = new NetBool();
         internal readonly NetColor color = new NetColor();
         internal readonly NetVector2 motion = new NetVector2(Vector2.Zero);
         internal new readonly NetRectangle nextPosition = new NetRectangle();
 
+        public Companion()
+        {
+
+        }
+
+        protected override void initNetFields()
+        {
+            base.initNetFields();
+            base.NetFields.AddFields(this.companionKey, this.ownerId, this.targetTile, this.hasShadow, this.hasReachedPlayer, this.specialNumber, this.isPrismatic, this.previousDirection, this.isIdle, this.color, this.motion, this.nextPosition);
+
+            if (this.model != null)
+            {
+                this.companionKey.Value = this.model.GetId();
+            }
+        }
+
         public Companion(CompanionModel model, Farmer owner, Vector2? targetTile = null) : base(new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight), (owner is null ? (Vector2)targetTile : owner.getTileLocation()) * 64f + new Vector2(model.SpawnOffsetX, model.SpawnOffsetY), model.SpawnDirection == -1 ? Game1.random.Next(4) : model.SpawnDirection, model.Name)
         {
-            base.Breather = model.EnableBreathing;
-            base.speed = model.TravelSpeed;
-            base.forceUpdateTimer = 9999;
-            base.collidesWithOtherCharacters.Value = (model.Type.ToUpper() == "FLYING" ? false : true);
-            base.farmerPassesThrough = true;
             base.HideShadow = true; // Always hiding the default shadow, as we are allowing user to config beyond normal settings
             base.Sprite.loop = false;
             base.Scale = model.Scale;
+            base.collidesWithOtherCharacters.Value = (model.Type.ToUpper() == "FLYING" ? false : true);
+            base.Breather = model.EnableBreathing;
+            base.displayName = null;
 
             this.model = model;
+            this.companionKey.Value = model.GetId();
+
             this.hasShadow.Value = model.EnableShadow;
             this.specialNumber.Value = Game1.random.Next(100);
-            this.idleBehavior = new IdleBehavior(this, model.IdleBehavior);
             this.previousDirection.Value = this.FacingDirection;
-            this.SetMovingDirection(this.FacingDirection);
+
+            // Pick a random color (Color.White if none given) or use prismatic if IsPrismatic is true
+            color.Value = Color.White;
+            if (model.Colors.Count > 0 || model.IsPrismatic)
+            {
+                if (model.Colors.Count == 0 && model.IsPrismatic)
+                {
+                    this.isPrismatic.Value = true;
+                }
+                else if (model.Colors.Count > 0)
+                {
+                    int randomColorIndex = Game1.random.Next(model.Colors.Count + (model.IsPrismatic ? 1 : 0));
+                    if (randomColorIndex > model.Colors.Count - 1)
+                    {
+                        // Primsatic color has been selected
+                        this.isPrismatic.Value = true;
+                    }
+                    else
+                    {
+                        this.color.Value = CustomCompanions.GetColorFromArray(model.Colors[randomColorIndex]);
+                    }
+                }
+            }
 
             if (owner != null)
             {
                 this.owner = owner;
+                this.ownerId = owner.uniqueMultiplayerID;
                 this.currentLocation = owner.currentLocation;
-                this.SetUpCompanion();
+
+                // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)
+                if (this.collidesWithOtherCharacters)
+                {
+                    this.PlaceInEmptyTile();
+                }
+                this.nextPosition.Value = this.GetBoundingBox();
             }
+
+            this.SetUpCompanion();
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -85,26 +136,59 @@ namespace CustomCompanions.Framework.Companions
                 return;
             }
 
+            if (this.model is null)
+            {
+                this.owner = Game1.getAllFarmers().FirstOrDefault(f => f.uniqueMultiplayerID == this.ownerId);
+                this.model = CompanionManager.companionModels.First(c => c.GetId() == this.companionKey.Value);
+                this.SetUpCompanion();
+                this.UpdateModel(this.model);
+            }
+
             base.currentLocation = location;
             base.update(time, location);
             base.forceUpdateTimer = 99999;
 
-            // Handle any movement
-            this.AttemptMovement(time, location);
-
-            // Update light location, if applicable
-            this.UpdateLight(time);
-
-            // Play any sound(s) that are required
-            if (Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) != null)
+            if (this.owner == Game1.player)
             {
-                this.PlayRequiredSounds(time, this.isMoving());
+                // Handle any movement
+                this.AttemptMovement(time, location);
+
+                // Update light location, if applicable
+                this.UpdateLight(time);
+
+                // Play any sound(s) that are required
+                if (Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) != null)
+                {
+                    this.PlayRequiredSounds(time, this.isMoving());
+                }
             }
+            else
+            {
+                if ((this.yJumpOffset == 0 && this.IsHovering() && this.isIdle) || this.IsJumper())
+                {
+                    this.idleBehavior.PerformIdleBehavior(this, time, this.model.IdleArguments);
+                }
+                this.Animate(time, this.isIdle);
+                this.wasIdle = this.isIdle;
+            }
+        }
+
+        protected override void updateSlaveAnimation(GameTime time)
+        {
+            // Do nothing
         }
 
         public override void performTenMinuteUpdate(int timeOfDay, GameLocation l)
         {
             // Do nothing
+        }
+
+        public override bool CanSocialize
+        {
+            get
+            {
+                return false;
+            }
         }
 
         public override bool checkAction(Farmer who, GameLocation l)
@@ -166,7 +250,7 @@ namespace CustomCompanions.Framework.Companions
 
         public override void draw(SpriteBatch b, float alpha = 1f)
         {
-            if (this.model.AppearUnderwater)
+            if (this.model is null || this.model.AppearUnderwater)
             {
                 return;
             }
@@ -213,12 +297,13 @@ namespace CustomCompanions.Framework.Companions
 
         internal void SetUpCompanion()
         {
-            // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)
-            if (this.collidesWithOtherCharacters)
-            {
-                this.PlaceInEmptyTile();
-            }
-            this.nextPosition.Value = this.GetBoundingBox();
+            // Standard configuration
+            base.speed = this.model.TravelSpeed;
+            base.forceUpdateTimer = 9999;
+            base.farmerPassesThrough = true;
+
+            this.idleBehavior = new IdleBehavior(this, model.IdleBehavior);
+            this.SetMovingDirection(this.FacingDirection);
 
             // Set up the sounds to play, if any
             this.idleSound = this.model.Sounds.FirstOrDefault(s => s.WhenToPlay.ToUpper() == "IDLE");
@@ -239,35 +324,12 @@ namespace CustomCompanions.Framework.Companions
                 this.soundAlwaysTimer = this.alwaysSound.TimeBetweenSound;
             }
 
-            // Pick a random color (Color.White if none given) or use prismatic if IsPrismatic is true
-            color.Value = Color.White;
-            if (this.model.Colors.Count > 0 || this.model.IsPrismatic)
-            {
-                if (this.model.Colors.Count == 0 && this.model.IsPrismatic)
-                {
-                    this.isPrismatic.Value = true;
-                }
-                else if (this.model.Colors.Count > 0)
-                {
-                    int randomColorIndex = Game1.random.Next(this.model.Colors.Count + (this.model.IsPrismatic ? 1 : 0));
-                    if (randomColorIndex > this.model.Colors.Count - 1)
-                    {
-                        // Primsatic color has been selected
-                        this.isPrismatic.Value = true;
-                    }
-                    else
-                    {
-                        this.color.Value = CustomCompanions.GetColorFromArray(this.model.Colors[randomColorIndex]);
-                    }
-                }
-            }
-
             // Set up the light to give off, if any
-            if (this.model.Light != null)
+            if (model.Light != null)
             {
-                this.lightPulseTimer = this.model.Light.PulseSpeed;
+                this.lightPulseTimer = model.Light.PulseSpeed;
 
-                this.light = new LightSource(1, new Vector2(this.position.X + this.model.Light.OffsetX, this.position.Y + this.model.Light.OffsetY), this.model.Light.Radius, CustomCompanions.GetColorFromArray(this.model.Light.Color), this.id, LightSource.LightContext.None, 0L);
+                this.light = new LightSource(1, new Vector2(this.position.X + model.Light.OffsetX, this.position.Y + model.Light.OffsetY), model.Light.Radius, CustomCompanions.GetColorFromArray(model.Light.Color), this.id, LightSource.LightContext.None, 0L);
                 Game1.currentLightSources.Add(this.light);
             }
 
@@ -332,50 +394,49 @@ namespace CustomCompanions.Framework.Companions
                 }
                 else if ((targetDistance >= 64f && ((owner != null && owner.isMoving()) || !this.hasReachedPlayer.Value)) || (targetDistance >= this.model.MaxIdleDistance && this.model.MaxIdleDistance != -1))
                 {
-                    if (owner is null && targetDistance > this.model.MaxIdleDistance)
+                    this.hasReachedPlayer.Value = false;
+                    this.motion.Value = Vector2.Zero;
+                    this.SetMovingDirection(-1);
+
+                    base.Speed = model.TravelSpeed;
+                    if (targetDistance > this.model.MaxIdleDistance)
                     {
-                        if (this.IsFlying())
-                        {
-                            Vector2 targetPosition = this.GetTargetPosition() + new Vector2(this.model.SpawnOffsetX, this.model.SpawnOffsetY);
-                            base.position.Value = Vector2.Lerp(base.position, targetPosition, this.model.TravelSpeed / 400f);
-                            this.motion.Value *= -1;
-                        }
-                        else
-                        {
-                            this.Halt();
-                            this.FlipDirection();
-                            this.SetMovingDirection(this.FacingDirection);
-                        }
+                        base.Speed = model.TravelSpeed + (int)(targetDistance / 64f) - 1;
                     }
-                    else
+
+                    if (IsJumper())
                     {
-                        this.hasReachedPlayer.Value = false;
-                        this.motion.Value = Vector2.Zero;
-                        this.SetMovingDirection(-1);
-
-                        base.Speed = model.TravelSpeed;
-                        if (targetDistance > this.model.MaxIdleDistance)
+                        var gravity = -0.5f;
+                        var jumpScale = 10f;
+                        var randomJumpBoostMultiplier = 2f;
+                        if (this.model.IdleArguments != null)
                         {
-                            base.Speed = model.TravelSpeed + (int)(targetDistance / 64f) - 1;
-                        }
-
-                        if (IsJumper())
-                        {
-                            float jumpScale = 10f;
-                            float randomJumpBoostMultiplier = 2f;
-                            if (this.model.IdleArguments != null && this.model.IdleArguments.Length >= 2)
+                            if (this.model.IdleArguments.Length > 0)
                             {
-                                jumpScale = this.model.IdleArguments[0];
-                                randomJumpBoostMultiplier = this.model.IdleArguments[1];
+                                gravity = this.model.IdleArguments[0];
                             }
-
-                            this.PerformJumpMovement(jumpScale, randomJumpBoostMultiplier, -0.5f, this.GetTargetPosition());
+                            if (this.model.IdleArguments.Length > 1)
+                            {
+                                jumpScale = this.model.IdleArguments[1];
+                            }
+                            if (this.model.IdleArguments.Length > 2)
+                            {
+                                randomJumpBoostMultiplier = this.model.IdleArguments[2];
+                            }
                         }
-                        else
+                        if (this.yJumpOffset == 0)
                         {
-                            this.SetMotion(Utility.getVelocityTowardPoint(base.Position, this.GetTargetPosition(), base.speed));
+                            this.jumpWithoutSound();
+                            this.yJumpGravity = Math.Abs(gravity) * -1;
+                            this.yJumpVelocity = (float)Game1.random.Next(50, 70) / jumpScale;
+
+                            if (Game1.random.NextDouble() < 0.01)
+                            {
+                                this.yJumpVelocity *= randomJumpBoostMultiplier;
+                            }
                         }
                     }
+                    this.SetMotion(Utility.getVelocityTowardPoint(base.Position, this.GetTargetPosition(), base.speed));
                 }
                 else if (this.owner is null || (!this.hasReachedPlayer.Value && !this.owner.isMoving()))
                 {
@@ -415,7 +476,6 @@ namespace CustomCompanions.Framework.Companions
                 if (model.UniformAnimation != null && !CustomCompanions.CompanionHasFullMovementSet(model))
                 {
                     this.FacingDirection = 2;
-                    this.Animate(time, false);
                 }
                 else if (CustomCompanions.CompanionHasFullMovementSet(model))
                 {
@@ -435,16 +495,17 @@ namespace CustomCompanions.Framework.Companions
                     {
                         this.FacingDirection = 3;
                     }
-
-                    this.Animate(time, false);
                 }
 
-                this.wasIdle.Value = false;
+                this.isIdle.Value = false;
+                this.Animate(time, this.isIdle);
+                this.wasIdle = false;
             }
             else
             {
-                this.Animate(time, true);
-                this.wasIdle.Value = true;
+                this.isIdle.Value = true;
+                this.Animate(time, this.isIdle);
+                this.wasIdle = true;
             }
         }
 
@@ -785,47 +846,50 @@ namespace CustomCompanions.Framework.Companions
             }
 
             // Update color
-            if (!updatedModel.ContainsColor(this.color.Value) || this.model.IsPrismatic != updatedModel.IsPrismatic)
+            if (Game1.IsMasterGame)
             {
-                this.isPrismatic.Value = false;
-                if (updatedModel.Colors.Count == 0 && updatedModel.IsPrismatic)
+                if (!updatedModel.ContainsColor(this.color.Value) || this.model.IsPrismatic != updatedModel.IsPrismatic)
                 {
-                    this.isPrismatic.Value = true;
-                }
-                else if (updatedModel.Colors.Count > 0 && !updatedModel.ContainsColor(this.color.Value))
-                {
-                    int randomColorIndex = Game1.random.Next(updatedModel.Colors.Count + (updatedModel.IsPrismatic ? 1 : 0));
-                    if (randomColorIndex > updatedModel.Colors.Count - 1)
+                    this.isPrismatic.Value = false;
+                    if (updatedModel.Colors.Count == 0 && updatedModel.IsPrismatic)
                     {
-                        // Primsatic color has been selected
                         this.isPrismatic.Value = true;
                     }
-                    else
+                    else if (updatedModel.Colors.Count > 0 && !updatedModel.ContainsColor(this.color.Value))
                     {
-                        this.color.Value = CustomCompanions.GetColorFromArray(updatedModel.Colors[randomColorIndex]);
+                        int randomColorIndex = Game1.random.Next(updatedModel.Colors.Count + (updatedModel.IsPrismatic ? 1 : 0));
+                        if (randomColorIndex > updatedModel.Colors.Count - 1)
+                        {
+                            // Primsatic color has been selected
+                            this.isPrismatic.Value = true;
+                        }
+                        else
+                        {
+                            this.color.Value = CustomCompanions.GetColorFromArray(updatedModel.Colors[randomColorIndex]);
+                        }
+                    }
+                    else if (updatedModel.Colors.Count == 0 && !updatedModel.IsPrismatic)
+                    {
+                        this.color.Value = Color.White;
                     }
                 }
-                else if (updatedModel.Colors.Count == 0 && !updatedModel.IsPrismatic)
-                {
-                    this.color.Value = Color.White;
-                }
-            }
 
-            // Set up the light to give off, if any
-            if (this.model.Light != updatedModel.Light)
-            {
-                if (this.light != null)
+                // Set up the light to give off, if any
+                if (this.model.Light != updatedModel.Light)
                 {
-                    Game1.currentLightSources.Remove(this.light);
-                    this.light = null;
-                }
+                    if (this.light != null)
+                    {
+                        Game1.currentLightSources.Remove(this.light);
+                        this.light = null;
+                    }
 
-                if (updatedModel.Light != null)
-                {
-                    this.lightPulseTimer = updatedModel.Light.PulseSpeed;
+                    if (updatedModel.Light != null)
+                    {
+                        this.lightPulseTimer = updatedModel.Light.PulseSpeed;
 
-                    this.light = new LightSource(1, new Vector2(this.position.X + updatedModel.Light.OffsetX, this.position.Y + updatedModel.Light.OffsetY), updatedModel.Light.Radius, CustomCompanions.GetColorFromArray(updatedModel.Light.Color), this.id, LightSource.LightContext.None, 0L);
-                    Game1.currentLightSources.Add(this.light);
+                        this.light = new LightSource(1, new Vector2(this.position.X + updatedModel.Light.OffsetX, this.position.Y + updatedModel.Light.OffsetY), updatedModel.Light.Radius, CustomCompanions.GetColorFromArray(updatedModel.Light.Color), this.id, LightSource.LightContext.None, 0L);
+                        Game1.currentLightSources.Add(this.light);
+                    }
                 }
             }
 
@@ -873,14 +937,19 @@ namespace CustomCompanions.Framework.Companions
             this.model = updatedModel;
 
             // Leftover settings
-            base.collidesWithOtherCharacters.Value = (model.Type.ToUpper() == "FLYING" ? false : true);
+            base.displayName = null;
             base.Breather = model.EnableBreathing;
             base.speed = model.TravelSpeed;
             base.Scale = model.Scale;
 
-            if (base.Sprite.loadedTexture != model.TileSheetPath || base.Sprite.SpriteWidth != model.FrameSizeWidth || base.Sprite.SpriteHeight != model.FrameSizeHeight)
+            if (Game1.IsMasterGame)
             {
-                base.Sprite = new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight);
+                this.hasShadow.Value = model.EnableShadow;
+                base.collidesWithOtherCharacters.Value = (model.Type.ToUpper() == "FLYING" ? false : true);
+                if (base.Sprite.loadedTexture != model.TileSheetPath || base.Sprite.SpriteWidth != model.FrameSizeWidth || base.Sprite.SpriteHeight != model.FrameSizeHeight)
+                {
+                    base.Sprite = new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight);
+                }
             }
 
             // Avoid issue where MaxHaltTime may be higher than MinHaltTime
@@ -890,7 +959,6 @@ namespace CustomCompanions.Framework.Companions
             }
 
             this.idleBehavior = new IdleBehavior(this, model.IdleBehavior);
-            this.hasShadow.Value = model.EnableShadow;
         }
     }
 }
