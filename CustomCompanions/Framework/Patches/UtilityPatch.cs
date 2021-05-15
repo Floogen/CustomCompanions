@@ -32,16 +32,18 @@ namespace CustomCompanions.Framework.Patches
 
         private static void IsThereAFarmerOrCharacterWithinDistancePostfix(Utility __instance, ref Character __result, Vector2 tileLocation, int tilesAway, GameLocation environment)
         {
-            if (environment is Town && __result != null && CompanionManager.IsCustomCompanion(__result))
+            if (__result != null && CompanionManager.IsCustomCompanion(__result))
             {
                 foreach (NPC c in environment.characters.Where(c => !CompanionManager.IsCustomCompanion(c)))
                 {
                     if (Vector2.Distance(c.getTileLocation(), tileLocation) <= tilesAway)
                     {
                         __result = c;
-                        break;
+                        return;
                     }
                 }
+
+                __result = null;
             }
         }
 
