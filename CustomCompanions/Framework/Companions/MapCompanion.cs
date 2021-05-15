@@ -36,7 +36,7 @@ namespace CustomCompanions.Framework.Companions
                 this.model.MinHaltTime = this.model.MaxHaltTime;
             }
 
-            this.canHalt = !base.IsFlying();
+            this.canHalt = !base.IsFlying() && this.model.CanHalt;
             this.motionMultiplier = 1f;
 
             // Verify the location the companion is spawning on isn't occupied (if collidesWithOtherCharacters == true)

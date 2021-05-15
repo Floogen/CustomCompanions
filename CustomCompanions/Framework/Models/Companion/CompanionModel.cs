@@ -25,6 +25,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public float MaxDistanceBeforeTeleport { get; set; } = 512f;
         public float DirectionChangeChanceWhileMoving { get; set; } = 0.007f;
         public float DirectionChangeChanceWhileIdle { get; set; } = 0.1f;
+        public bool CanHalt { get; set; } = true;
         public float ChanceForHalting { get; set; } = 1.0f;
         public int MinHaltTime { get; set; } = 2000;
         public int MaxHaltTime { get; set; } = 10000;
