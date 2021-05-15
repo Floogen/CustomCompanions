@@ -15,12 +15,12 @@ namespace CustomCompanions.Framework.Managers
 {
     internal class BoundCompanions
     {
-        public string SummoningRingId { get; set; }
+        public RingModel SummoningRing { get; set; }
         public List<Companion> Companions { get; set; }
 
-        public BoundCompanions(string id, List<Companion> companions)
+        public BoundCompanions(RingModel ring, List<Companion> companions)
         {
-            SummoningRingId = id;
+            SummoningRing = ring;
             Companions = companions;
         }
     }
@@ -71,7 +71,7 @@ namespace CustomCompanions.Framework.Managers
                 companions.Add(companion);
             }
 
-            activeCompanions.Add(new BoundCompanions(summoningRing.GetId(), companions));
+            activeCompanions.Add(new BoundCompanions(summoningRing, companions));
         }
 
         internal static void SummonCompanions(CompanionModel model, int numberToSummon, Vector2 tile, GameLocation location)
@@ -113,7 +113,7 @@ namespace CustomCompanions.Framework.Managers
 
         internal static void RespawnCompanions(RingModel summoningRing, Farmer who, GameLocation location, bool removeFromActive = true)
         {
-            var boundCompanions = activeCompanions.FirstOrDefault(a => a.SummoningRingId == summoningRing.GetId());
+            var boundCompanions = activeCompanions.FirstOrDefault(a => a.SummoningRing == summoningRing);
             if (boundCompanions is null)
             {
                 CustomCompanions.monitor.Log($"Unable to find summoning ring match to {summoningRing.Name}, will be unable to respawn companions!");
@@ -132,7 +132,7 @@ namespace CustomCompanions.Framework.Managers
 
         internal static void RemoveCompanions(RingModel summoningRing, GameLocation location, bool removeFromActive = true)
         {
-            var boundCompanions = activeCompanions.FirstOrDefault(a => a.SummoningRingId == summoningRing.GetId());
+            var boundCompanions = activeCompanions.FirstOrDefault(a => a.SummoningRing == summoningRing);
             if (boundCompanions is null)
             {
                 CustomCompanions.monitor.Log($"Unable to find summoning ring match to {summoningRing.Name}, will be unable to despawn companions!");
