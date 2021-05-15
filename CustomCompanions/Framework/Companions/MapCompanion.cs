@@ -227,6 +227,14 @@ namespace CustomCompanions.Framework.Companions
 
                 return true;
             }
+            if (base.idleBehavior.behavior == Behavior.SIMPLE_PATH || base.idleBehavior.behavior == Behavior.PACING)
+            {
+                if (activePath != null && activePath.Count > 0)
+                {
+                    activePath.Clear();
+                }
+                return true;
+            }
             return false;
         }
 
@@ -514,7 +522,7 @@ namespace CustomCompanions.Framework.Companions
 
         private void FollowActivePath()
         {
-            if (activePath is null)
+            if (activePath is null || this.pauseTimer > 0)
             {
                 return;
             }
@@ -612,6 +620,9 @@ namespace CustomCompanions.Framework.Companions
                     return true;
                 case Behavior.PACING:
                     DoPacing(arguments, time, location);
+                    return true;
+                case Behavior.SIMPLE_PATH:
+                    DoSimplePath(arguments, time, location);
                     return true;
                 default:
                     DoNothing(arguments, time, location);
@@ -828,8 +839,7 @@ namespace CustomCompanions.Framework.Companions
                     }
                 }
 
-                var destinationTile = this.GetTargetTile() + new Vector2(xPacingTiles, yPacingTiles);//new Point((int)Game1.player.getTileLocation().X, (int)Game1.player.getTileLocation().Y);//;
-                CustomCompanions.monitor.Log($"Target tile location: ({destinationTile.X}, {destinationTile.Y})", StardewModdingAPI.LogLevel.Warn);
+                var destinationTile = this.GetTargetTile() + new Vector2(xPacingTiles, yPacingTiles);
                 if (activePath is null || activePath.Count == 0)
                 {
                     if (base.getTileLocation() == destinationTile)
@@ -853,7 +863,65 @@ namespace CustomCompanions.Framework.Companions
 
                 this.FollowActivePath();
 
-                this.isIdle.Value = false;
+                this.isIdle.Value = !this.isMoving();
+                base.Animate(time, this.isIdle);
+                base.update(time, location, -1, move: false);
+                this.wasIdle = this.isIdle;
+
+                this.MovePositionViaSpeed(time, location);
+            }
+            else
+            {
+                this.Animate(time, this.isIdle);
+                this.wasIdle = this.isIdle;
+            }
+        }
+
+        private void DoSimplePath(float[] arguments, GameTime time, GameLocation location)
+        {
+            if (Game1.IsMasterGame)
+            {
+                var xDestination = this.GetTargetTile().X;
+                var yDestination = this.GetTargetTile().Y;
+                var waitTime = 5000;
+                if (arguments != null)
+                {
+                    if (arguments.Length > 1)
+                    {
+                        xDestination = (int)arguments[0];
+                        yDestination = (int)arguments[1];
+                    }
+                    if (arguments.Length > 2)
+                    {
+                        waitTime = (int)arguments[2];
+                    }
+                }
+
+                var destinationTile = new Vector2(xDestination, yDestination);
+                if (activePath is null || activePath.Count == 0)
+                {
+                    if (base.getTileLocation() == destinationTile)
+                    {
+                        this.hasReachedDestination = true;
+                        this.pauseTimer = waitTime;
+                    }
+                    else if (base.getTileLocation() == this.GetTargetTile())
+                    {
+                        this.hasReachedDestination = false;
+                        this.pauseTimer = waitTime;
+                    }
+
+                    if (this.hasReachedDestination)
+                    {
+                        destinationTile = this.GetTargetTile();
+                    }
+
+                    activePath = PathFindController.findPath(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), new isAtEnd(isAtEndPoint), base.currentLocation, this, 300);
+                }
+
+                this.FollowActivePath();
+
+                this.isIdle.Value = !this.isMoving();
                 base.Animate(time, this.isIdle);
                 base.update(time, location, -1, move: false);
                 this.wasIdle = this.isIdle;
