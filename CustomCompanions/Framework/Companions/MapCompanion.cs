@@ -703,31 +703,42 @@ namespace CustomCompanions.Framework.Companions
 
         private void DoWalkSquare(float[] arguments, GameTime time, GameLocation location)
         {
-            var squareWidth = 2;
-            var squareHeight = 2;
-            if (arguments != null)
+            if (Game1.IsMasterGame)
             {
-                if (arguments.Length > 0)
+                var squareWidth = 2;
+                var squareHeight = 2;
+                if (arguments != null)
                 {
-                    squareWidth = (int)arguments[0];
+                    if (arguments.Length > 0)
+                    {
+                        squareWidth = (int)arguments[0];
+                    }
+                    if (arguments.Length > 1)
+                    {
+                        squareHeight = (int)arguments[1];
+                    }
                 }
-                if (arguments.Length > 1)
+
+                if (base.lastCrossroad == Rectangle.Empty)
                 {
-                    squareHeight = (int)arguments[1];
+                    base.lastCrossroad = new Rectangle(base.getTileX() * 64, base.getTileY() * 64, 64, 64);
                 }
+
+                this.MoveInSquare(time, location, squareWidth, squareHeight);
+
+                this.isIdle.Value = false;
+                base.Animate(time, this.isIdle);
+                base.update(time, location, -1, move: false);
+                this.wasIdle = this.isIdle;
+
+                this.MovePositionViaSpeed(time, location);
+            }
+            else
+            {
+                this.Animate(time, this.isIdle);
+                this.wasIdle = this.isIdle;
             }
 
-            if (base.lastCrossroad == Rectangle.Empty)
-            {
-                base.lastCrossroad = new Rectangle(base.getTileX() * 64, base.getTileY() * 64, 64, 64);
-            }
-
-            this.MoveInSquare(time, location, squareWidth, squareHeight);
-
-            base.Animate(time, false);
-            base.update(time, location, -1, move: false);
-
-            this.MovePositionViaSpeed(time, location);
         }
 
         private void DoNothing(float[] arguments, GameTime time, GameLocation location)
