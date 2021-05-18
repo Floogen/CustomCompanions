@@ -248,6 +248,17 @@ namespace CustomCompanions.Framework.Companions
             base.farmerPassesThrough = this.owner is null && this.model.EnableFarmerCollision ? false : true;
         }
 
+        public override Rectangle GetBoundingBox()
+        {
+            if (this.Sprite == null)
+            {
+                return Rectangle.Empty;
+            }
+
+            Vector2 position = this.Position;
+            return new Rectangle((int)position.X + this.Sprite.getWidth(), (int)position.Y + this.Sprite.getHeight() / 2, this.Sprite.getWidth(), this.Sprite.getHeight());
+        }
+
         public override void draw(SpriteBatch b, float alpha = 1f)
         {
             if (this.model is null || this.model.AppearUnderwater)
