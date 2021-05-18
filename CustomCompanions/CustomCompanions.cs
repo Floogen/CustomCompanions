@@ -152,7 +152,7 @@ namespace CustomCompanions
             // Check for any content patcher changes every second, but iterate through list based on PERIODIC_CHECK_INTERVAL
             if (e.IsMultipleOf(PERIODIC_CHECK_INTERVAL) || !this.areAllModelsValidated)
             {
-                this.areAllModelsValidated = this.ValidateModelCache(Game1.player.currentLocation, PERIODIC_CHECK_INTERVAL / 60);
+                this.areAllModelsValidated = this.ValidateModelCache(Game1.player.currentLocation, false, PERIODIC_CHECK_INTERVAL / 60);
             }
         }
 
@@ -162,7 +162,7 @@ namespace CustomCompanions
             this.modelValidationIndex = 0;
 
             // Check for any content patcher changes
-            this.areAllModelsValidated = this.ValidateModelCache(e.NewLocation);
+            this.areAllModelsValidated = this.ValidateModelCache(e.NewLocation, true);
 
             // Spawn any map-based companions that are located in this new area
             this.SpawnSceneryCompanions(e.NewLocation);
@@ -171,10 +171,10 @@ namespace CustomCompanions
             this.RemoveOrphanCompanions(e.NewLocation);
         }
 
-        private bool ValidateModelCache(GameLocation location, int workingPeriod = -1)
+        private bool ValidateModelCache(GameLocation location, bool forceCheck = false, int workingPeriod = -1)
         {
             // Have to load each asset every second, as we don't have a way to track content patcher changes (except for comparing changes to our cache)
-            var validCompanionIdToTokens = AssetManager.idToAssetToken.Where(p => location.characters.Any(c => CompanionManager.IsCustomCompanion(c) && (c as Companion).model != null && (c as Companion).model.GetId() == p.Key && (c as Companion).model.EnablePeriodicPatchCheck)).ToList();
+            var validCompanionIdToTokens = AssetManager.idToAssetToken.Where(p => location.characters.Any(c => CompanionManager.IsCustomCompanion(c) && (c as Companion).model != null && (c as Companion).model.GetId() == p.Key && ((c as Companion).model.EnablePeriodicPatchCheck || forceCheck))).ToList();
             if (validCompanionIdToTokens.Count() == 0)
             {
                 return true;
