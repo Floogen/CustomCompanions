@@ -31,6 +31,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public int MaxHaltTime { get; set; } = 10000;
         public string InspectionDialogue { get; set; }
         public int[] DespawnOnTile { get; set; }
+        public int DespawnOnTimer { get; set; }
         public string IdleBehavior { get; set; } = "NOTHING";
         public float[] IdleArguments { get; set; }
         public List<int[]> Colors { get; set; } = new List<int[]>();

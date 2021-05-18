@@ -11,6 +11,7 @@ namespace CustomCompanions.Framework.Companions
 {
     public class MapCompanion : Companion
     {
+        private int? despawnTimer;
         private int pauseTimer;
         private bool canHalt;
         private float motionMultiplier;
@@ -50,6 +51,12 @@ namespace CustomCompanions.Framework.Companions
             this.nextPosition.Value = this.GetBoundingBox();
 
             this.activePath = new Stack<Point>();
+
+            // Set up despawn timer, if valid
+            if (this.model.DespawnOnTimer > 0)
+            {
+                this.despawnTimer = this.model.DespawnOnTimer;
+            }
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -101,9 +108,20 @@ namespace CustomCompanions.Framework.Companions
             {
                 this.shakeTimer -= time.ElapsedGameTime.Milliseconds;
             }
+            if (this.despawnTimer > 0)
+            {
+                this.despawnTimer -= time.ElapsedGameTime.Milliseconds;
+            }
 
             if (Game1.IsMasterGame)
             {
+                if (this.despawnTimer <= 0)
+                {
+                    base.PrepareForDeletion();
+                    base.currentLocation.characters.Remove(this);
+                    return;
+                }
+
                 // Update light location, if applicable
                 base.UpdateLight(time);
 
@@ -152,6 +170,12 @@ namespace CustomCompanions.Framework.Companions
             base.UpdateModel(updatedModel);
 
             base.farmerPassesThrough = updatedModel.EnableFarmerCollision ? false : true;
+
+            // Set up despawn timer, if valid
+            if (updatedModel.DespawnOnTimer > 0)
+            {
+                this.despawnTimer = updatedModel.DespawnOnTimer;
+            }
         }
 
         internal void FaceAndMoveInDirection(int direction)
