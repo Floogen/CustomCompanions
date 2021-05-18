@@ -544,7 +544,19 @@ namespace CustomCompanions.Framework.Companions
                         this.endBehaviorFunction(this.character, this.location);
                     }
                     */
+                    // Check for despawn conditions
+                    if (this.model.DespawnOnTile != null && this.model.DespawnOnTile.Length > 1)
+                    {
+                        var despawnTile = new Vector2(this.model.DespawnOnTile[0], this.model.DespawnOnTile[1]);
+                        if (base.getTileLocation() == despawnTile)
+                        {
+                            base.PrepareForDeletion();
+                            base.currentLocation.characters.Remove(this);
+                            return;
+                        }
+                    }
                 }
+
                 return;
             }
 
@@ -572,6 +584,28 @@ namespace CustomCompanions.Framework.Companions
             else if (bbox.Bottom >= targetTile.Bottom - 2)
             {
                 this.FaceAndMoveInDirection(0);
+            }
+        }
+
+        private void AttemptDespawnNearEdge()
+        {
+            if (!this.isMoving())
+            {
+                // Check for despawn conditions
+                if (this.model.DespawnOnTile != null && this.model.DespawnOnTile.Length > 1)
+                {
+                    Point peek = new Point(this.model.DespawnOnTile[0], this.model.DespawnOnTile[1]);
+                    Rectangle targetTile = new Rectangle(peek.X * 64, peek.Y * 64, 64, 64);
+                    targetTile.Inflate(32, 32);
+                    Rectangle bbox = base.GetBoundingBox();
+
+                    if (targetTile.Contains(bbox))
+                    {
+                        base.PrepareForDeletion();
+                        base.currentLocation.characters.Remove(this);
+                        return;
+                    }
+                }
             }
         }
 
@@ -858,7 +892,7 @@ namespace CustomCompanions.Framework.Companions
 
                     //base.stopWithoutChangingFrame();
                     //base.SetFacingDirection(this.getGeneralDirectionTowards(destinationTile, 0, opposite: false, useTileCalculations: true));
-                    activePath = PathFindController.findPath(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), new isAtEnd(isAtEndPoint), base.currentLocation, this, 300);
+                    activePath = PathFindController.findPathForNPCSchedules(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), base.currentLocation, 300);
                 }
 
                 this.FollowActivePath();
@@ -896,7 +930,6 @@ namespace CustomCompanions.Framework.Companions
                         waitTime = (int)arguments[2];
                     }
                 }
-
                 var destinationTile = new Vector2(xDestination, yDestination);
                 if (activePath is null || activePath.Count == 0)
                 {
@@ -916,7 +949,7 @@ namespace CustomCompanions.Framework.Companions
                         destinationTile = this.GetTargetTile();
                     }
 
-                    activePath = PathFindController.findPath(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), new isAtEnd(isAtEndPoint), base.currentLocation, this, 300);
+                    activePath = PathFindController.findPath(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), PathFindController.isAtEndPoint, base.currentLocation, this, 300);
                 }
 
                 this.FollowActivePath();
@@ -927,6 +960,8 @@ namespace CustomCompanions.Framework.Companions
                 this.wasIdle = this.isIdle;
 
                 this.MovePositionViaSpeed(time, location);
+
+                this.AttemptDespawnNearEdge();
             }
             else
             {
