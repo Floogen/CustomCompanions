@@ -135,6 +135,9 @@ namespace CustomCompanions
             // Reset the tracked validation counter
             this.modelValidationIndex = 0;
             this.areAllModelsValidated = false;
+
+            // Clear out the list of denied companions to respawn
+            CompanionManager.denyRespawnCompanions = new List<SceneryCompanions>();
         }
 
         private void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
@@ -419,6 +422,12 @@ namespace CustomCompanions
 
                         // Check if it is already spawned
                         if (location.characters.Any(c => CompanionManager.IsSceneryCompanion(c) && (c as MapCompanion).targetTile == new Vector2(x, y) * 64f && (c as MapCompanion).companionKey == companion.GetId()))
+                        {
+                            continue;
+                        }
+
+                        // Check if the companion is allowed to be spawned
+                        if (CompanionManager.denyRespawnCompanions.Any(s => s.Location == location && s.Tile == new Vector2(x, y) && s.Companions.Any(c => c.companionKey == companion.GetId())))
                         {
                             continue;
                         }
