@@ -53,7 +53,7 @@ namespace CustomCompanions.Framework.Companions
             this.activePath = new Stack<Point>();
 
             // Set up despawn timer, if valid
-            if (this.model.DespawnOnTimer > 0)
+            if (this.model.DespawnOnTimer >= 0)
             {
                 this.despawnTimer = this.model.DespawnOnTimer;
             }
@@ -171,7 +171,7 @@ namespace CustomCompanions.Framework.Companions
             base.farmerPassesThrough = updatedModel.EnableFarmerCollision ? false : true;
 
             // Set up despawn timer, if valid
-            if (updatedModel.DespawnOnTimer > 0)
+            if (updatedModel.DespawnOnTimer >= 0)
             {
                 this.despawnTimer = updatedModel.DespawnOnTimer;
             }
