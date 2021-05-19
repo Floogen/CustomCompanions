@@ -117,8 +117,7 @@ namespace CustomCompanions.Framework.Companions
             {
                 if (this.despawnTimer <= 0)
                 {
-                    base.PrepareForDeletion();
-                    base.currentLocation.characters.Remove(this);
+                    this.Despawn();
                     return;
                 }
 
@@ -202,6 +201,47 @@ namespace CustomCompanions.Framework.Companions
         {
             return new Vector2(base.targetTile.X / 64, base.targetTile.Y / 64);
 
+        }
+
+        internal void Despawn()
+        {
+            base.PrepareForDeletion();
+            base.currentLocation.characters.Remove(this);
+
+            // Check if we need to disable respawning
+            if (!this.model.Respawn)
+            {
+                var backLayer = this.currentLocation.map.GetLayer("Back");
+                if (backLayer.Tiles.Array.GetLength(0) < this.GetTargetTile().X || backLayer.Tiles.Array.GetLength(1) < this.GetTargetTile().Y)
+                {
+                    return;
+                }
+
+                var mapTile = backLayer.Tiles[(int)this.GetTargetTile().X, (int)this.GetTargetTile().Y];
+                if (mapTile is null || !mapTile.Properties.ContainsKey("CustomCompanions") || String.IsNullOrEmpty(mapTile.Properties["CustomCompanions"]))
+                {
+                    return;
+                }
+
+                string command = mapTile.Properties["CustomCompanions"].ToString();
+                if (command.Split(' ')[0].ToUpper() != "SPAWN")
+                {
+                    return;
+                }
+
+                string companionKey = command.Substring(command.IndexOf(' ') + 2).TrimStart();
+                if (!Int32.TryParse(command.Split(' ')[1], out int amountToSummon))
+                {
+                    companionKey = command.Substring(command.IndexOf(' ') + 1);
+                }
+
+                if (companionKey.ToUpper() == this.companionKey.Value.ToUpper())
+                {
+                    CustomCompanions.monitor.Log($"Despawning {this.companionKey} at {this.GetTargetTile()} permanently", StardewModdingAPI.LogLevel.Trace);
+                    mapTile.Properties["CustomCompanions"] = null;
+                    CompanionManager.RemoveSceneryCompanionsAtTile(this.currentLocation, this.GetTargetTile());
+                }
+            }
         }
 
         private bool IsCollidingWithFarmer(GameLocation location, Rectangle position)
@@ -574,8 +614,7 @@ namespace CustomCompanions.Framework.Companions
                         var despawnTile = new Vector2(this.model.DespawnOnTile[0], this.model.DespawnOnTile[1]);
                         if (base.getTileLocation() == despawnTile)
                         {
-                            base.PrepareForDeletion();
-                            base.currentLocation.characters.Remove(this);
+                            this.Despawn();
                             return;
                         }
                     }
@@ -625,8 +664,7 @@ namespace CustomCompanions.Framework.Companions
 
                     if (targetTile.Contains(bbox))
                     {
-                        base.PrepareForDeletion();
-                        base.currentLocation.characters.Remove(this);
+                        this.Despawn();
                         return;
                     }
                 }
