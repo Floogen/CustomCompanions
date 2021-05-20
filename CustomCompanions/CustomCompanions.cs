@@ -137,6 +137,7 @@ namespace CustomCompanions
             this.areAllModelsValidated = false;
 
             // Clear out the list of denied companions to respawn
+            this.LoadContentPacks(true);
             CompanionManager.denyRespawnCompanions = new List<SceneryCompanions>();
         }
 
