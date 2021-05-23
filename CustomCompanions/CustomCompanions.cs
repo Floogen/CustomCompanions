@@ -63,7 +63,7 @@ namespace CustomCompanions
             }
 
             // Add in our debug commands
-            helper.ConsoleCommands.Add("cc_spawn", "Spawns in a specific companion.\n\nUsage: cc_spawn [QUANTITY] UNIQUE_ID.COMPANION_NAME", this.DebugSpawnCompanion);
+            helper.ConsoleCommands.Add("cc_spawn", "Spawns in a specific companion.\n\nUsage: cc_spawn [QUANTITY] UNIQUE_ID.COMPANION_NAME [X] [Y]", this.DebugSpawnCompanion);
             helper.ConsoleCommands.Add("cc_clear", "Removes all map-based custom companions at the current location.\n\nUsage: cc_clear", this.DebugClear);
             helper.ConsoleCommands.Add("cc_reload", "Reloads all custom companion content packs. Note: This will remove all spawned companions.\n\nUsage: cc_reload", this.DebugReload);
 
@@ -483,15 +483,26 @@ namespace CustomCompanions
         {
             if (args.Length == 0)
             {
-                Monitor.Log($"Missing required arguments: [QUANTITY] UNIQUE_ID.COMPANION_NAME", LogLevel.Warn);
+                Monitor.Log($"Missing required arguments: [QUANTITY] UNIQUE_ID.COMPANION_NAME [X] [Y]", LogLevel.Warn);
                 return;
             }
 
             int amountToSummon = 1;
             string companionKey = args[0];
-            if (args.Length > 1 && Int32.TryParse(args[0], out amountToSummon))
+            var targetTile = Game1.player.getTileLocation();
+            if (args.Length > 1 && Int32.TryParse(args[0], out int parsedAmountToSummon))
             {
+                amountToSummon = parsedAmountToSummon;
                 companionKey = args[1];
+
+                if (args.Length > 3 && Int32.TryParse(args[2], out int xTile) && Int32.TryParse(args[3], out int yTile))
+                {
+                    targetTile += new Vector2(xTile, yTile);
+                }
+            }
+            else if (args.Length > 2 && Int32.TryParse(args[1], out int xTile) && Int32.TryParse(args[2], out int yTile))
+            {
+                targetTile += new Vector2(xTile, yTile);
             }
 
             if (!CompanionManager.companionModels.Any(c => String.Concat(c.Owner, ".", c.Name) == companionKey) && !CompanionManager.companionModels.Any(c => String.Concat(c.Name) == companionKey))
@@ -513,7 +524,7 @@ namespace CustomCompanions
             }
 
             Monitor.Log($"Spawning {companionKey} x{amountToSummon} at {Game1.currentLocation} on tile {Game1.player.getTileLocation()}!", LogLevel.Debug);
-            CompanionManager.SummonCompanions(companion, amountToSummon, Game1.player.getTileLocation(), Game1.currentLocation);
+            CompanionManager.SummonCompanions(companion, amountToSummon, targetTile, Game1.currentLocation);
         }
 
         private void DebugClear(string command, string[] args)
