@@ -12,12 +12,14 @@ namespace CustomCompanions.Framework.Companions
     public class MapCompanion : Companion
     {
         private int? despawnTimer;
+        private int stuckTimer;
         private int pauseTimer;
         private bool canHalt;
         private float motionMultiplier;
         private float behaviorTimer;
 
         // Path finder related
+        private bool bypassCollision;
         private bool hasReachedDestination;
         private Stack<Point> activePath;
 
@@ -112,6 +114,9 @@ namespace CustomCompanions.Framework.Companions
             {
                 this.despawnTimer -= time.ElapsedGameTime.Milliseconds;
             }
+
+            // Stuck timer
+            this.CheckStuckStatus(location, time);
 
             if (Game1.IsMasterGame)
             {
@@ -211,36 +216,28 @@ namespace CustomCompanions.Framework.Companions
             // Check if we need to disable respawning
             if (!this.model.Respawn)
             {
-                var backLayer = this.currentLocation.map.GetLayer("Back");
-                if (backLayer.Tiles.Array.GetLength(0) < this.GetTargetTile().X || backLayer.Tiles.Array.GetLength(1) < this.GetTargetTile().Y)
-                {
-                    return;
-                }
+                CompanionManager.DenyCompanionFromRespawning(base.currentLocation, this.GetTargetTile(), this);
+            }
+        }
 
-                var mapTile = backLayer.Tiles[(int)this.GetTargetTile().X, (int)this.GetTargetTile().Y];
-                if (mapTile is null || !mapTile.Properties.ContainsKey("CustomCompanions") || String.IsNullOrEmpty(mapTile.Properties["CustomCompanions"]))
-                {
-                    return;
-                }
+        private void CheckStuckStatus(GameLocation location, GameTime time)
+        {
+            var collidingCharacter = location.isCollidingWithCharacter(this.nextPosition(this.FacingDirection));
+            bool isCollidingWithCharacter = collidingCharacter != null && (!collidingCharacter.Equals(this) || (collidingCharacter is MapCompanion && (collidingCharacter as MapCompanion).targetTile != this.targetTile));
 
-                string command = mapTile.Properties["CustomCompanions"].ToString();
-                if (command.Split(' ')[0].ToUpper() != "SPAWN")
-                {
-                    return;
-                }
+            if (base.currentLocation.isTileLocationTotallyClearAndPlaceable(new Vector2(this.nextPosition(this.FacingDirection).X, this.nextPosition(this.FacingDirection).Y)))
+            {
+                this.stuckTimer = 0;
+                this.bypassCollision = false;
+            }
+            else
+            {
+                this.stuckTimer += time.ElapsedGameTime.Milliseconds;
+            }
 
-                string companionKey = command.Substring(command.IndexOf(' ') + 2).TrimStart();
-                if (!Int32.TryParse(command.Split(' ')[1], out int amountToSummon))
-                {
-                    companionKey = command.Substring(command.IndexOf(' ') + 1);
-                }
-
-                if (companionKey.ToUpper() == this.companionKey.Value.ToUpper())
-                {
-                    CustomCompanions.monitor.Log($"Despawning {this.companionKey} at {this.GetTargetTile()} permanently", StardewModdingAPI.LogLevel.Trace);
-                    mapTile.Properties["CustomCompanions"] = null;
-                    CompanionManager.RemoveSceneryCompanionsAtTile(this.currentLocation, this.GetTargetTile());
-                }
+            if (this.stuckTimer > 5000)
+            {
+                this.bypassCollision = true;
             }
         }
 
@@ -251,6 +248,12 @@ namespace CustomCompanions.Framework.Companions
 
         private bool IsCollidingPosition(Rectangle position, GameLocation location)
         {
+            var collidingCharacter = location.isCollidingWithCharacter(this.nextPosition(this.FacingDirection));
+            if (this.bypassCollision && collidingCharacter != null && (!collidingCharacter.Equals(this) || (collidingCharacter is MapCompanion && (collidingCharacter as MapCompanion).targetTile != this.targetTile)))
+            {
+                return false;
+            }
+
             if (location.isCollidingPosition(position, Game1.viewport, isFarmer: false, 0, glider: false, this))
             {
                 return true;
@@ -291,12 +294,20 @@ namespace CustomCompanions.Framework.Companions
 
                 return true;
             }
-            if (base.idleBehavior.behavior == Behavior.SIMPLE_PATH || base.idleBehavior.behavior == Behavior.PACING)
+            if (base.idleBehavior.behavior == Behavior.PACING)
             {
-                if (activePath != null && activePath.Count > 0)
+                if (!this.IsCollidingWithFarmer(location, next_position))
                 {
-                    activePath.Clear();
+                    activePath = new Stack<Point>();
+                    this.FaceAndMoveInDirection(Utility.GetOppositeFacingDirection(this.FacingDirection));
                 }
+
+                return true;
+            }
+            if (base.idleBehavior.behavior == Behavior.SIMPLE_PATH)
+            {
+                activePath = new Stack<Point>();
+
                 return true;
             }
             return false;
@@ -601,6 +612,7 @@ namespace CustomCompanions.Framework.Companions
                 //base.stopWithoutChangingFrame();
                 if (activePath.Count == 0)
                 {
+                    this.bypassCollision = false;
                     /*
                     this.Halt();
                     if (this.endBehaviorFunction != null)
