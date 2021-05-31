@@ -43,6 +43,10 @@ namespace CustomCompanions.Framework.Models.Companion
         public bool AppearUnderwater { get; set; }
         public int FrameSizeWidth { get; set; }
         public int FrameSizeHeight { get; set; }
+        public int CollisionPositionX { get; set; }
+        public int CollisionPositionY { get; set; }
+        public int CollisionPositionWidth { get; set; }
+        public int CollisionPositionHeight { get; set; }
         public string TileSheetPath { get; set; }
         public AnimationModel UniformAnimation { get; set; }
         public AnimationModel UpAnimation { get; set; }

@@ -250,13 +250,18 @@ namespace CustomCompanions.Framework.Companions
 
         public override Rectangle GetBoundingBox()
         {
+            if (!this.HasCustomCollisionBox())
+            {
+                return base.GetBoundingBox();
+            }
+
             if (this.Sprite == null)
             {
                 return Rectangle.Empty;
             }
 
             Vector2 position = this.Position;
-            return new Rectangle((int)position.X + this.Sprite.getWidth(), (int)position.Y + this.Sprite.getHeight() / 2, this.Sprite.getWidth(), this.Sprite.getHeight());
+            return new Rectangle((int)position.X + this.model.CollisionPositionX, (int)position.Y + this.model.CollisionPositionY, this.model.CollisionPositionWidth, this.model.CollisionPositionHeight);
         }
 
         public override void draw(SpriteBatch b, float alpha = 1f)
@@ -304,6 +309,21 @@ namespace CustomCompanions.Framework.Companions
         internal void DrawUnderwater(SpriteBatch b)
         {
             this.DoDraw(b, 1f);
+        }
+
+        internal bool HasCustomCollisionBox()
+        {
+            if (this.model is null)
+            {
+                return false;
+            }
+
+            if (this.model.CollisionPositionHeight == 0 && this.model.CollisionPositionWidth == 0 && this.model.CollisionPositionX == 0 && this.model.CollisionPositionY == 0)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         internal void SetUpCompanion()
