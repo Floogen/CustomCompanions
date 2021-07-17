@@ -277,8 +277,9 @@ namespace CustomCompanions.Framework.Companions
         internal void DoDraw(SpriteBatch b, float alpha = 1f)
         {
             var spriteLayerDepth = this.IsFlying() ? 0.991f : Math.Max(0f, base.drawOnTop ? 0.991f : ((float)base.getStandingY() / 10000f));
+            float layer_depth = ((float)(this.GetBoundingBox().Center.Y + 4) + base.Position.X / 20000f) / 10000f;
 
-            b.Draw(this.Sprite.Texture, Utility.snapDrawPosition(Game1.GlobalToLocal(Game1.viewport, base.Position + new Vector2(this.GetBoundingBox().Width, this.GetBoundingBox().Height))) + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), this.Sprite.SourceRect, this.isPrismatic ? Utility.GetPrismaticColor(348 + (int)this.specialNumber, 5f) : color, this.rotation, new Vector2(this.Sprite.SpriteWidth / 2, (float)this.Sprite.SpriteHeight * 3f / 4f), Math.Max(0.2f, base.scale) * 4f, (base.flip || (this.Sprite.CurrentAnimation != null && this.Sprite.CurrentAnimation[this.Sprite.currentAnimationIndex].flip)) ? SpriteEffects.FlipHorizontally : SpriteEffects.None, spriteLayerDepth);
+            b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(this.GetSpriteWidthForPositioning() * 4 / 2, this.Sprite.getHeight() / 2) + ((this.shakeTimer > 0) ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero), this.Sprite.SourceRect, this.isPrismatic ? Utility.GetPrismaticColor(348 + (int)this.specialNumber, 5f) : color, this.rotation, new Vector2(this.Sprite.SpriteWidth / 2, (float)this.Sprite.SpriteHeight * 3f / 4f), Math.Max(0.2f, base.scale) * 4f, (base.flip || (this.Sprite.CurrentAnimation != null && this.Sprite.CurrentAnimation[this.Sprite.currentAnimationIndex].flip)) ? SpriteEffects.FlipHorizontally : SpriteEffects.None, layer_depth);
             if (this.Breather && this.shakeTimer <= 0 && !this.isMoving())
             {
                 Rectangle chestBox = this.Sprite.SourceRect;
@@ -296,12 +297,12 @@ namespace CustomCompanions.Framework.Companions
             {
                 if (this.model.Shadow != null)
                 {
-                    Game1.spriteBatch.Draw(Game1.shadowTexture, Utility.snapDrawPosition(Game1.GlobalToLocal(Game1.viewport, new Vector2(this.model.Shadow.OffsetX, this.model.Shadow.OffsetY) + this.Position + new Vector2(this.GetBoundingBox().Width, this.GetBoundingBox().Height))), Game1.shadowTexture.Bounds, new Color(255, 255, 255, this.model.Shadow.Alpha), 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), Math.Max(0f, (4f + (float)this.yJumpOffset / 40f) * this.model.Shadow.Scale), SpriteEffects.None, shadowLayerDepth);
+                    Game1.spriteBatch.Draw(Game1.shadowTexture, Game1.GlobalToLocal(Game1.viewport, new Vector2(this.model.Shadow.OffsetX, this.model.Shadow.OffsetY) + this.Position + new Vector2((float)(this.GetSpriteWidthForPositioning() * 4) / 2f, this.Sprite.getHeight() + 12)), Game1.shadowTexture.Bounds, new Color(255, 255, 255, this.model.Shadow.Alpha), 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), Math.Max(0f, (4f + (float)this.yJumpOffset / 40f) * this.model.Shadow.Scale), SpriteEffects.None, shadowLayerDepth);
                 }
                 else
                 {
                     // Default game shadow
-                    Game1.spriteBatch.Draw(Game1.shadowTexture, Utility.snapDrawPosition(Game1.GlobalToLocal(Game1.viewport, this.GetShadowOffset()) + this.Position + new Vector2(this.GetBoundingBox().Width, this.GetBoundingBox().Height)), Game1.shadowTexture.Bounds, Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), Math.Max(0f, (4f + (float)this.yJumpOffset / 40f) * (float)this.scale), SpriteEffects.None, shadowLayerDepth);
+                    Game1.spriteBatch.Draw(Game1.shadowTexture, Game1.GlobalToLocal(Game1.viewport, this.GetShadowOffset() + this.Position + new Vector2((float)(this.GetSpriteWidthForPositioning() * 4) / 2f, this.Sprite.getHeight() + 12)), Game1.shadowTexture.Bounds, Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), Math.Max(0f, (4f + (float)this.yJumpOffset / 40f) * (float)this.scale), SpriteEffects.None, shadowLayerDepth);
                 }
             }
         }
