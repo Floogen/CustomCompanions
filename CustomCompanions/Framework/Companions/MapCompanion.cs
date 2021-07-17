@@ -246,7 +246,7 @@ namespace CustomCompanions.Framework.Companions
             return location.farmers.Any(f => f != null && f.GetBoundingBox().Intersects(position));
         }
 
-        private bool IsCollidingPosition(Rectangle position, GameLocation location)
+        internal bool IsCollidingPosition(Rectangle position, GameLocation location, bool isPathFinding = false)
         {
             var collidingCharacter = location.isCollidingWithCharacter(this.nextPosition(this.FacingDirection));
             if (this.bypassCollision && collidingCharacter != null && (!collidingCharacter.Equals(this) || (collidingCharacter is MapCompanion && (collidingCharacter as MapCompanion).targetTile != this.targetTile)))
@@ -254,12 +254,12 @@ namespace CustomCompanions.Framework.Companions
                 return false;
             }
 
-            if (location.isCollidingPosition(position, Game1.viewport, isFarmer: false, 0, glider: false, this))
+            if (location.isCollidingPosition(position, Game1.viewport, isFarmer: false, 0, glider: false, this, pathfinding: isPathFinding))
             {
                 return true;
             }
 
-            if (location.isCollidingPosition(position, Game1.viewport, isFarmer: true, 0, glider: false, this))
+            if (location.isCollidingPosition(position, Game1.viewport, isFarmer: true, 0, glider: false, this, pathfinding: isPathFinding))
             {
                 return true;
             }
@@ -308,6 +308,10 @@ namespace CustomCompanions.Framework.Companions
             {
                 activePath = new Stack<Point>();
 
+                return true;
+            }
+            if (base.idleBehavior.behavior == Behavior.FOLLOW)
+            {
                 return true;
             }
             return false;
@@ -732,6 +736,9 @@ namespace CustomCompanions.Framework.Companions
                 case Behavior.SIMPLE_PATH:
                     DoSimplePath(arguments, time, location);
                     return true;
+                case Behavior.FOLLOW:
+                    DoFollow(arguments, time, location);
+                    return true;
                 default:
                     DoNothing(arguments, time, location);
                     return false;
@@ -1004,6 +1011,7 @@ namespace CustomCompanions.Framework.Companions
                         waitTime = (int)arguments[2];
                     }
                 }
+
                 var destinationTile = new Vector2(xDestination, yDestination);
                 if (activePath is null || activePath.Count == 0)
                 {
@@ -1024,6 +1032,57 @@ namespace CustomCompanions.Framework.Companions
                     }
 
                     activePath = PathFindController.findPath(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), PathFindController.isAtEndPoint, base.currentLocation, this, 300);
+                }
+
+                this.FollowActivePath();
+
+                this.isIdle.Value = !this.isMoving();
+                base.Animate(time, this.isIdle);
+                base.update(time, location, -1, move: false);
+                this.wasIdle = this.isIdle;
+
+                this.MovePositionViaSpeed(time, location);
+
+                this.AttemptDespawnNearEdge();
+            }
+            else
+            {
+                this.Animate(time, this.isIdle);
+                this.wasIdle = this.isIdle;
+            }
+        }
+
+        private void DoFollow(float[] arguments, GameTime time, GameLocation location)
+        {
+            if (Game1.IsMasterGame)
+            {
+                var followTileRadius = 5;
+                if (arguments != null)
+                {
+                    if (arguments.Length > 0)
+                    {
+                        followTileRadius = (int)arguments[0];
+                    }
+                }
+
+                var destinationTile = this.GetTargetTile();
+                var targetFollower = Utility.isThereAFarmerWithinDistance(this.GetTargetTile(), followTileRadius, location);
+                if (targetFollower != null)
+                {
+                    destinationTile = targetFollower.getTileLocation();
+                }
+
+                if (base.getTileLocation() != destinationTile)
+                {
+                    if (activePath is null || activePath.Count == 0 || (activePath.Count < 3 && !activePath.Last().Equals(new Point((int)destinationTile.X, (int)destinationTile.Y))))
+                    {
+                        activePath = PathFindController.findPath(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), PathFindController.isAtEndPoint, base.currentLocation, this, 300);
+                    }
+                }
+                else
+                {
+                    activePath = null;
+                    base.SetMovingDirection(-1);
                 }
 
                 this.FollowActivePath();

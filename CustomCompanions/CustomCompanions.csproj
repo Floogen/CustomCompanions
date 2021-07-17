@@ -90,6 +90,7 @@
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkerCollisionTest\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkerSimplePathTest\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkerPacingTest\companion.json" />
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkerFollowTest\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkerWalkSquareTest\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWanderWalkingChicken\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWanderWalkingCow\companion.json" />

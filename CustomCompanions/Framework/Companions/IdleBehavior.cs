@@ -17,7 +17,8 @@ namespace CustomCompanions.Framework.Companions
         JUMPER,
         WALK_SQUARE,
         PACING,
-        SIMPLE_PATH
+        SIMPLE_PATH,
+        FOLLOW
     }
 
     internal class IdleBehavior
@@ -56,6 +57,9 @@ namespace CustomCompanions.Framework.Companions
                     break;
                 case "SIMPLE_PATH":
                     this.behavior = Behavior.SIMPLE_PATH;
+                    break;
+                case "FOLLOW":
+                    this.behavior = Behavior.FOLLOW;
                     break;
                 default:
                     this.behavior = Behavior.NOTHING;
