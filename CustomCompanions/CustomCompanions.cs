@@ -63,7 +63,7 @@ namespace CustomCompanions
             }
 
             // Add in our debug commands
-            helper.ConsoleCommands.Add("cc_spawn", "Spawns in a specific companion.\n\nUsage: cc_spawn [QUANTITY] UNIQUE_ID.COMPANION_NAME", this.DebugSpawnCompanion);
+            helper.ConsoleCommands.Add("cc_spawn", "Spawns in a specific companion.\n\nUsage: cc_spawn [QUANTITY] UNIQUE_ID.COMPANION_NAME [X] [Y]", this.DebugSpawnCompanion);
             helper.ConsoleCommands.Add("cc_clear", "Removes all map-based custom companions at the current location.\n\nUsage: cc_clear", this.DebugClear);
             helper.ConsoleCommands.Add("cc_reload", "Reloads all custom companion content packs. Note: This will remove all spawned companions.\n\nUsage: cc_reload", this.DebugReload);
 
@@ -135,6 +135,10 @@ namespace CustomCompanions
             // Reset the tracked validation counter
             this.modelValidationIndex = 0;
             this.areAllModelsValidated = false;
+
+            // Clear out the list of denied companions to respawn
+            this.LoadContentPacks(true);
+            CompanionManager.denyRespawnCompanions = new List<SceneryCompanions>();
         }
 
         private void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
@@ -152,7 +156,7 @@ namespace CustomCompanions
             // Check for any content patcher changes every second, but iterate through list based on PERIODIC_CHECK_INTERVAL
             if (e.IsMultipleOf(PERIODIC_CHECK_INTERVAL) || !this.areAllModelsValidated)
             {
-                this.areAllModelsValidated = this.ValidateModelCache(Game1.player.currentLocation, PERIODIC_CHECK_INTERVAL / 60);
+                this.areAllModelsValidated = this.ValidateModelCache(Game1.player.currentLocation, false, PERIODIC_CHECK_INTERVAL / 60);
             }
         }
 
@@ -162,7 +166,7 @@ namespace CustomCompanions
             this.modelValidationIndex = 0;
 
             // Check for any content patcher changes
-            this.areAllModelsValidated = this.ValidateModelCache(e.NewLocation);
+            this.areAllModelsValidated = this.ValidateModelCache(e.NewLocation, true);
 
             // Spawn any map-based companions that are located in this new area
             this.SpawnSceneryCompanions(e.NewLocation);
@@ -171,10 +175,10 @@ namespace CustomCompanions
             this.RemoveOrphanCompanions(e.NewLocation);
         }
 
-        private bool ValidateModelCache(GameLocation location, int workingPeriod = -1)
+        private bool ValidateModelCache(GameLocation location, bool forceCheck = false, int workingPeriod = -1)
         {
             // Have to load each asset every second, as we don't have a way to track content patcher changes (except for comparing changes to our cache)
-            var validCompanionIdToTokens = AssetManager.idToAssetToken.Where(p => location.characters.Any(c => CompanionManager.IsCustomCompanion(c) && (c as Companion).model != null && (c as Companion).model.GetId() == p.Key && (c as Companion).model.EnablePeriodicPatchCheck)).ToList();
+            var validCompanionIdToTokens = AssetManager.idToAssetToken.Where(p => location.characters.Any(c => CompanionManager.IsCustomCompanion(c) && (c as Companion).model != null && (c as Companion).model.GetId() == p.Key && ((c as Companion).model.EnablePeriodicPatchCheck || forceCheck))).ToList();
             if (validCompanionIdToTokens.Count() == 0)
             {
                 return true;
@@ -423,6 +427,12 @@ namespace CustomCompanions
                             continue;
                         }
 
+                        // Check if the companion is allowed to be spawned
+                        if (CompanionManager.denyRespawnCompanions.Any(s => s.Location == location && s.Tile == new Vector2(x, y) && s.Companions.Any(c => c.companionKey == companion.GetId())))
+                        {
+                            continue;
+                        }
+
                         Monitor.Log($"Spawning [{companionKey}] x{amountToSummon} on tile ({x}, {y}) for map {location.NameOrUniqueName}");
                         CompanionManager.SummonCompanions(companion, amountToSummon, new Vector2(x, y), location);
                     }
@@ -473,15 +483,26 @@ namespace CustomCompanions
         {
             if (args.Length == 0)
             {
-                Monitor.Log($"Missing required arguments: [QUANTITY] UNIQUE_ID.COMPANION_NAME", LogLevel.Warn);
+                Monitor.Log($"Missing required arguments: [QUANTITY] UNIQUE_ID.COMPANION_NAME [X] [Y]", LogLevel.Warn);
                 return;
             }
 
             int amountToSummon = 1;
             string companionKey = args[0];
-            if (args.Length > 1 && Int32.TryParse(args[0], out amountToSummon))
+            var targetTile = Game1.player.getTileLocation();
+            if (args.Length > 1 && Int32.TryParse(args[0], out int parsedAmountToSummon))
             {
+                amountToSummon = parsedAmountToSummon;
                 companionKey = args[1];
+
+                if (args.Length > 3 && Int32.TryParse(args[2], out int xTile) && Int32.TryParse(args[3], out int yTile))
+                {
+                    targetTile += new Vector2(xTile, yTile);
+                }
+            }
+            else if (args.Length > 2 && Int32.TryParse(args[1], out int xTile) && Int32.TryParse(args[2], out int yTile))
+            {
+                targetTile += new Vector2(xTile, yTile);
             }
 
             if (!CompanionManager.companionModels.Any(c => String.Concat(c.Owner, ".", c.Name) == companionKey) && !CompanionManager.companionModels.Any(c => String.Concat(c.Name) == companionKey))
@@ -503,7 +524,7 @@ namespace CustomCompanions
             }
 
             Monitor.Log($"Spawning {companionKey} x{amountToSummon} at {Game1.currentLocation} on tile {Game1.player.getTileLocation()}!", LogLevel.Debug);
-            CompanionManager.SummonCompanions(companion, amountToSummon, Game1.player.getTileLocation(), Game1.currentLocation);
+            CompanionManager.SummonCompanions(companion, amountToSummon, targetTile, Game1.currentLocation);
         }
 
         private void DebugClear(string command, string[] args)

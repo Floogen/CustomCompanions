@@ -88,6 +88,10 @@
     <None Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWanderWalkingCow\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleUnderwaterFish\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkerCollisionTest\companion.json" />
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkerSimplePathTest\companion.json" />
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkerPacingTest\companion.json" />
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkerFollowTest\companion.json" />
+    <None Include="Examples\[CC] Example Pack\Companions\ExampleWalkerWalkSquareTest\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWanderWalkingChicken\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleWanderWalkingCow\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleFlyingCompanion\companion.json" />
@@ -140,7 +144,7 @@
   </PostBuildEventDependsOn>
     <PostBuildEvent>powershell -Command "(ls *manifest.json -rec | foreach-object { $f=$_.FullName; (gc -LiteralPath \"$f\") -replace 'REPLACE_ME_WITH_VERSION',  '@(VersionNumber)' | sc -LiteralPath \"$f\" })"
 
-powershell Remove-Item -Path '$(SolutionDir)releases\latest\$(SolutionName)\$(ProjectName)"' -Recurse -Force
+powershell Remove-Item -Path '$(SolutionDir)releases\latest\$(SolutionName)"' -Recurse -Force
 xcopy /s /y /i "$(TargetDir)" "$(SolutionDir)releases\latest\$(SolutionName)"
 7z a -tzip "$(SolutionDir)releases\$(SolutionName)-@(VersionNumber).zip" "$(SolutionDir)releases\latest\$(SolutionName)"
 
