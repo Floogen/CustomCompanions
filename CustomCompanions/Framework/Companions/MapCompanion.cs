@@ -648,6 +648,7 @@ namespace CustomCompanions.Framework.Companions
                     return;
                 }
             }
+
             if (bbox.Left < targetTile.Left && bbox.Right < targetTile.Right)
             {
                 this.FaceAndMoveInDirection(1);
@@ -1032,6 +1033,13 @@ namespace CustomCompanions.Framework.Companions
                     }
 
                     activePath = PathFindController.findPath(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), PathFindController.isAtEndPoint, base.currentLocation, this, 300);
+
+                    // TODO: Implement custom path finder to avoid manually skipping first node
+                    // This workaround is done to avoid the companion moving back and forth briefly after collision / reseting activePath
+                    if (activePath is null || activePath.Count == 0)
+                    {
+                        activePath.Pop();
+                    }
                 }
 
                 this.FollowActivePath();
