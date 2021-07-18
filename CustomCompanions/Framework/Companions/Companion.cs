@@ -297,12 +297,12 @@ namespace CustomCompanions.Framework.Companions
             {
                 if (this.model.Shadow != null)
                 {
-                    Game1.spriteBatch.Draw(Game1.shadowTexture, Game1.GlobalToLocal(Game1.viewport, new Vector2(this.model.Shadow.OffsetX, this.model.Shadow.OffsetY) + this.Position + new Vector2((float)(this.GetSpriteWidthForPositioning() * 4) / 2f, this.Sprite.getHeight() + 12)), Game1.shadowTexture.Bounds, new Color(255, 255, 255, this.model.Shadow.Alpha), 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), Math.Max(0f, (4f + (float)this.yJumpOffset / 40f) * this.model.Shadow.Scale), SpriteEffects.None, shadowLayerDepth);
+                    Game1.spriteBatch.Draw(Game1.shadowTexture, Game1.GlobalToLocal(Game1.viewport, new Vector2(this.model.Shadow.OffsetX, this.model.Shadow.OffsetY) + this.Position + new Vector2((float)(this.GetSpriteWidthForPositioning() * 4) / 2f, this.Sprite.getHeight())), Game1.shadowTexture.Bounds, new Color(255, 255, 255, this.model.Shadow.Alpha), 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), Math.Max(0f, (4f + (float)this.yJumpOffset / 40f) * this.model.Shadow.Scale), SpriteEffects.None, shadowLayerDepth);
                 }
                 else
                 {
                     // Default game shadow
-                    Game1.spriteBatch.Draw(Game1.shadowTexture, Game1.GlobalToLocal(Game1.viewport, this.GetShadowOffset() + this.Position + new Vector2((float)(this.GetSpriteWidthForPositioning() * 4) / 2f, this.Sprite.getHeight() + 12)), Game1.shadowTexture.Bounds, Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), Math.Max(0f, (4f + (float)this.yJumpOffset / 40f) * (float)this.scale), SpriteEffects.None, shadowLayerDepth);
+                    Game1.spriteBatch.Draw(Game1.shadowTexture, Game1.GlobalToLocal(Game1.viewport, this.GetShadowOffset() + this.Position + new Vector2((float)(this.GetSpriteWidthForPositioning() * 4) / 2f, this.Sprite.getHeight())), Game1.shadowTexture.Bounds, Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), Math.Max(0f, (4f + (float)this.yJumpOffset / 40f) * (float)this.scale), SpriteEffects.None, shadowLayerDepth);
                 }
             }
         }
