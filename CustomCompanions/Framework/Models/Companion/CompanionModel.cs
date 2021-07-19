@@ -30,6 +30,9 @@ namespace CustomCompanions.Framework.Models.Companion
         public int MinHaltTime { get; set; } = 2000;
         public int MaxHaltTime { get; set; } = 10000;
         public string InspectionDialogue { get; set; }
+        public int OverheadTextCheckInterval { get; set; } = 5000;
+        public float OverheadTextChance { get; set; } = 0.5f;
+        public List<OverheadTextModel> OverheadTexts { get; set; } = new List<OverheadTextModel>();
         public int[] DespawnOnTile { get; set; }
         public int DespawnOnTimer { get; set; } = -1;
         public bool Respawn { get; set; }
