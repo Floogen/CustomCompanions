@@ -98,6 +98,12 @@ namespace CustomCompanions.Framework.Companions
 
             base.currentLocation = location;
 
+            // Check if player is nearby for UpdateWhenPlayerNearby property, if applicable
+            if (this.model.UpdateWhenPlayerNearby != null && Utility.isThereAFarmerWithinDistance(base.getTileLocation(), this.model.MinTilesForNearby, base.currentLocation) != null)
+            {
+                this.UpdateModel(this.model.UpdateWhenPlayerNearby);
+            }
+
             // Do Idle Behaviors
             this.PerformBehavior(base.idleBehavior.behavior, base.model.IdleArguments, time, location);
 

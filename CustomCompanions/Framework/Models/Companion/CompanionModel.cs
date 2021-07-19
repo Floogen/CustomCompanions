@@ -35,6 +35,8 @@ namespace CustomCompanions.Framework.Models.Companion
         public bool Respawn { get; set; }
         public string IdleBehavior { get; set; } = "NOTHING";
         public float[] IdleArguments { get; set; }
+        public int MinTilesForNearby { get; set; } = 1;
+        public CompanionModel UpdateWhenPlayerNearby { get; set; }
         public List<int[]> Colors { get; set; } = new List<int[]>();
         public bool IsPrismatic { get; set; } = false;
         public LightModel Light { get; set; }
