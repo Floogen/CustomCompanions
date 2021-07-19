@@ -1042,7 +1042,7 @@ namespace CustomCompanions.Framework.Companions
 
                     // TODO: Implement custom path finder to avoid manually skipping first node
                     // This workaround is done to avoid the companion moving back and forth briefly after collision / reseting activePath
-                    if (activePath is null || activePath.Count == 0)
+                    if (activePath != null && activePath.Count > 0)
                     {
                         activePath.Pop();
                     }
