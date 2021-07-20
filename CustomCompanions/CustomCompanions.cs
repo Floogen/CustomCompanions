@@ -288,6 +288,19 @@ namespace CustomCompanions
                         companion.TileSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.png"));
                     }
 
+                    // Save the PortraitSheet, if one is given
+                    if (companion.Portrait != null)
+                    {
+                        if (!File.Exists(Path.Combine(companionFolder.FullName, "portrait.png")))
+                        {
+                            Monitor.Log($"Warning for companion {companion.Name} from {contentPack.Manifest.Name}: Portrait property was given but no portrait.png was found", LogLevel.Warn);
+                        }
+                        else
+                        {
+                            companion.Portrait.PortraitSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "portrait.png"));
+                        }
+                    }
+
                     if (contentPack.Translation != null)
                     {
                         companion.Translations = contentPack.Translation;

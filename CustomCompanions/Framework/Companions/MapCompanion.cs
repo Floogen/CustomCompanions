@@ -1,6 +1,7 @@
 ﻿using CustomCompanions.Framework.Managers;
 using CustomCompanions.Framework.Models.Companion;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,7 @@ namespace CustomCompanions.Framework.Companions
         private bool canHalt;
         private float motionMultiplier;
         private float behaviorTimer;
+        private float overheadTextSelectionTimer;
 
         // Path finder related
         private bool bypassCollision;
@@ -59,6 +61,16 @@ namespace CustomCompanions.Framework.Companions
             {
                 this.despawnTimer = this.model.DespawnOnTimer;
             }
+
+            // Set up overhead text timer
+            this.overheadTextSelectionTimer = this.model.OverheadTextCheckInterval;
+
+            // Set up portrait, if valid
+            if (this.model.Portrait != null && !String.IsNullOrEmpty(this.model.Portrait.PortraitSheetPath))
+            {
+                this.displayName = String.IsNullOrEmpty(this.model.Portrait.PortraitDisplayName) ? this.displayName : this.model.Portrait.PortraitDisplayName;
+                this.Portrait = CustomCompanions.modHelper.ContentPacks.GetOwned().First(c => c.Manifest.UniqueID == this.model.Owner).LoadAsset<Texture2D>(this.model.Portrait.PortraitSheetPath);
+            }
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -98,8 +110,17 @@ namespace CustomCompanions.Framework.Companions
 
             base.currentLocation = location;
 
+            // Check if player is nearby for UpdateWhenPlayerNearby property, if applicable
+            if (this.model.UpdateWhenPlayerNearby != null && Utility.isThereAFarmerWithinDistance(base.getTileLocation(), this.model.MinTilesForNearby, base.currentLocation) != null)
+            {
+                this.UpdateModel(this.model.UpdateWhenPlayerNearby);
+            }
+
             // Do Idle Behaviors
             this.PerformBehavior(base.idleBehavior.behavior, base.model.IdleArguments, time, location);
+
+            // Check for overhead text
+            this.AttemptOverheadText(time);
 
             // Timers
             if (this.pauseTimer > 0)
@@ -133,6 +154,70 @@ namespace CustomCompanions.Framework.Companions
                 if (Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) != null)
                 {
                     base.PlayRequiredSounds(time, this.isMoving());
+                }
+            }
+        }
+
+        internal void AttemptOverheadText(GameTime time)
+        {
+            if (this.model.OverheadTexts.Count == 0)
+            {
+                return;
+            }
+
+            // Overhead text timer
+            if (this.overheadTextSelectionTimer > 0)
+            {
+                this.overheadTextSelectionTimer -= time.ElapsedGameTime.Milliseconds;
+            }
+            else
+            {
+                if (Game1.random.NextDouble() < this.model.OverheadTextChance && String.IsNullOrEmpty(base.textAboveHead))
+                {
+                    var weightedSelection = this.model.OverheadTexts.Where(o => o.ChanceWeight >= Game1.random.NextDouble()).ToList();
+                    if (weightedSelection.Count > 0)
+                    {
+                        weightedSelection = this.model.OverheadTexts;
+                    }
+
+                    var selectedOverheadObject = weightedSelection[Game1.random.Next(weightedSelection.Count)];
+
+                    // Check for any translations
+                    var selectedText = selectedOverheadObject.Text;
+                    if (this.model.Translations.GetTranslations().Any(t => t.Key == selectedText))
+                    {
+                        selectedText = this.model.Translations.Get(selectedText);
+                    }
+
+                    base.showTextAboveHead(selectedText, duration: selectedOverheadObject.TextLifetime);
+                }
+
+                this.overheadTextSelectionTimer = this.model.OverheadTextCheckInterval;
+            }
+
+            // Handle text display
+            if (base.textAboveHeadTimer > 0)
+            {
+                if (base.textAboveHeadPreTimer > 0)
+                {
+                    base.textAboveHeadPreTimer -= time.ElapsedGameTime.Milliseconds;
+                }
+                else
+                {
+                    base.textAboveHeadTimer -= time.ElapsedGameTime.Milliseconds;
+                    if (base.textAboveHeadTimer > 500)
+                    {
+                        base.textAboveHeadAlpha = Math.Min(1f, base.textAboveHeadAlpha + 0.1f);
+                    }
+                    else
+                    {
+                        base.textAboveHeadAlpha = Math.Max(0f, base.textAboveHeadAlpha - 0.04f);
+                    }
+
+                    if (base.textAboveHeadTimer <= 0)
+                    {
+                        base.clearTextAboveHead();
+                    }
                 }
             }
         }
@@ -179,6 +264,16 @@ namespace CustomCompanions.Framework.Companions
             if (updatedModel.DespawnOnTimer >= 0)
             {
                 this.despawnTimer = updatedModel.DespawnOnTimer;
+            }
+
+            // Set up overhead text timer
+            this.overheadTextSelectionTimer = this.model.OverheadTextCheckInterval;
+
+            // Set up portrait, if valid
+            if (this.model.Portrait != null && !String.IsNullOrEmpty(this.model.Portrait.PortraitSheetPath))
+            {
+                this.displayName = String.IsNullOrEmpty(this.model.Portrait.PortraitDisplayName) ? this.displayName : this.model.Portrait.PortraitDisplayName;
+                this.Portrait = CustomCompanions.modHelper.ContentPacks.GetOwned().First(c => c.Manifest.UniqueID == this.model.Owner).LoadAsset<Texture2D>(this.model.Portrait.PortraitSheetPath);
             }
         }
 
@@ -1036,7 +1131,7 @@ namespace CustomCompanions.Framework.Companions
 
                     // TODO: Implement custom path finder to avoid manually skipping first node
                     // This workaround is done to avoid the companion moving back and forth briefly after collision / reseting activePath
-                    if (activePath is null || activePath.Count == 0)
+                    if (activePath != null && activePath.Count > 0)
                     {
                         activePath.Pop();
                     }
