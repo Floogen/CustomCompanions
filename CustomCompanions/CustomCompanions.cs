@@ -315,8 +315,11 @@ namespace CustomCompanions
                         var assetToken = $"{TOKEN_HEADER}{companion.GetId()}";
                         AssetManager.idToAssetToken.Add(companion.GetId(), assetToken);
 
-                        var modelObject = AssetManager.GetCompanionModelObject(Helper.Content.Load<Dictionary<string, object>>(assetToken, ContentSource.GameContent));
-                        trackedModels[companion.GetId()] = modelObject;
+                        if (!isReload)
+                        {
+                            var modelObject = AssetManager.GetCompanionModelObject(Helper.Content.Load<Dictionary<string, object>>(assetToken, ContentSource.GameContent));
+                            trackedModels[companion.GetId()] = modelObject;
+                        }
                     }
                 }
 
