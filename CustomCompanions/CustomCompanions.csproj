@@ -66,6 +66,7 @@
     <Compile Include="Framework\Interfaces\IWearMoreRingsApi.cs" />
     <Compile Include="Framework\Managers\AssetManager.cs" />
     <Compile Include="Framework\Managers\CompanionManager.cs" />
+    <Compile Include="Framework\Models\Companion\PortraitModel.cs" />
     <Compile Include="Framework\Models\Companion\OverheadTextModel.cs" />
     <Compile Include="Framework\Models\Companion\ShadowModel.cs" />
     <Compile Include="Framework\Models\Companion\ManualFrameModel.cs" />
@@ -84,6 +85,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Examples\[CC] Example Pack\Companions\ExamplePortraitCompanion\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleUpdateWhenPlayerNearbyCompanion\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWanderWalkingChicken\companion.json" />
     <None Include="Examples\[CC] Example Pack\Companions\ExampleFirefly\companion.json" />
@@ -117,6 +119,8 @@
   <ItemGroup />
   <ItemGroup>
     <Content Include="Examples\[CC] Example Pack\Companions\ExampleAlternativeWalkingCompanion\companion.png" />
+    <Content Include="Examples\[CC] Example Pack\Companions\ExamplePortraitCompanion\companion.png" />
+    <Content Include="Examples\[CC] Example Pack\Companions\ExamplePortraitCompanion\portrait.png" />
     <Content Include="Examples\[CC] Example Pack\Companions\ExampleUnderwaterFish\companion.png" />
     <Content Include="Examples\[CC] Example Pack\Companions\ExampleWalkingCompanion\companion.png" />
     <Content Include="Examples\[CC] Example Pack\Companions\ExampleFirefly\companion.png" />

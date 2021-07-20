@@ -201,7 +201,17 @@ namespace CustomCompanions.Framework.Companions
                     dialogueText = this.model.Translations.Get(this.model.InspectionDialogue);
                 }
 
-                Game1.drawObjectDialogue(dialogueText);
+                // Check if displaying a portrait is required
+                if (this.Portrait != null)
+                {
+                    this.CurrentDialogue.Push(new Dialogue(dialogueText, this));
+                    Game1.drawDialogue(this);
+                }
+                else
+                {
+                    Game1.drawObjectDialogue(dialogueText);
+                }
+
                 return true;
             }
             return false;

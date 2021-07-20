@@ -29,6 +29,7 @@ namespace CustomCompanions.Framework.Models.Companion
         public float ChanceForHalting { get; set; } = 1.0f;
         public int MinHaltTime { get; set; } = 2000;
         public int MaxHaltTime { get; set; } = 10000;
+        public PortraitModel Portrait { get; set; }
         public string InspectionDialogue { get; set; }
         public int OverheadTextCheckInterval { get; set; } = 5000;
         public float OverheadTextChance { get; set; } = 0.5f;
