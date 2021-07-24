@@ -464,13 +464,13 @@ namespace CustomCompanions
             CompanionManager.RefreshLights(location);
         }
 
-        private void RemoveAllCompanions(GameLocation targetLocation = null)
+        private void RemoveAllCompanions(string owner = null, GameLocation targetLocation = null)
         {
             foreach (GameLocation location in Game1.locations.Where(l => l != null && (targetLocation is null || l == targetLocation)))
             {
                 if (location.characters != null)
                 {
-                    foreach (var creature in location.characters.Where(c => CompanionManager.IsCustomCompanion(c)).ToList())
+                    foreach (var creature in location.characters.Where(c => CompanionManager.IsCustomCompanion(c) && (owner is null || (c as Companion).model.Owner.Equals(owner, StringComparison.OrdinalIgnoreCase))).ToList())
                     {
                         location.characters.Remove(creature);
                     }
@@ -489,7 +489,7 @@ namespace CustomCompanions
 
                         if (indoorLocation.characters != null)
                         {
-                            foreach (var creature in indoorLocation.characters.Where(c => CompanionManager.IsCustomCompanion(c)).ToList())
+                            foreach (var creature in indoorLocation.characters.Where(c => CompanionManager.IsCustomCompanion(c) && (owner is null || (c as Companion).model.Owner.Equals(owner, StringComparison.OrdinalIgnoreCase))).ToList())
                             {
                                 indoorLocation.characters.Remove(creature);
                             }
@@ -551,7 +551,7 @@ namespace CustomCompanions
 
         private void DebugClear(string command, string[] args)
         {
-            this.RemoveAllCompanions(Game1.player.currentLocation);
+            this.RemoveAllCompanions(targetLocation: Game1.player.currentLocation);
         }
 
         private void DebugReload(string command, string[] args)
@@ -561,6 +561,91 @@ namespace CustomCompanions
 
             // Respawn any previously active companions
             RingManager.LoadWornRings();
+
+            this.SpawnSceneryCompanions(Game1.player.currentLocation);
+
+            // Remove companions that no longer have an existing map tile property
+            this.RemoveOrphanCompanions(Game1.player.currentLocation);
+        }
+
+        internal void ManualReload(string packUniqueId)
+        {
+            this.RemoveAllCompanions(owner: packUniqueId);
+
+            // Reset the tracked validation counter
+            this.modelValidationIndex = 0;
+
+            // Set up the CompanionManager
+            CompanionManager.activeCompanions = CompanionManager.activeCompanions.Where(c => !c.Companions.Any(m => m.model.Owner.Equals(packUniqueId, StringComparison.OrdinalIgnoreCase))).ToList();
+            CompanionManager.sceneryCompanions = CompanionManager.sceneryCompanions.Where(c => !c.Companions.Any(m => m.model.Owner.Equals(packUniqueId, StringComparison.OrdinalIgnoreCase))).ToList();
+
+
+            // Load the owned content packs
+            foreach (IContentPack contentPack in Helper.ContentPacks.GetOwned().Where(c => c.Manifest.UniqueID.Equals(packUniqueId, StringComparison.OrdinalIgnoreCase)))
+            {
+                Monitor.Log($"Loading companions from pack: {contentPack.Manifest.Name} {contentPack.Manifest.Version} by {contentPack.Manifest.Author}", LogLevel.Debug);
+
+                var companionFolders = new DirectoryInfo(Path.Combine(contentPack.DirectoryPath, "Companions")).GetDirectories();
+                if (companionFolders.Count() == 0)
+                {
+                    Monitor.Log($"No sub-folders found under Companions for the content pack {contentPack.Manifest.Name}!", LogLevel.Warn);
+                    continue;
+                }
+
+                // Load in the companions
+                foreach (var companionFolder in companionFolders)
+                {
+                    if (!File.Exists(Path.Combine(companionFolder.FullName, "companion.json")))
+                    {
+                        Monitor.Log($"Content pack {contentPack.Manifest.Name} is missing a companion.json under {companionFolder.Name}!", LogLevel.Warn);
+                        continue;
+                    }
+
+                    CompanionModel companion = contentPack.ReadJsonFile<CompanionModel>(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.json"));
+                    companion.Name = companion.Name.Replace(" ", "");
+                    companion.Owner = contentPack.Manifest.UniqueID;
+                    Monitor.Log(companion.ToString(), LogLevel.Trace);
+
+                    // Save the TileSheet, if one is given
+                    if (String.IsNullOrEmpty(companion.TileSheetPath) && !File.Exists(Path.Combine(companionFolder.FullName, "companion.png")))
+                    {
+                        Monitor.Log($"Unable to add companion {companion.Name} from {contentPack.Manifest.Name}: No associated companion.png or TileSheetPath given", LogLevel.Warn);
+                        continue;
+                    }
+                    else if (String.IsNullOrEmpty(companion.TileSheetPath))
+                    {
+                        companion.TileSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.png"));
+                    }
+
+                    // Save the PortraitSheet, if one is given
+                    if (companion.Portrait != null)
+                    {
+                        if (!File.Exists(Path.Combine(companionFolder.FullName, "portrait.png")))
+                        {
+                            Monitor.Log($"Warning for companion {companion.Name} from {contentPack.Manifest.Name}: Portrait property was given but no portrait.png was found", LogLevel.Warn);
+                        }
+                        else
+                        {
+                            companion.Portrait.PortraitSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "portrait.png"));
+                        }
+                    }
+
+                    if (contentPack.Translation != null)
+                    {
+                        companion.Translations = contentPack.Translation;
+                    }
+
+                    // Cache the full name of the companion, so that it can be reference by a Content Patcher token
+                    if (_contentPatcherApi != null)
+                    {
+                        var assetToken = $"{TOKEN_HEADER}{companion.GetId()}";
+                        AssetManager.idToAssetToken[companion.GetId()] = assetToken;
+
+                        var modelObject = AssetManager.GetCompanionModelObject(Helper.Content.Load<Dictionary<string, object>>(assetToken, ContentSource.GameContent));
+                        trackedModels[companion.GetId()] = modelObject;
+                    }
+                }
+            }
 
             this.SpawnSceneryCompanions(Game1.player.currentLocation);
 
