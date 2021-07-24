@@ -2,6 +2,7 @@
 using CustomCompanions.Framework.Companions;
 using CustomCompanions.Framework.External.ContentPatcher;
 using CustomCompanions.Framework.Interfaces;
+using CustomCompanions.Framework.Interfaces.API;
 using CustomCompanions.Framework.Managers;
 using CustomCompanions.Framework.Models;
 using CustomCompanions.Framework.Models.Companion;
@@ -79,6 +80,11 @@ namespace CustomCompanions
 
             // Load the asset manager
             Helper.Content.AssetLoaders.Add(new AssetManager());
+        }
+
+        public override object GetApi()
+        {
+            return new Api(this);
         }
 
         private void OnGameLaunched(object sender, GameLaunchedEventArgs e)
