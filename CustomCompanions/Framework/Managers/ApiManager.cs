@@ -6,6 +6,7 @@ namespace CustomCompanions.Framework.Managers
     internal static class ApiManager
     {
         private static IMonitor monitor = CustomCompanions.monitor;
+        private static ISaveAnywhereApi saveAnywhereApi;
         private static IContentPatcherAPI contentPatcherApi;
         private static IJsonAssetsApi jsonAssetsApi;
         private static IWearMoreRingsApi wearMoreRingsApi;
@@ -52,6 +53,20 @@ namespace CustomCompanions.Framework.Managers
             return true;
         }
 
+        internal static bool HookIntoSaveAnywhere(IModHelper helper)
+        {
+            saveAnywhereApi = helper.ModRegistry.GetApi<ISaveAnywhereApi>("Omegasis.SaveAnywhere");
+
+            if (saveAnywhereApi is null)
+            {
+                monitor.Log("Failed to hook into Omegasis.SaveAnywhere.", LogLevel.Error);
+                return false;
+            }
+
+            monitor.Log("Successfully hooked into Omegasis.SaveAnywhere.", LogLevel.Debug);
+            return true;
+        }
+
         public static IContentPatcherAPI GetContentPatcherInterface()
         {
             return contentPatcherApi;
@@ -65,6 +80,11 @@ namespace CustomCompanions.Framework.Managers
         internal static IWearMoreRingsApi GetIWMRApi()
         {
             return wearMoreRingsApi;
+        }
+
+        internal static ISaveAnywhereApi GetSaveAnywhereApi()
+        {
+            return saveAnywhereApi;
         }
     }
 }

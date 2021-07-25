@@ -31,6 +31,7 @@ namespace CustomCompanions
         internal const string COMPANION_KEY = "Companion";
         internal const string TOKEN_HEADER = "CustomCompanions/Companions/";
 
+        private ISaveAnywhereApi _saveAnywhereApi;
         private IJsonAssetsApi _jsonAssetsApi;
         private IContentPatcherAPI _contentPatcherApi;
 
@@ -90,6 +91,16 @@ namespace CustomCompanions
         private void OnGameLaunched(object sender, GameLaunchedEventArgs e)
         {
             // Hook into the APIs we utilize
+            if (Helper.ModRegistry.IsLoaded("Omegasis.SaveAnywhere") && ApiManager.HookIntoSaveAnywhere(Helper))
+            {
+                _saveAnywhereApi = ApiManager.GetSaveAnywhereApi();
+
+                // Hook into save related events
+                _saveAnywhereApi.BeforeSave += this.OnSaving;
+                _saveAnywhereApi.AfterSave += this.OnCustomLoad; // Save Anywhere's AfterSave event doesn't seem to be triggered, known issue
+                _saveAnywhereApi.AfterLoad += this.OnCustomLoad;
+            }
+
             if (Helper.ModRegistry.IsLoaded("bcmpinc.WearMoreRings") && ApiManager.HookIntoIWMR(Helper))
             {
                 RingManager.wearMoreRingsApi = ApiManager.GetIWMRApi();
@@ -128,13 +139,13 @@ namespace CustomCompanions
             }
         }
 
-        private void OnSaving(object sender, SavingEventArgs e)
+        private void OnSaving(object sender, EventArgs e)
         {
             // Go through all game locations and purge any of custom creatures
             this.RemoveAllCompanions();
         }
 
-        private void OnDayStarted(object sender, DayStartedEventArgs e)
+        private void OnDayStarted(object sender, EventArgs e)
         {
             RingManager.LoadWornRings();
 
@@ -145,6 +156,15 @@ namespace CustomCompanions
             // Clear out the list of denied companions to respawn
             this.LoadContentPacks(true);
             CompanionManager.denyRespawnCompanions = new List<SceneryCompanions>();
+        }
+
+        private void OnCustomLoad(object sender, EventArgs e)
+        {
+            this.OnDayStarted(sender, e);
+
+            this.areAllModelsValidated = this.ValidateModelCache(Game1.player.currentLocation, true);
+
+            this.DebugReload(null, null);
         }
 
         private void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
