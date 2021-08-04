@@ -1,6 +1,6 @@
 ﻿using CustomCompanions.Framework.Companions;
 using CustomCompanions.Framework.Managers;
-using Harmony;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
@@ -24,7 +24,7 @@ namespace CustomCompanions.Framework.Patches
             monitor = modMonitor;
         }
 
-        internal void Apply(HarmonyInstance harmony)
+        internal void Apply(Harmony harmony)
         {
             harmony.Patch(AccessTools.Method(_utility, nameof(Utility.isThereAFarmerOrCharacterWithinDistance), new[] { typeof(Vector2), typeof(int), typeof(GameLocation) }), postfix: new HarmonyMethod(GetType(), nameof(IsThereAFarmerOrCharacterWithinDistancePostfix)));
             harmony.Patch(AccessTools.Method(_utility, nameof(Utility.checkForCharacterInteractionAtTile), new[] { typeof(Vector2), typeof(Farmer) }), postfix: new HarmonyMethod(GetType(), nameof(CheckForCharacterInteractionAtTilePostfix)));
