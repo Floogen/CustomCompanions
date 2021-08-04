@@ -1095,6 +1095,7 @@ namespace CustomCompanions.Framework.Companions
                 var xDestination = this.GetTargetTile().X;
                 var yDestination = this.GetTargetTile().Y;
                 var waitTime = 5000;
+                var stopAtDestination = false;
                 if (arguments != null)
                 {
                     if (arguments.Length > 1)
@@ -1106,28 +1107,41 @@ namespace CustomCompanions.Framework.Companions
                     {
                         waitTime = (int)arguments[2];
                     }
+                    if (arguments.Length > 3)
+                    {
+                        stopAtDestination = arguments[3] >= 1;
+                    }
                 }
 
                 var destinationTile = new Vector2(xDestination, yDestination);
                 if (activePath is null || activePath.Count == 0)
                 {
-                    if (base.getTileLocation() == destinationTile)
+                    if (this.hasReachedDestination && stopAtDestination)
                     {
-                        this.hasReachedDestination = true;
-                        this.pauseTimer = waitTime;
+                        // Do nothing
+                        this.SetMovingDirection(-1);
+                        this.pauseTimer = 1000;
                     }
-                    else if (base.getTileLocation() == this.GetTargetTile())
+                    else
                     {
-                        this.hasReachedDestination = false;
-                        this.pauseTimer = waitTime;
-                    }
+                        if (base.getTileLocation() == destinationTile)
+                        {
+                            this.hasReachedDestination = true;
+                            this.pauseTimer = waitTime;
+                        }
+                        else if (base.getTileLocation() == this.GetTargetTile())
+                        {
+                            this.hasReachedDestination = false;
+                            this.pauseTimer = waitTime;
+                        }
 
-                    if (this.hasReachedDestination)
-                    {
-                        destinationTile = this.GetTargetTile();
-                    }
+                        if (this.hasReachedDestination && !stopAtDestination)
+                        {
+                            destinationTile = this.GetTargetTile();
+                        }
 
-                    activePath = PathFindController.findPathForNPCSchedules(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), base.currentLocation, 300);
+                        activePath = PathFindController.findPathForNPCSchedules(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), base.currentLocation, 300);
+                    }
                 }
 
                 this.FollowActivePath();
