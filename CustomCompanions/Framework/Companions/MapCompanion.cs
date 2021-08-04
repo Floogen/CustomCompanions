@@ -1127,7 +1127,7 @@ namespace CustomCompanions.Framework.Companions
                         destinationTile = this.GetTargetTile();
                     }
 
-                    activePath = PathFindController.findPath(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), PathFindController.isAtEndPoint, base.currentLocation, this, 300);
+                    activePath = PathFindController.findPathForNPCSchedules(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), base.currentLocation, 300);
 
                     // TODO: Implement custom path finder to avoid manually skipping first node
                     // This workaround is done to avoid the companion moving back and forth briefly after collision / reseting activePath
