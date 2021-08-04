@@ -1128,13 +1128,6 @@ namespace CustomCompanions.Framework.Companions
                     }
 
                     activePath = PathFindController.findPathForNPCSchedules(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), base.currentLocation, 300);
-
-                    // TODO: Implement custom path finder to avoid manually skipping first node
-                    // This workaround is done to avoid the companion moving back and forth briefly after collision / reseting activePath
-                    if (activePath != null && activePath.Count > 0)
-                    {
-                        activePath.Pop();
-                    }
                 }
 
                 this.FollowActivePath();
