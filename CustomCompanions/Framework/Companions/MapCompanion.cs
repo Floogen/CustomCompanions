@@ -175,7 +175,7 @@ namespace CustomCompanions.Framework.Companions
                 if (Game1.random.NextDouble() < this.model.OverheadTextChance && String.IsNullOrEmpty(base.textAboveHead))
                 {
                     var weightedSelection = this.model.OverheadTexts.Where(o => o.ChanceWeight >= Game1.random.NextDouble()).ToList();
-                    if (weightedSelection.Count > 0)
+                    if (weightedSelection.Count == 0)
                     {
                         weightedSelection = this.model.OverheadTexts;
                     }
