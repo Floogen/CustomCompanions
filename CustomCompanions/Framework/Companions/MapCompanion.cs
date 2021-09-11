@@ -25,6 +25,9 @@ namespace CustomCompanions.Framework.Companions
         private bool hasReachedDestination;
         private Stack<Point> activePath;
 
+        // Follow related
+        private Character followTarget;
+
         public MapCompanion()
         {
 
@@ -1171,12 +1174,23 @@ namespace CustomCompanions.Framework.Companions
         {
             if (Game1.IsMasterGame)
             {
-                var followTileRadius = 5;
+                var detectionTileRadius = 5;
+                var followTileRadius = detectionTileRadius * 2;
+                var followAnyCharacter = false;
                 if (arguments != null)
                 {
                     if (arguments.Length > 0)
                     {
                         followTileRadius = (int)arguments[0];
+                        detectionTileRadius = (int)arguments[0];
+                    }
+                    if (arguments.Length > 2)
+                    {
+                        followTileRadius = (int)arguments[1];
+                    }
+                    if (arguments.Length > 2)
+                    {
+                        followAnyCharacter = arguments[2] >= 1;
                     }
                 }
 
