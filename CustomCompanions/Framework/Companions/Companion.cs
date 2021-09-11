@@ -847,6 +847,24 @@ namespace CustomCompanions.Framework.Companions
             return targetTile;
         }
 
+        internal Vector2 GetPositionDirectlyBehind(Vector2 position, int facingDirection)
+        {
+            var adjacentPositions = Utility.getAdjacentTileLocationsArray(position);
+            switch (facingDirection)
+            {
+                case 0:
+                    return adjacentPositions[2];
+                case 1:
+                    return adjacentPositions[0];
+                case 2:
+                    return adjacentPositions[3];
+                case 3:
+                    return adjacentPositions[1];
+                default:
+                    return adjacentPositions[0];
+            }
+        }
+
         internal void SetMotion(Vector2 motion)
         {
             this.motion.Value = motion;
