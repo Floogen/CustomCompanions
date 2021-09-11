@@ -349,6 +349,11 @@ namespace CustomCompanions.Framework.Companions
                 return false;
             }
 
+            if (collidingCharacter != null && collidingCharacter is MapCompanion companion && !companion.Equals(this) && !companion.collidesWithOtherCharacters)
+            {
+                return false;
+            }
+
             if (location.isCollidingPosition(position, Game1.viewport, isFarmer: false, 0, glider: false, this, pathfinding: isPathFinding))
             {
                 return true;
