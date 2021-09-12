@@ -1,5 +1,5 @@
 {
-  "Name": "ExampleWalkerFollowTest",
+  "Name": "ExampleWalkerFollowSpecificName",
   "Type": "Walking",
   "TravelSpeed": 2,
   "FrameSizeWidth": 16,
@@ -8,6 +8,7 @@
   "MaxHaltTime": 0,
   "IdleBehavior": "Follow",
   "IdleArguments": [ 3, -1, 1 ],
+  "TargetNpcName": "ExampleWalkerWalkSquareTest",
   "MaxIdleDistance": "-1",
   "MaxDistanceBeforeTeleport": "-1",
   "EnableFarmerCollision": true,
