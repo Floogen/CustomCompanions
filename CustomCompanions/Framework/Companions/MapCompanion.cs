@@ -1186,7 +1186,7 @@ namespace CustomCompanions.Framework.Companions
                         followTileRadius = (int)arguments[0];
                         detectionTileRadius = (int)arguments[0];
                     }
-                    if (arguments.Length > 2)
+                    if (arguments.Length > 1)
                     {
                         followTileRadius = (int)arguments[1];
                     }
@@ -1197,7 +1197,7 @@ namespace CustomCompanions.Framework.Companions
                 }
 
                 var destinationTile = base.getTileLocationPoint();
-                if (followTarget != null && (this.followTarget.currentLocation != this.currentLocation || Vector2.Distance(this.followTarget.getTileLocation(), this.GetTargetTile()) > followTileRadius))
+                if (followTarget != null && (this.followTarget.currentLocation != this.currentLocation || (followTileRadius > 0 && Vector2.Distance(this.followTarget.getTileLocation(), this.GetTargetTile()) > followTileRadius)))
                 {
                     followTarget = null;
                     targetLastFacingDirection = -1;
