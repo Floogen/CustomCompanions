@@ -1207,14 +1207,23 @@ namespace CustomCompanions.Framework.Companions
                 if (followTarget is null)
                 {
                     followTarget = Utility.isThereAFarmerWithinDistance(this.GetTargetTile(), detectionTileRadius, location);
+                    if (followTarget != null && !String.IsNullOrEmpty(model.TargetNpcName) && !String.Equals(model.TargetNpcName, followTarget.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        followTarget = null;
+                    }
+
                     if (followAnyCharacter && followTarget is null)
                     {
                         foreach (NPC npc in location.characters.Where(c => !c.Equals(this)))
                         {
                             if (Vector2.Distance(npc.getTileLocation(), this.GetTargetTile()) <= detectionTileRadius)
                             {
-                                followTarget = npc;
-                                break;
+                                var actualName = npc is MapCompanion companion ? companion.model.Name : npc.Name;
+                                if (String.IsNullOrEmpty(model.TargetNpcName) || String.Equals(model.TargetNpcName, actualName, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    followTarget = npc;
+                                    break;
+                                }
                             }
                         }
                     }
