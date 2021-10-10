@@ -218,7 +218,7 @@ namespace CustomCompanions
             {
                 var idToToken = validCompanionIdToTokens[modelValidationIndex];
                 var asset = AssetManager.GetCompanionModelObject(Helper.Content.Load<Dictionary<string, object>>(idToToken.Value, ContentSource.GameContent));
-                if (asset != null)
+                if (asset != null && trackedModels.ContainsKey(idToToken.Key))
                 {
                     var trackedModel = trackedModels[idToToken.Key];
                     var updatedModel = JsonParser.GetUpdatedModel(trackedModel, asset);
