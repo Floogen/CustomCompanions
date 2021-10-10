@@ -8,17 +8,16 @@
     <GameModsPath>E:\SteamLibrary\steamapps\common\Stardew Valley\Mods</GameModsPath>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Properties\**" />
     <Compile Remove="releases\**" />
+    <EmbeddedResource Remove="Properties\**" />
     <EmbeddedResource Remove="releases\**" />
+    <None Remove="Properties\**" />
     <None Remove="releases\**" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.0-beta.20210916" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Properties\" />
   </ItemGroup>
 
   <ItemGroup>
