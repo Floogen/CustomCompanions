@@ -71,6 +71,7 @@ namespace CustomCompanions
 
             // Hook into GameLoop events
             helper.Events.GameLoop.Saving += this.OnSaving;
+            helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
@@ -143,6 +144,11 @@ namespace CustomCompanions
         {
             // Go through all game locations and purge any of custom creatures
             this.RemoveAllCompanions();
+        }
+
+        private void OnSaveLoaded(object sender, EventArgs e)
+        {
+            this.LoadContentPacks(true);
         }
 
         private void OnDayStarted(object sender, EventArgs e)
