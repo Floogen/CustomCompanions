@@ -165,6 +165,12 @@ namespace CustomCompanions
 
             // Check for any Content Patcher changes from OnDayStart
             this.ValidateModelCache(null, true, true);
+
+            // Spawn any required companions
+            foreach (var location in Game1.locations)
+            {
+                this.SpawnSceneryCompanions(location, spawnOnlyRequiredCompanions: true);
+            }
         }
 
         private void OnCustomLoad(object sender, EventArgs e)
@@ -423,7 +429,7 @@ namespace CustomCompanions
             CompanionManager.sceneryCompanions = new List<SceneryCompanions>();
         }
 
-        private void SpawnSceneryCompanions(GameLocation location)
+        private void SpawnSceneryCompanions(GameLocation location, bool spawnOnlyRequiredCompanions = false)
         {
             var backLayer = location.map.GetLayer("Back");
             for (int x = 0; x < backLayer.LayerWidth; x++)
@@ -469,6 +475,11 @@ namespace CustomCompanions
                         if (companion is null)
                         {
                             Monitor.Log($"Unable to find companion match for {companionKey} given on tile ({x}, {y}) for map {location.NameOrUniqueName}!", LogLevel.Warn);
+                            continue;
+                        }
+
+                        if (spawnOnlyRequiredCompanions && !companion.EnableSpawnAtDayStart)
+                        {
                             continue;
                         }
 
