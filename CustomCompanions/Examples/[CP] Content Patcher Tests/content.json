@@ -85,6 +85,24 @@
           }
         }
       ]
+    },
+    {
+      "Action": "EditMap",
+      "Target": "Maps/FarmHouse",
+      "MapTiles": [
+        {
+          "Position": {
+            "X": 5,
+            "Y": 5
+          },
+          "SetIndex": 1422,
+          "SetTilesheet": "indoor",
+          "Layer": "Front",
+          "SetProperties": {
+            "CustomCompanions": "Spawn 1 ExampleAuthor.ExamplePack.ExampleAlternativeWalkingCompanionEnableSpawnAtDayStart"
+          }
+        }
+      ]
     }
   ]
 }

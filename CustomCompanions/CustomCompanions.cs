@@ -427,12 +427,16 @@ namespace CustomCompanions
         {
             try
             {
-                var backLayer = location.map.GetLayer("Back");
-                for (int x = 0; x < backLayer.LayerWidth; x++)
+                var targetLayer = location.map.GetLayer("Back");
+                if (location is FarmHouse)
                 {
-                    for (int y = 0; y < backLayer.LayerHeight; y++)
+                    targetLayer = location.map.GetLayer("Front");
+                }
+                for (int x = 0; x < targetLayer.LayerWidth; x++)
+                {
+                    for (int y = 0; y < targetLayer.LayerHeight; y++)
                     {
-                        var tile = backLayer.Tiles[x, y];
+                        var tile = targetLayer.Tiles[x, y];
                         if (tile is null)
                         {
                             continue;
