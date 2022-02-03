@@ -310,7 +310,6 @@ namespace CustomCompanions
                     CompanionModel companion = contentPack.ReadJsonFile<CompanionModel>(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.json"));
                     companion.Name = companion.Name.Replace(" ", "");
                     companion.Owner = contentPack.Manifest.UniqueID;
-                    Monitor.Log(companion.ToString(), LogLevel.Trace);
 
                     // Save the TileSheet, if one is given
                     if (String.IsNullOrEmpty(companion.TileSheetPath) && !File.Exists(Path.Combine(companionFolder.FullName, "companion.png")))
@@ -332,7 +331,7 @@ namespace CustomCompanions
                         }
                         else
                         {
-                            companion.Portrait.PortraitSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "portrait.png"));
+                            companion.PortraitSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "portrait.png"));
                         }
                     }
 
@@ -340,6 +339,7 @@ namespace CustomCompanions
                     {
                         companion.Translations = contentPack.Translation;
                     }
+                    Monitor.Log(companion.ToString(), LogLevel.Trace);
 
                     // Add the companion to our cache
                     CompanionManager.companionModels.Add(companion);
@@ -672,7 +672,7 @@ namespace CustomCompanions
                         }
                         else
                         {
-                            companion.Portrait.PortraitSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "portrait.png"));
+                            companion.PortraitSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "portrait.png"));
                         }
                     }
 
