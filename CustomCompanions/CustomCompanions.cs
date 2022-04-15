@@ -57,6 +57,7 @@ namespace CustomCompanions
                 new RingPatch(monitor).Apply(harmony);
                 new UtilityPatch(monitor).Apply(harmony);
                 new GameLocationPatch(monitor).Apply(harmony);
+                new EventPatch(monitor).Apply(harmony);
             }
             catch (Exception e)
             {
