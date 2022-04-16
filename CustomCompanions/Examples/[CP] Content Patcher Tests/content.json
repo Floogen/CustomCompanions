@@ -97,7 +97,7 @@
           },
           "Layer": "Back",
           "SetProperties": {
-            "CustomCompanions": "Spawn 1 ExampleAuthor.ExamplePack.ExampleAlternativeWanderWalkingCow"
+            "CustomCompanions": "Spawn 1 ExampleAuthor.ExamplePack.ExampleUpdateWhenPlayerNearbyCompanion"
           }
         }
       ]
