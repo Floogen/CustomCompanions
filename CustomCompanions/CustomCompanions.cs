@@ -146,6 +146,7 @@ namespace CustomCompanions
             this.RemoveAllCompanions();
         }
 
+        [EventPriority(EventPriority.Low)]
         private void OnDayStarted(object sender, EventArgs e)
         {
             RingManager.LoadWornRings();
