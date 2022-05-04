@@ -75,13 +75,53 @@ namespace CustomCompanions
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
-            helper.Events.GameLoop.OneSecondUpdateTicked += this.OnOneSecondUpdateTicked;
 
             // Hook into Player events
             helper.Events.Player.Warped += this.OnWarped;
 
-            // Load the asset manager
-            Helper.Content.AssetLoaders.Add(new AssetManager());
+            // Hook into the Content events
+            helper.Events.Content.AssetRequested += this.OnContentAssetRequested;
+            helper.Events.Content.AssetsInvalidated += OnContentInvalidated;
+        }
+
+        [EventPriority(EventPriority.High)]
+        private void OnContentInvalidated(object sender, AssetsInvalidatedEventArgs e)
+        {
+            foreach (var asset in e.Names.Where(a => a.Name.Contains(TOKEN_HEADER)))
+            {
+                var tokenModel = Helper.GameContent.Load<TokenModel>(asset);
+
+                if (trackedModels.ContainsKey(asset.Name) is false)
+                {
+                    return;
+                }
+                var trackedModel = trackedModels[asset.Name];
+
+                var updatedModel = JsonParser.GetUpdatedModel(trackedModel, tokenModel.Companion);
+                if (!JsonParser.CompareSerializedObjects(updatedModel, trackedModel))
+                {
+                    // Update the existing model object
+                    if (CompanionManager.UpdateCompanionModel(JsonParser.Deserialize<CompanionModel>(updatedModel)))
+                    {
+                        trackedModels[asset.Name] = updatedModel;
+                    }
+                }
+            }
+        }
+
+        [EventPriority(EventPriority.High)]
+        private void OnContentAssetRequested(object sender, AssetRequestedEventArgs e)
+        {
+            if (e.DataType == typeof(TokenModel))
+            {
+                var companionModel = CompanionManager.companionModels.FirstOrDefault(c => e.Name.IsEquivalentTo($"{CustomCompanions.TOKEN_HEADER}{c.GetId()}"));
+                if (companionModel is null)
+                {
+                    return;
+                }
+
+                e.LoadFrom(() => new TokenModel() { Companion = JsonParser.Serialize<object>(companionModel) }, AssetLoadPriority.Exclusive, companionModel.Owner);
+            }
         }
 
         public override object GetApi()
@@ -159,9 +199,6 @@ namespace CustomCompanions
             this.LoadContentPacks(true);
             CompanionManager.denyRespawnCompanions = new List<SceneryCompanions>();
 
-            // Check for any Content Patcher changes from OnDayStart
-            this.ValidateModelCache(null, true, true);
-
             // Spawn any required companions
             foreach (var location in Game1.locations)
             {
@@ -173,8 +210,6 @@ namespace CustomCompanions
         {
             this.OnDayStarted(sender, e);
 
-            this.areAllModelsValidated = this.ValidateModelCache(Game1.player.currentLocation, true, true);
-
             this.DebugReload(null, null);
         }
 
@@ -183,73 +218,16 @@ namespace CustomCompanions
             this.Reset();
         }
 
-        private void OnOneSecondUpdateTicked(object sender, OneSecondUpdateTickedEventArgs e)
-        {
-            if (!Context.IsWorldReady)
-            {
-                return;
-            }
-
-            // Check for any content patcher changes every second, but iterate through list based on PERIODIC_CHECK_INTERVAL
-            if (e.IsMultipleOf(PERIODIC_CHECK_INTERVAL) || !this.areAllModelsValidated)
-            {
-                this.areAllModelsValidated = this.ValidateModelCache(Game1.player.currentLocation, false, false, PERIODIC_CHECK_INTERVAL / 60);
-            }
-        }
-
         private void OnWarped(object sender, WarpedEventArgs e)
         {
             // Reset the tracked validation counter
             this.modelValidationIndex = 0;
-
-            // Check for any content patcher changes
-            this.areAllModelsValidated = this.ValidateModelCache(e.NewLocation, true);
 
             // Spawn any map-based companions that are located in this new area
             this.SpawnSceneryCompanions(e.NewLocation);
 
             // Remove companions that no longer have an existing map tile property
             this.RemoveOrphanCompanions(e.NewLocation);
-        }
-
-        private bool ValidateModelCache(GameLocation location, bool bypassCheckCondition = false, bool checkAllCompanions = false, int workingPeriod = -1)
-        {
-            // Have to load each asset every second, as we don't have a way to track content patcher changes (except for comparing changes to our cache)
-            var validCompanionIdToTokens = AssetManager.idToAssetToken.Where(p => checkAllCompanions || location.characters.Any(c => CompanionManager.IsCustomCompanion(c) && (c as Companion).model != null && (c as Companion).model.GetId() == p.Key && ((c as Companion).model.EnablePeriodicPatchCheck || bypassCheckCondition))).ToList();
-            if (validCompanionIdToTokens.Count() == 0)
-            {
-                return true;
-            }
-
-            var quantityToCheck = workingPeriod == -1 ? validCompanionIdToTokens.Count() : (validCompanionIdToTokens.Count() / workingPeriod) + (validCompanionIdToTokens.Count() % workingPeriod);
-            for (int x = 0; x < quantityToCheck && modelValidationIndex < validCompanionIdToTokens.Count(); x++)
-            {
-                var idToToken = validCompanionIdToTokens[modelValidationIndex];
-                var asset = AssetManager.GetCompanionModelObject(Helper.Content.Load<Dictionary<string, object>>(idToToken.Value, ContentSource.GameContent));
-                if (asset != null)
-                {
-                    var trackedModel = trackedModels[idToToken.Key];
-                    var updatedModel = JsonParser.GetUpdatedModel(trackedModel, asset);
-                    if (!JsonParser.CompareSerializedObjects(updatedModel, trackedModel))
-                    {
-                        // Update the existing model object
-                        if (CompanionManager.UpdateCompanionModel(JsonParser.Deserialize<CompanionModel>(updatedModel)))
-                        {
-                            trackedModels[idToToken.Key] = updatedModel;
-                        }
-                    }
-                }
-
-                modelValidationIndex++;
-            }
-
-            if (modelValidationIndex == validCompanionIdToTokens.Count())
-            {
-                modelValidationIndex = 0;
-                return true;
-            }
-
-            return false;
         }
 
         private void RemoveOrphanCompanions(GameLocation location)
@@ -350,12 +328,13 @@ namespace CustomCompanions
                     if (_contentPatcherApi != null)
                     {
                         var assetToken = $"{TOKEN_HEADER}{companion.GetId()}";
-                        AssetManager.idToAssetToken.Add(companion.GetId(), assetToken);
+                        AssetManager.idToAssetToken[companion.GetId()] = assetToken;
 
                         if (!isReload)
                         {
-                            var modelObject = AssetManager.GetCompanionModelObject(Helper.Content.Load<Dictionary<string, object>>(assetToken, ContentSource.GameContent));
-                            trackedModels[companion.GetId()] = modelObject;
+                            var modelObject = Helper.GameContent.Load<TokenModel>(assetToken);
+                            //var modelObject = AssetManager.GetCompanionModelObject(Helper.Content.Load<Dictionary<string, object>>(assetToken, ContentSource.GameContent));
+                            trackedModels[$"{CustomCompanions.TOKEN_HEADER}{companion.GetId()}"] = modelObject.Companion;
                         }
                     }
                 }
@@ -689,8 +668,9 @@ namespace CustomCompanions
                         var assetToken = $"{TOKEN_HEADER}{companion.GetId()}";
                         AssetManager.idToAssetToken[companion.GetId()] = assetToken;
 
-                        var modelObject = AssetManager.GetCompanionModelObject(Helper.Content.Load<Dictionary<string, object>>(assetToken, ContentSource.GameContent));
-                        trackedModels[companion.GetId()] = modelObject;
+                        var modelObject = Helper.GameContent.Load<TokenModel>(assetToken);
+                        //var modelObject = AssetManager.GetCompanionModelObject(Helper.Content.Load<Dictionary<string, object>>(assetToken, ContentSource.GameContent));
+                        trackedModels[$"{CustomCompanions.TOKEN_HEADER}{companion.GetId()}"] = modelObject.Companion;
                     }
                 }
             }

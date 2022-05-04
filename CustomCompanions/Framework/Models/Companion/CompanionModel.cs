@@ -1,8 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace CustomCompanions.Framework.Models.Companion
 {
@@ -10,8 +12,9 @@ namespace CustomCompanions.Framework.Models.Companion
     {
         public string Owner { get; set; }
         public string Name { get; set; }
-        public ITranslationHelper Translations { get; set; }
+        internal ITranslationHelper Translations { get; set; }
         public string Type { get; set; }
+        [Obsolete("No longer used due SMAPI 3.14.0 allowing for passive invalidation checks.")]
         public bool EnablePeriodicPatchCheck { get; set; }
         public bool EnableSpawnAtDayStart { get; set; }
         public bool EnableFarmerCollision { get; set; }
@@ -73,6 +76,17 @@ namespace CustomCompanions.Framework.Models.Companion
         public bool ContainsColor(Color color)
         {
             return Colors.Any(c => c.SequenceEqual(new int[] { color.R, color.G, color.B, color.A }));
+        }
+
+        public CompanionModel Merge(CompanionModel source)
+        {
+            typeof(CompanionModel)
+            .GetProperties()
+            .Select((PropertyInfo x) => new KeyValuePair<PropertyInfo, object>(x, x.GetValue(source, null)))
+            .Where((KeyValuePair<PropertyInfo, object> x) => x.Value != null).ToList()
+            .ForEach((KeyValuePair<PropertyInfo, object> x) => x.Key.SetValue(this, x.Value, null));
+
+            return this;
         }
 
         public override string ToString()
