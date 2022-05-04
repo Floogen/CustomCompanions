@@ -84,18 +84,12 @@ namespace CustomCompanions
             helper.Events.Content.AssetsInvalidated += OnContentInvalidated;
         }
 
-        [EventPriority(EventPriority.High)]
         private void OnContentInvalidated(object sender, AssetsInvalidatedEventArgs e)
         {
-            foreach (var asset in e.Names.Where(a => a.Name.Contains(TOKEN_HEADER)))
+            foreach (var asset in e.Names.Where(a => trackedModels.ContainsKey(a.Name)))
             {
-                var tokenModel = Helper.GameContent.Load<TokenModel>(asset);
-
-                if (trackedModels.ContainsKey(asset.Name) is false)
-                {
-                    return;
-                }
                 var trackedModel = trackedModels[asset.Name];
+                var tokenModel = Helper.GameContent.Load<TokenModel>(asset);
 
                 var updatedModel = JsonParser.GetUpdatedModel(trackedModel, tokenModel.Companion);
                 if (!JsonParser.CompareSerializedObjects(updatedModel, trackedModel))
@@ -109,7 +103,6 @@ namespace CustomCompanions
             }
         }
 
-        [EventPriority(EventPriority.High)]
         private void OnContentAssetRequested(object sender, AssetRequestedEventArgs e)
         {
             if (e.DataType == typeof(TokenModel))
@@ -299,7 +292,7 @@ namespace CustomCompanions
                     }
                     else if (String.IsNullOrEmpty(companion.TileSheetPath))
                     {
-                        companion.TileSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.png"));
+                        companion.TileSheetPath = contentPack.ModContent.GetInternalAssetName(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.png")).Name;
                     }
 
                     // Save the PortraitSheet, if one is given
@@ -311,7 +304,7 @@ namespace CustomCompanions
                         }
                         else
                         {
-                            companion.PortraitSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "portrait.png"));
+                            companion.PortraitSheetPath = contentPack.ModContent.GetInternalAssetName(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "portrait.png")).Name;
                         }
                     }
 
@@ -641,7 +634,7 @@ namespace CustomCompanions
                     }
                     else if (String.IsNullOrEmpty(companion.TileSheetPath))
                     {
-                        companion.TileSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.png"));
+                        companion.TileSheetPath = contentPack.ModContent.GetInternalAssetName(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "companion.png")).Name;
                     }
 
                     // Save the PortraitSheet, if one is given
@@ -653,7 +646,7 @@ namespace CustomCompanions
                         }
                         else
                         {
-                            companion.PortraitSheetPath = contentPack.GetActualAssetKey(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "portrait.png"));
+                            companion.PortraitSheetPath = contentPack.ModContent.GetInternalAssetName(Path.Combine(companionFolder.Parent.Name, companionFolder.Name, "portrait.png")).Name;
                         }
                     }
 
