@@ -97,7 +97,7 @@ namespace CustomCompanions.Framework.Models.Companion
                 $"\tTravelSpeed: {TravelSpeed} | SpawnDirection: {SpawnDirection} | SpawnOffsetX: {SpawnOffsetX} | SpawnOffsetY: {SpawnOffsetY}\n" +
                 $"\tDirectionChangeChanceWhileMoving: {DirectionChangeChanceWhileMoving} | DirectionChangeChanceWhileMoving: {DirectionChangeChanceWhileIdle}\n" +
                 $"\tChanceForHalting: {ChanceForHalting} | MinHaltTime: {MinHaltTime} | MaxHaltTime: {MaxHaltTime}\n" +
-                $"\tInspectionDialogue: {InspectionDialogue}\n" +
+                $"\tInspectionDialogue: {InspectionDialogue} | HasTranslation: {this.Translations is not null}\n" +
                 $"\tMaxIdleDistance: {MaxIdleDistance} | MaxDistanceBeforeTeleport: {MaxDistanceBeforeTeleport} | IdleBehavior: {IdleBehavior} | IdleArguments: { (IdleArguments is null ? null : IdleArguments) }\n" +
                 $"\tColors: {string.Join(",", Colors.Select(c => "[" + string.Join(",", c) + "]"))} | IsPrismatic: {IsPrismatic}\n" +
                 $"\tLight: {(Light is null ? null : Light)}\n" +

@@ -184,12 +184,7 @@ namespace CustomCompanions
         {
             RingManager.LoadWornRings();
 
-            // Reset the tracked validation counter
-            this.modelValidationIndex = 0;
-            this.areAllModelsValidated = false;
-
             // Clear out the list of denied companions to respawn
-            this.LoadContentPacks(true);
             CompanionManager.denyRespawnCompanions = new List<SceneryCompanions>();
 
             // Spawn any required companions
