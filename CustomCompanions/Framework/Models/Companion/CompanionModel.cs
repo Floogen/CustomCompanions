@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using CustomCompanions.Framework.Utilities;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using System;
@@ -47,6 +48,8 @@ namespace CustomCompanions.Framework.Models.Companion
         public string IdleBehavior { get; set; } = "NOTHING";
         public float[] IdleArguments { get; set; }
         public string TargetNpcName { get; set; }
+        public int MinTilesForAway { get; set; } = 1;
+        public bool ResetWhenPlayerAway { get; set; }
         public int MinTilesForNearby { get; set; } = 1;
         public CompanionModel UpdateWhenPlayerNearby { get; set; }
         public List<int[]> Colors { get; set; } = new List<int[]>();
@@ -87,6 +90,12 @@ namespace CustomCompanions.Framework.Models.Companion
             .ForEach((KeyValuePair<PropertyInfo, object> x) => x.Key.SetValue(this, x.Value, null));
 
             return this;
+        }
+
+        internal CompanionModel Clone()
+        {
+            var rawClone = JsonParser.Serialize(this);
+            return JsonParser.Deserialize<CompanionModel>(rawClone);
         }
 
         public override string ToString()

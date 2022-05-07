@@ -1041,6 +1041,25 @@ namespace CustomCompanions.Framework.Companions
             // Preserve the translations
             updatedModel.Translations = this.model.Translations;
 
+            // Preserve the sprite if needed
+            if (Game1.IsMasterGame)
+            {
+                this.hasShadow.Value = updatedModel.EnableShadow;
+                base.collidesWithOtherCharacters.Value = (updatedModel.Type.ToUpper() == "FLYING" || !updatedModel.EnableCharacterCollision ? false : true);
+                if (base.Sprite.loadedTexture != updatedModel.TileSheetPath || base.Sprite.SpriteWidth != updatedModel.FrameSizeWidth || base.Sprite.SpriteHeight != updatedModel.FrameSizeHeight)
+                {
+                    string targetSheetPath = updatedModel.TileSheetPath;
+                    if (String.IsNullOrEmpty(targetSheetPath))
+                    {
+                        targetSheetPath = model.TileSheetPath;
+                    }
+
+                    base.Sprite = new AnimatedSprite(targetSheetPath, 0, updatedModel.FrameSizeWidth, updatedModel.FrameSizeHeight);
+                }
+
+                this.Sprite.CurrentAnimation = null;
+            }
+
             // Update the model itself
             this.model = updatedModel;
 
@@ -1049,16 +1068,6 @@ namespace CustomCompanions.Framework.Companions
             base.Breather = model.EnableBreathing;
             base.speed = model.TravelSpeed;
             base.Scale = model.Scale;
-
-            if (Game1.IsMasterGame)
-            {
-                this.hasShadow.Value = model.EnableShadow;
-                base.collidesWithOtherCharacters.Value = (model.Type.ToUpper() == "FLYING" || !model.EnableCharacterCollision ? false : true);
-                if (base.Sprite.loadedTexture != model.TileSheetPath || base.Sprite.SpriteWidth != model.FrameSizeWidth || base.Sprite.SpriteHeight != model.FrameSizeHeight)
-                {
-                    base.Sprite = new AnimatedSprite(model.TileSheetPath, 0, model.FrameSizeWidth, model.FrameSizeHeight);
-                }
-            }
 
             // Avoid issue where MaxHaltTime may be higher than MinHaltTime
             if (this.model.MinHaltTime > this.model.MaxHaltTime)
