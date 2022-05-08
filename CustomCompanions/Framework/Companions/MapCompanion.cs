@@ -130,7 +130,7 @@ namespace CustomCompanions.Framework.Companions
             // Check if player is nearby for UpdateWhenPlayerNearby property, if applicable
             if (this.model.UpdateWhenPlayerNearby != null && Utility.isThereAFarmerWithinDistance(base.getTileLocation(), this.model.MinTilesForNearby, base.currentLocation) != null)
             {
-                cachedModel = this.model.Clone();
+                cachedModel = this.model.Clone(true);
                 this.UpdateModel(this.model.UpdateWhenPlayerNearby);
             }
             else if (this.model.ResetWhenPlayerAway && Utility.isThereAFarmerWithinDistance(base.getTileLocation(), this.model.MinTilesForAway, base.currentLocation) is null && cachedModel is not null)

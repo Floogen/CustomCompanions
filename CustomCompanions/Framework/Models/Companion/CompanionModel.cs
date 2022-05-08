@@ -92,10 +92,56 @@ namespace CustomCompanions.Framework.Models.Companion
             return this;
         }
 
-        internal CompanionModel Clone()
+        internal CompanionModel Clone(bool resetFrames = false)
         {
-            var rawClone = JsonParser.Serialize(this);
-            return JsonParser.Deserialize<CompanionModel>(rawClone);
+            // Lazy cloning
+            var clone = JsonParser.Deserialize<CompanionModel>(JsonParser.Serialize(this));
+
+            if (resetFrames is true)
+            {
+                clone.ResetFrames();
+            }
+
+            return clone;
+        }
+
+        internal void ResetFrames()
+        {
+            if (UniformAnimation?.ManualFrames is not null)
+            {
+                foreach (var frame in UniformAnimation.ManualFrames)
+                {
+                    frame.Reset();
+                }
+            }
+            if (UpAnimation?.ManualFrames is not null)
+            {
+                foreach (var frame in UpAnimation.ManualFrames)
+                {
+                    frame.Reset();
+                }
+            }
+            if (DownAnimation?.ManualFrames is not null)
+            {
+                foreach (var frame in DownAnimation.ManualFrames)
+                {
+                    frame.Reset();
+                }
+            }
+            if (LeftAnimation?.ManualFrames is not null)
+            {
+                foreach (var frame in LeftAnimation.ManualFrames)
+                {
+                    frame.Reset();
+                }
+            }
+            if (RightAnimation?.ManualFrames is not null)
+            {
+                foreach (var frame in RightAnimation.ManualFrames)
+                {
+                    frame.Reset();
+                }
+            }
         }
 
         public override string ToString()
