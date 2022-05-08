@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using CustomCompanions.Framework.Utilities;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using System;
@@ -47,6 +48,8 @@ namespace CustomCompanions.Framework.Models.Companion
         public string IdleBehavior { get; set; } = "NOTHING";
         public float[] IdleArguments { get; set; }
         public string TargetNpcName { get; set; }
+        public int MinTilesForAway { get; set; } = 1;
+        public bool ResetWhenPlayerAway { get; set; }
         public int MinTilesForNearby { get; set; } = 1;
         public CompanionModel UpdateWhenPlayerNearby { get; set; }
         public List<int[]> Colors { get; set; } = new List<int[]>();
@@ -87,6 +90,58 @@ namespace CustomCompanions.Framework.Models.Companion
             .ForEach((KeyValuePair<PropertyInfo, object> x) => x.Key.SetValue(this, x.Value, null));
 
             return this;
+        }
+
+        internal CompanionModel Clone(bool resetFrames = false)
+        {
+            // Lazy cloning
+            var clone = JsonParser.Deserialize<CompanionModel>(JsonParser.Serialize(this));
+
+            if (resetFrames is true)
+            {
+                clone.ResetFrames();
+            }
+
+            return clone;
+        }
+
+        internal void ResetFrames()
+        {
+            if (UniformAnimation?.ManualFrames is not null)
+            {
+                foreach (var frame in UniformAnimation.ManualFrames)
+                {
+                    frame.Reset();
+                }
+            }
+            if (UpAnimation?.ManualFrames is not null)
+            {
+                foreach (var frame in UpAnimation.ManualFrames)
+                {
+                    frame.Reset();
+                }
+            }
+            if (DownAnimation?.ManualFrames is not null)
+            {
+                foreach (var frame in DownAnimation.ManualFrames)
+                {
+                    frame.Reset();
+                }
+            }
+            if (LeftAnimation?.ManualFrames is not null)
+            {
+                foreach (var frame in LeftAnimation.ManualFrames)
+                {
+                    frame.Reset();
+                }
+            }
+            if (RightAnimation?.ManualFrames is not null)
+            {
+                foreach (var frame in RightAnimation.ManualFrames)
+                {
+                    frame.Reset();
+                }
+            }
         }
 
         public override string ToString()
