@@ -121,6 +121,22 @@
       ]
     },
     {
+      "Action": "EditMap",
+      "Target": "Maps/Beach-Jellies",
+      "MapTiles": [
+        {
+          "Position": {
+            "X": 32,
+            "Y": 13
+          },
+          "Layer": "Back",
+          "SetProperties": {
+            "CustomCompanions": "Spawn 1 ExampleAuthor.ExamplePack.ExampleUpdateWhenPlayerAwayCompanion"
+          }
+        }
+      ]
+    },
+    {
       "Action": "EditData",
       "Target": "{{PeacefulEnd.CustomCompanions/Companions:ExampleAuthor.ExamplePack.ExamplePortraitCompanion}}",
       "Entries": {
