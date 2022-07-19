@@ -17,12 +17,14 @@ namespace CustomCompanions.Framework.Patches
 {
     internal class EventPatch
     {
-        private static IMonitor monitor;
+        private static IMonitor _monitor;
+        private static CustomCompanions _customCompanions;
         private readonly Type _event = typeof(Event);
 
-        internal EventPatch(IMonitor modMonitor)
+        internal EventPatch(IMonitor modMonitor, CustomCompanions customCompanions)
         {
-            monitor = modMonitor;
+            _monitor = modMonitor;
+            _customCompanions = customCompanions;
         }
 
         internal void Apply(Harmony harmony)
@@ -30,6 +32,7 @@ namespace CustomCompanions.Framework.Patches
             harmony.Patch(AccessTools.Method(_event, "setUpCharacters", new[] { typeof(string), typeof(GameLocation) }), postfix: new HarmonyMethod(GetType(), nameof(SetUpCharactersPostfix)));
             harmony.Patch(AccessTools.Method(_event, "_checkForNextCommand", new[] { typeof(GameLocation), typeof(GameTime) }), prefix: new HarmonyMethod(GetType(), nameof(CheckForNextCommandPrefix)));
             harmony.Patch(AccessTools.Method(_event, "_checkForNextCommand", new[] { typeof(GameLocation), typeof(GameTime) }), postfix: new HarmonyMethod(GetType(), nameof(CheckForNextCommandPostfix)));
+            harmony.Patch(AccessTools.Method(_event, "command_changeToTemporaryMap", new[] { typeof(GameLocation), typeof(GameTime), typeof(string[]) }), postfix: new HarmonyMethod(GetType(), nameof(ChangeToTemporaryMapPostfix)));
         }
 
         private static void SetUpCharactersPostfix(Event __instance, string description, GameLocation location)
@@ -60,6 +63,22 @@ namespace CustomCompanions.Framework.Patches
             foreach (MapCompanion companion in __state)
             {
                 __instance.actors.Add(companion);
+            }
+        }
+
+        private static void ChangeToTemporaryMapPostfix(Event __instance, GameLocation ___temporaryLocation, GameLocation location, GameTime time, string[] split)
+        {
+            if (___temporaryLocation is not null)
+            {
+                _customCompanions.SpawnSceneryCompanions(___temporaryLocation, false);
+            }
+
+            foreach (MapCompanion companion in CompanionManager.sceneryCompanions.Where(c => c.Location == ___temporaryLocation).SelectMany(c => c.Companions))
+            {
+                if (companion.model.EnableEventAppearance)
+                {
+                    __instance.actors.Add(companion.Clone(true));
+                }
             }
         }
     }

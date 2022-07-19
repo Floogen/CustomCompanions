@@ -57,7 +57,7 @@ namespace CustomCompanions
                 new RingPatch(monitor).Apply(harmony);
                 new UtilityPatch(monitor).Apply(harmony);
                 new GameLocationPatch(monitor).Apply(harmony);
-                new EventPatch(monitor).Apply(harmony);
+                new EventPatch(monitor, this).Apply(harmony);
             }
             catch (Exception e)
             {
@@ -392,7 +392,7 @@ namespace CustomCompanions
             CompanionManager.sceneryCompanions = new List<SceneryCompanions>();
         }
 
-        private void SpawnSceneryCompanions(GameLocation location, bool spawnOnlyRequiredCompanions = false)
+        internal void SpawnSceneryCompanions(GameLocation location, bool spawnOnlyRequiredCompanions = false)
         {
             try
             {
