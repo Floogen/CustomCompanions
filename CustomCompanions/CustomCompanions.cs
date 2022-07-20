@@ -302,7 +302,7 @@ namespace CustomCompanions
                     {
                         companion.Translations = contentPack.Translation;
                     }
-                    Monitor.Log(companion.ToString(), LogLevel.Trace);
+                    //Monitor.Log(companion.ToString(), LogLevel.Trace);
 
                     // Add the companion to our cache
                     CompanionManager.companionModels.Add(companion);
