@@ -45,7 +45,7 @@ namespace CustomCompanions.Framework.Patches
 
             foreach (NPC actor in __instance.actors)
             {
-                if (actor.getTileX() == tileLocation.X && actor.getTileY() == tileLocation.Y && actor is Companion companion && companion is not null && !String.IsNullOrEmpty(companion.model.InspectionDialogue))
+                if (actor.getTileX() == tileLocation.X && actor.getTileY() == tileLocation.Y && actor is Companion companion && companion is not null && String.IsNullOrEmpty(companion.GetDialogue(probe: true).Text) is false)
                 {
                     companion.checkAction(who, ___temporaryLocation);
                     __result = true;
@@ -97,6 +97,11 @@ namespace CustomCompanions.Framework.Patches
                 {
                     __instance.actors.Add(companion.Clone(true));
                 }
+            }
+
+            foreach (MapCompanion companion in CompanionManager.sceneryCompanions.Where(c => c.Location == ___temporaryLocation).SelectMany(c => c.Companions).ToList())
+            {
+                companion.Despawn();
             }
         }
     }
