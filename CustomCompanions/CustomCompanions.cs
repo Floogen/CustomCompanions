@@ -35,8 +35,6 @@ namespace CustomCompanions
         private IJsonAssetsApi _jsonAssetsApi;
         private IContentPatcherAPI _contentPatcherApi;
 
-        private bool areAllModelsValidated;
-        private int modelValidationIndex;
         private Dictionary<string, object> trackedModels = new Dictionary<string, object>();
 
         public override void Entry(IModHelper helper)
@@ -208,9 +206,6 @@ namespace CustomCompanions
 
         private void OnWarped(object sender, WarpedEventArgs e)
         {
-            // Reset the tracked validation counter
-            this.modelValidationIndex = 0;
-
             // Spawn any map-based companions that are located in this new area
             this.SpawnSceneryCompanions(e.NewLocation);
 
@@ -307,7 +302,7 @@ namespace CustomCompanions
                     {
                         companion.Translations = contentPack.Translation;
                     }
-                    Monitor.Log(companion.ToString(), LogLevel.Trace);
+                    //Monitor.Log(companion.ToString(), LogLevel.Trace);
 
                     // Add the companion to our cache
                     CompanionManager.companionModels.Add(companion);
@@ -383,9 +378,6 @@ namespace CustomCompanions
                 // Set up the dictionary between content pack's manifest IDs to their asset names
                 AssetManager.idToAssetToken = new Dictionary<string, string>();
             }
-
-            // Reset the tracked validation counter
-            this.modelValidationIndex = 0;
 
             // Set up the CompanionManager
             CompanionManager.activeCompanions = new List<BoundCompanions>();
@@ -592,13 +584,9 @@ namespace CustomCompanions
         {
             this.RemoveAllCompanions(owner: packUniqueId);
 
-            // Reset the tracked validation counter
-            this.modelValidationIndex = 0;
-
             // Set up the CompanionManager
             CompanionManager.activeCompanions = CompanionManager.activeCompanions.Where(c => !c.Companions.Any(m => m.model.Owner.Equals(packUniqueId, StringComparison.OrdinalIgnoreCase))).ToList();
             CompanionManager.sceneryCompanions = CompanionManager.sceneryCompanions.Where(c => !c.Companions.Any(m => m.model.Owner.Equals(packUniqueId, StringComparison.OrdinalIgnoreCase))).ToList();
-
 
             // Load the owned content packs
             foreach (IContentPack contentPack in Helper.ContentPacks.GetOwned().Where(c => c.Manifest.UniqueID.Equals(packUniqueId, StringComparison.OrdinalIgnoreCase)))
