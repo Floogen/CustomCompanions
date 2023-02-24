@@ -1,4 +1,5 @@
 ﻿using CustomCompanions.Framework.Managers;
+using CustomCompanions.Framework.Models.Companion;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,12 @@ namespace CustomCompanions.Framework.Interfaces.API
 {
     public interface IApi
     {
-        void ReloadContentPack(string packUniqueId);
+        public void ReloadContentPack(string packUniqueId);
+
+        public List<string> GetLoadedContentPackIds();
+
+        // Note: This method requires the CustomCompanions.dll to be added to your project's dependencies (with "Copy Local" set to "No")
+        public CompanionModel GetCompanionModelById(string packUniqueId);
     }
 
     public class Api : IApi
@@ -30,6 +36,16 @@ namespace CustomCompanions.Framework.Interfaces.API
             }
 
             _framework.ManualReload(packUniqueId);
+        }
+
+        public List<string> GetLoadedContentPackIds()
+        {
+            return CustomCompanions.modHelper.ContentPacks.GetOwned().Select(c => c.Manifest.UniqueID).ToList();
+        }
+
+        public CompanionModel GetCompanionModelById(string packUniqueId)
+        {
+            return CompanionManager.companionModels.FirstOrDefault(c => c.Owner.Equals(packUniqueId, StringComparison.OrdinalIgnoreCase));
         }
     }
 }
