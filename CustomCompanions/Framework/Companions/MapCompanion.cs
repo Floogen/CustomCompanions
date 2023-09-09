@@ -99,7 +99,12 @@ namespace CustomCompanions.Framework.Companions
 
             if (this.model is null)
             {
-                this.model = CompanionManager.companionModels.First(c => c.GetId() == this.companionKey.Value);
+                this.model = CompanionManager.companionModels.FirstOrDefault(c => c.GetId() == this.companionKey.Value);
+                if (this.model is null)
+                {
+                    this.Despawn();
+                }
+
                 this.SetUpCompanion();
                 this.UpdateModel(this.model);
 
@@ -333,7 +338,7 @@ namespace CustomCompanions.Framework.Companions
             base.currentLocation.characters.Remove(this);
 
             // Check if we need to disable respawning
-            if (!this.model.Respawn)
+            if (this.model is not null && !this.model.Respawn)
             {
                 CompanionManager.DenyCompanionFromRespawning(base.currentLocation, this.GetTargetTile(), this);
             }
