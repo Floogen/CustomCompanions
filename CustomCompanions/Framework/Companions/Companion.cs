@@ -304,6 +304,11 @@ namespace CustomCompanions.Framework.Companions
             this.DoDraw(b, alpha);
         }
 
+        public override void ChooseAppearance(LocalizedContentManager content = null)
+        {
+            return;
+        }
+
         internal void DoDraw(SpriteBatch b, float alpha = 1f)
         {
             var spriteLayerDepth = this.IsFlying() ? 0.991f : Math.Max(0f, base.drawOnTop ? 0.991f : ((float)base.StandingPixel.Y / 10000f));
