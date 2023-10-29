@@ -224,9 +224,9 @@ namespace CustomCompanions
                 }
             }
 
-            if (location is BuildableGameLocation)
+            if (location.buildings is not null)
             {
-                foreach (Building building in (location as BuildableGameLocation).buildings)
+                foreach (Building building in location.buildings)
                 {
                     GameLocation indoorLocation = building.indoors.Value;
                     if (indoorLocation is null)
@@ -450,7 +450,7 @@ namespace CustomCompanions
                             }
 
                             // Check if it is already spawned
-                            if (location.characters.Any(c => CompanionManager.IsSceneryCompanion(c) && (c as MapCompanion).targetTile == new Vector2(x, y) * 64f && (c as MapCompanion).companionKey == companion.GetId()))
+                            if (location.characters.Any(c => CompanionManager.IsSceneryCompanion(c) && c is MapCompanion mapCompanion && mapCompanion.targetTile.Value == new Vector2(x, y) * 64f && mapCompanion.companionKey == companion.GetId()))
                             {
                                 continue;
                             }
@@ -489,9 +489,9 @@ namespace CustomCompanions
                 }
 
 
-                if (location is BuildableGameLocation)
+                if (location.buildings is not null)
                 {
-                    foreach (Building building in (location as BuildableGameLocation).buildings)
+                    foreach (Building building in location.buildings)
                     {
                         GameLocation indoorLocation = building.indoors.Value;
                         if (indoorLocation is null)
@@ -523,7 +523,7 @@ namespace CustomCompanions
 
             int amountToSummon = 1;
             string companionKey = args[0];
-            var targetTile = Game1.player.getTileLocation();
+            var targetTile = Game1.player.Tile;
             if (args.Length > 1 && Int32.TryParse(args[0], out int parsedAmountToSummon))
             {
                 amountToSummon = parsedAmountToSummon;
@@ -557,7 +557,7 @@ namespace CustomCompanions
                 return;
             }
 
-            Monitor.Log($"Spawning {companionKey} x{amountToSummon} at {Game1.currentLocation.NameOrUniqueName} on tile {Game1.player.getTileLocation()}!", LogLevel.Debug);
+            Monitor.Log($"Spawning {companionKey} x{amountToSummon} at {Game1.currentLocation.NameOrUniqueName} on tile {Game1.player.Tile}!", LogLevel.Debug);
             CompanionManager.SummonCompanions(companion, amountToSummon, targetTile, Game1.currentLocation);
         }
 

@@ -36,7 +36,7 @@ namespace CustomCompanions.Framework.Patches
             {
                 foreach (NPC c in environment.characters.Where(c => !CompanionManager.IsCustomCompanion(c)))
                 {
-                    if (Vector2.Distance(c.getTileLocation(), tileLocation) <= tilesAway)
+                    if (Vector2.Distance(c.Tile, tileLocation) <= tilesAway)
                     {
                         __result = c;
                         return;

@@ -32,7 +32,7 @@ namespace CustomCompanions.Framework.Managers
 
         internal static List<Ring> GetWornRings(bool filterVanillaRings = false)
         {
-            List<Ring> wornRings = new List<Ring>() { Game1.player.leftRing, Game1.player.rightRing };
+            List<Ring> wornRings = new List<Ring>() { Game1.player.leftRing.Value, Game1.player.rightRing.Value };
             if (wearMoreRingsApi != null)
             {
                 wornRings = wearMoreRingsApi.GetAllRings(Game1.player).ToList();
