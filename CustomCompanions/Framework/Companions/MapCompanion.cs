@@ -79,7 +79,7 @@ namespace CustomCompanions.Framework.Companions
             if (this.model.Portrait != null && !String.IsNullOrEmpty(this.model.PortraitSheetPath))
             {
                 this.displayName = String.IsNullOrEmpty(this.model.Portrait.PortraitDisplayName) ? this.displayName : this.model.Portrait.PortraitDisplayName;
-                this.Portrait = CustomCompanions.modHelper.ModContent.Load<Texture2D>(this.model.PortraitSheetPath);
+                this.Portrait = CustomCompanions.modHelper.ContentPacks.GetOwned().First(c => c.Manifest.UniqueID == this.model.Owner).ModContent.Load<Texture2D>(this.model.PortraitSheetPath);
             }
         }
 
@@ -303,7 +303,7 @@ namespace CustomCompanions.Framework.Companions
             if (this.model.Portrait != null && !String.IsNullOrEmpty(this.model.PortraitSheetPath))
             {
                 this.displayName = String.IsNullOrEmpty(this.model.Portrait.PortraitDisplayName) ? this.displayName : this.model.Portrait.PortraitDisplayName;
-                this.Portrait = CustomCompanions.modHelper.ModContent.Load<Texture2D>(this.model.PortraitSheetPath);
+                this.Portrait = CustomCompanions.modHelper.ContentPacks.GetOwned().First(c => c.Manifest.UniqueID == this.model.Owner).ModContent.Load<Texture2D>(this.model.PortraitSheetPath);
             }
         }
 
