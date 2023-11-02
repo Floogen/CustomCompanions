@@ -95,7 +95,7 @@ namespace CustomCompanions.Framework.Patches
             {
                 if (companion.model.EnableEventAppearance)
                 {
-                    __instance.actors.Add(companion.Clone(true));
+                    @event.actors.Add(companion.Clone(true));
                 }
             }
 
