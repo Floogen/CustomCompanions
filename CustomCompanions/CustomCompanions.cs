@@ -67,6 +67,7 @@ namespace CustomCompanions
             helper.ConsoleCommands.Add("cc_spawn", "Spawns in a specific companion.\n\nUsage: cc_spawn [QUANTITY] UNIQUE_ID.COMPANION_NAME [X] [Y]", this.DebugSpawnCompanion);
             helper.ConsoleCommands.Add("cc_clear", "Removes all map-based custom companions at the current location.\n\nUsage: cc_clear", this.DebugClear);
             helper.ConsoleCommands.Add("cc_reload", "Reloads all custom companion content packs. Note: This will remove all spawned companions.\n\nUsage: cc_reload", this.DebugReload);
+            helper.ConsoleCommands.Add("cc_list", "Lists all custom companion keys in the log.\n\nUsage: cc_list", this.DebugList);
 
             // Hook into GameLoop events
             helper.Events.GameLoop.Saving += this.OnSaving;
@@ -546,6 +547,16 @@ namespace CustomCompanions
         private void DebugClear(string command, string[] args)
         {
             this.RemoveAllCompanions(targetLocation: Game1.player.currentLocation);
+        }
+
+
+        private void DebugList(string command, string[] args)
+        {
+            Monitor.Log($"Listed all companion keys in the log!", LogLevel.Debug);
+            foreach (var companionModel in CompanionManager.companionModels)
+            {
+                Monitor.Log(String.Concat(companionModel.Owner, ".", companionModel.Name), LogLevel.Trace);
+            }
         }
 
         private void DebugReload(string command, string[] args)
