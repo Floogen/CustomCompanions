@@ -1,12 +1,13 @@
-﻿using CustomCompanions.Framework.Managers;
+﻿using CustomCompanions.Framework.Extensions;
+using CustomCompanions.Framework.Managers;
 using CustomCompanions.Framework.Models.Companion;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
+using StardewValley.Pathfinding;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static StardewValley.PathFindController;
 
 namespace CustomCompanions.Framework.Companions
 {
@@ -78,13 +79,13 @@ namespace CustomCompanions.Framework.Companions
             if (this.model.Portrait != null && !String.IsNullOrEmpty(this.model.PortraitSheetPath))
             {
                 this.displayName = String.IsNullOrEmpty(this.model.Portrait.PortraitDisplayName) ? this.displayName : this.model.Portrait.PortraitDisplayName;
-                this.Portrait = CustomCompanions.modHelper.ContentPacks.GetOwned().First(c => c.Manifest.UniqueID == this.model.Owner).LoadAsset<Texture2D>(this.model.PortraitSheetPath);
+                this.Portrait = CustomCompanions.modHelper.ContentPacks.GetOwned().First(c => c.Manifest.UniqueID == this.model.Owner).ModContent.Load<Texture2D>(this.model.PortraitSheetPath);
             }
         }
 
         public MapCompanion Clone(bool isEventClone)
         {
-            MapCompanion clone = new MapCompanion(this.model, base.getTileLocation(), base.currentLocation);
+            MapCompanion clone = new MapCompanion(this.model, base.Tile, base.currentLocation);
             clone.isEventClone = isEventClone;
 
             return clone;
@@ -99,7 +100,12 @@ namespace CustomCompanions.Framework.Companions
 
             if (this.model is null)
             {
-                this.model = CompanionManager.companionModels.First(c => c.GetId() == this.companionKey.Value);
+                this.model = CompanionManager.companionModels.FirstOrDefault(c => c.GetId() == this.companionKey.Value);
+                if (this.model is null)
+                {
+                    this.Despawn();
+                }
+
                 this.SetUpCompanion();
                 this.UpdateModel(this.model);
 
@@ -128,12 +134,12 @@ namespace CustomCompanions.Framework.Companions
             base.currentLocation = location;
 
             // Check if player is nearby for UpdateWhenPlayerNearby property, if applicable
-            if (this.model.UpdateWhenPlayerNearby != null && Utility.isThereAFarmerWithinDistance(base.getTileLocation(), this.model.MinTilesForNearby, base.currentLocation) != null)
+            if (this.model.UpdateWhenPlayerNearby != null && Utility.isThereAFarmerWithinDistance(base.Tile, this.model.MinTilesForNearby, base.currentLocation) != null)
             {
                 cachedModel = this.model.Clone(true);
                 this.UpdateModel(this.model.UpdateWhenPlayerNearby);
             }
-            else if (this.model.ResetWhenPlayerAway && Utility.isThereAFarmerWithinDistance(base.getTileLocation(), this.model.MinTilesForAway, base.currentLocation) is null && cachedModel is not null)
+            else if (this.model.ResetWhenPlayerAway && Utility.isThereAFarmerWithinDistance(base.Tile, this.model.MinTilesForAway, base.currentLocation) is null && cachedModel is not null)
             {
                 // Restore cache, if it exists
                 this.UpdateModel(cachedModel);
@@ -175,7 +181,7 @@ namespace CustomCompanions.Framework.Companions
                 base.UpdateLight(time);
 
                 // Play any sound(s) that are required
-                if (Utility.isThereAFarmerWithinDistance(base.getTileLocation(), 10, base.currentLocation) != null)
+                if (Utility.isThereAFarmerWithinDistance(base.Tile, 10, base.currentLocation) != null)
                 {
                     base.PlayRequiredSounds(time, this.isMoving());
                 }
@@ -297,7 +303,7 @@ namespace CustomCompanions.Framework.Companions
             if (this.model.Portrait != null && !String.IsNullOrEmpty(this.model.PortraitSheetPath))
             {
                 this.displayName = String.IsNullOrEmpty(this.model.Portrait.PortraitDisplayName) ? this.displayName : this.model.Portrait.PortraitDisplayName;
-                this.Portrait = CustomCompanions.modHelper.ContentPacks.GetOwned().First(c => c.Manifest.UniqueID == this.model.Owner).LoadAsset<Texture2D>(this.model.PortraitSheetPath);
+                this.Portrait = CustomCompanions.modHelper.ContentPacks.GetOwned().First(c => c.Manifest.UniqueID == this.model.Owner).ModContent.Load<Texture2D>(this.model.PortraitSheetPath);
             }
         }
 
@@ -333,7 +339,7 @@ namespace CustomCompanions.Framework.Companions
             base.currentLocation.characters.Remove(this);
 
             // Check if we need to disable respawning
-            if (!this.model.Respawn)
+            if (this.model is not null && !this.model.Respawn)
             {
                 CompanionManager.DenyCompanionFromRespawning(base.currentLocation, this.GetTargetTile(), this);
             }
@@ -423,7 +429,7 @@ namespace CustomCompanions.Framework.Companions
                 if (!this.IsCollidingWithFarmer(location, next_position))
                 {
                     this.RotateDirectionClockwise(this.FacingDirection);
-                    base.lastCrossroad = new Rectangle(base.getTileX() * 64, base.getTileY() * 64, 64, 64);
+                    base.lastCrossroad = new Rectangle((int)base.Tile.X * 64, (int)base.Tile.Y * 64, 64, 64);
                 }
 
                 return true;
@@ -497,7 +503,7 @@ namespace CustomCompanions.Framework.Companions
             {
                 if (this.previousDirection.Value != this.FacingDirection)
                 {
-                    this.previousDirection.Value = this.facingDirection;
+                    this.previousDirection.Value = this.FacingDirection;
                 }
                 return;
             }
@@ -591,7 +597,7 @@ namespace CustomCompanions.Framework.Companions
             {
                 if (this.previousDirection.Value != this.FacingDirection)
                 {
-                    this.previousDirection.Value = this.facingDirection;
+                    this.previousDirection.Value = this.FacingDirection;
                 }
                 return;
             }
@@ -720,16 +726,16 @@ namespace CustomCompanions.Framework.Companions
 
         private void MoveInSquare(GameTime time, GameLocation currentLocation, int width, int length)
         {
-            var distance = Vector2.Distance(this.position, new Vector2(this.lastCrossroad.X, this.lastCrossroad.Y));
+            var distance = Vector2.Distance(this.Position, new Vector2(this.lastCrossroad.X, this.lastCrossroad.Y));
             if (distance > width * 64f && this.getVerticalMovement() == 0)
             {
                 this.RotateDirectionClockwise(this.FacingDirection);
-                base.lastCrossroad = new Rectangle(base.getTileX() * 64, base.getTileY() * 64, 64, 64);
+                base.lastCrossroad = new Rectangle((int)base.Tile.X * 64, (int)base.Tile.Y * 64, 64, 64);
             }
             else if (distance > length * 64f && this.getHorizontalMovement() == 0)
             {
                 this.RotateDirectionClockwise(this.FacingDirection);
-                base.lastCrossroad = new Rectangle(base.getTileX() * 64, base.getTileY() * 64, 64, 64);
+                base.lastCrossroad = new Rectangle((int)base.Tile.X * 64, (int)base.Tile.Y * 64, 64, 64);
             }
         }
 
@@ -762,7 +768,7 @@ namespace CustomCompanions.Framework.Companions
                     if (this.model.DespawnOnTile != null && this.model.DespawnOnTile.Length > 1)
                     {
                         var despawnTile = new Vector2(this.model.DespawnOnTile[0], this.model.DespawnOnTile[1]);
-                        if (base.getTileLocation() == despawnTile)
+                        if (base.Tile == despawnTile)
                         {
                             this.Despawn();
                             return;
@@ -1051,7 +1057,7 @@ namespace CustomCompanions.Framework.Companions
 
                 if (base.lastCrossroad == Rectangle.Empty)
                 {
-                    base.lastCrossroad = new Rectangle(base.getTileX() * 64, base.getTileY() * 64, 64, 64);
+                    base.lastCrossroad = new Rectangle((int)base.Tile.X * 64, (int)base.Tile.Y * 64, 64, 64);
                 }
 
                 this.MoveInSquare(time, location, squareWidth, squareHeight);
@@ -1092,11 +1098,11 @@ namespace CustomCompanions.Framework.Companions
                 var destinationTile = this.GetTargetTile() + new Vector2(xPacingTiles, yPacingTiles);
                 if (activePath is null || activePath.Count == 0)
                 {
-                    if (base.getTileLocation() == destinationTile)
+                    if (base.Tile == destinationTile)
                     {
                         this.hasReachedDestination = true;
                     }
-                    else if (base.getTileLocation() == this.GetTargetTile())
+                    else if (base.Tile == this.GetTargetTile())
                     {
                         this.hasReachedDestination = false;
                     }
@@ -1108,7 +1114,7 @@ namespace CustomCompanions.Framework.Companions
 
                     //base.stopWithoutChangingFrame();
                     //base.SetFacingDirection(this.getGeneralDirectionTowards(destinationTile, 0, opposite: false, useTileCalculations: true));
-                    activePath = PathFindController.findPathForNPCSchedules(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), base.currentLocation, 300);
+                    activePath = PathFindController.findPathForNPCSchedules(new Point((int)base.Tile.X, (int)base.Tile.Y), new Point((int)destinationTile.X, (int)destinationTile.Y), base.currentLocation, 300);
                 }
 
                 this.FollowActivePath();
@@ -1163,12 +1169,12 @@ namespace CustomCompanions.Framework.Companions
                     }
                     else
                     {
-                        if (base.getTileLocation() == destinationTile)
+                        if (base.Tile == destinationTile)
                         {
                             this.hasReachedDestination = true;
                             this.pauseTimer = waitTime;
                         }
-                        else if (base.getTileLocation() == this.GetTargetTile())
+                        else if (base.Tile == this.GetTargetTile())
                         {
                             this.hasReachedDestination = false;
                             this.pauseTimer = waitTime;
@@ -1179,7 +1185,7 @@ namespace CustomCompanions.Framework.Companions
                             destinationTile = this.GetTargetTile();
                         }
 
-                        activePath = PathFindController.findPathForNPCSchedules(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), new Point((int)destinationTile.X, (int)destinationTile.Y), base.currentLocation, 300);
+                        activePath = PathFindController.findPathForNPCSchedules(new Point((int)base.Tile.X, (int)base.Tile.Y), new Point((int)destinationTile.X, (int)destinationTile.Y), base.currentLocation, 300);
                     }
                 }
 
@@ -1225,8 +1231,8 @@ namespace CustomCompanions.Framework.Companions
                     }
                 }
 
-                var destinationTile = base.getTileLocationPoint();
-                if (followTarget != null && (this.followTarget.currentLocation != this.currentLocation || (followTileRadius > 0 && Vector2.Distance(this.followTarget.getTileLocation(), this.GetTargetTile()) > followTileRadius)))
+                var destinationTile = base.TilePoint;
+                if (followTarget != null && (this.followTarget.currentLocation != this.currentLocation || (followTileRadius > 0 && Vector2.Distance(this.followTarget.Tile, this.GetTargetTile()) > followTileRadius)))
                 {
                     followTarget = null;
                     targetLastFacingDirection = -1;
@@ -1245,7 +1251,7 @@ namespace CustomCompanions.Framework.Companions
                     {
                         foreach (NPC npc in GetActiveCharacters().Where(c => !c.Equals(this)))
                         {
-                            if (Vector2.Distance(npc.getTileLocation(), this.GetTargetTile()) <= detectionTileRadius)
+                            if (Vector2.Distance(npc.Tile, this.GetTargetTile()) <= detectionTileRadius)
                             {
                                 var actualName = npc is MapCompanion companion ? companion.model.Name : npc.Name;
                                 if (String.IsNullOrEmpty(model.TargetNpcName) || String.Equals(model.TargetNpcName, actualName, StringComparison.OrdinalIgnoreCase))
@@ -1265,7 +1271,7 @@ namespace CustomCompanions.Framework.Companions
                     else
                     {
                         targetLastFacingDirection = followTarget.FacingDirection;
-                        nodeTargets.Add(followTarget.getTileLocationPoint());
+                        nodeTargets.Add(followTarget.TilePoint);
                     }
                 }
 
@@ -1274,19 +1280,19 @@ namespace CustomCompanions.Framework.Companions
                     if (followTarget.FacingDirection != targetLastFacingDirection)
                     {
                         targetLastFacingDirection = followTarget.FacingDirection;
-                        nodeTargets.Add(followTarget.getTileLocationPoint());
+                        nodeTargets.Add(followTarget.TilePoint);
                     }
                     else if (nodeTargets.Count() == 0)
                     {
-                        nodeTargets.Add(Utility.Vector2ToPoint(base.GetPositionDirectlyBehind(followTarget.getTileLocation(), followTarget.FacingDirection)));
+                        nodeTargets.Add(Utility.Vector2ToPoint(base.GetPositionDirectlyBehind(followTarget.Tile, followTarget.FacingDirection)));
                     }
                 }
 
                 if (nodeTargets.Count() > 0)
                 {
-                    if (nodeTargets.ElementAt(0) != base.getTileLocationPoint())
+                    if (nodeTargets.ElementAt(0) != base.TilePoint)
                     {
-                        destinationTile = nodeTargets.ElementAt(0);//base.GetPositionDirectlyBehind(followTarget.getTileLocation(), followTarget.FacingDirection);
+                        destinationTile = nodeTargets.ElementAt(0);//base.GetPositionDirectlyBehind(followTarget.Tile, followTarget.FacingDirection);
                     }
                     else
                     {
@@ -1294,11 +1300,11 @@ namespace CustomCompanions.Framework.Companions
                     }
                 }
 
-                if (base.getTileLocationPoint() != destinationTile)
+                if (base.TilePoint != destinationTile)
                 {
                     if (activePath is null || activePath.Count == 0 || (activePath.Count < 3 && !activePath.Last().Equals(destinationTile)))
                     {
-                        activePath = PathFindController.findPath(new Point((int)base.getTileLocation().X, (int)base.getTileLocation().Y), destinationTile, PathFindController.isAtEndPoint, base.currentLocation, this, 300);
+                        activePath = PathFindController.findPath(new Point((int)base.Tile.X, (int)base.Tile.Y), destinationTile, PathFindController.isAtEndPoint, base.currentLocation, this, 300);
                     }
                 }
                 else
