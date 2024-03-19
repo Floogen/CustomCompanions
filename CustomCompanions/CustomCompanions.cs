@@ -532,7 +532,7 @@ namespace CustomCompanions
                 return;
             }
 
-            var companion = CompanionManager.companionModels.Where(c => String.Concat(c.Name) == companionKey).Count() > 1 ? CompanionManager.companionModels.FirstOrDefault(c => String.Concat(c.Owner, ".", c.Name) == companionKey) : CompanionManager.companionModels.FirstOrDefault(c => String.Concat(c.Name) == companionKey);
+            var companion = CompanionManager.companionModels.Where(c => String.Concat(c.Owner, ".", c.Name) == companionKey).Count() > 1 ? CompanionManager.companionModels.FirstOrDefault(c => String.Concat(c.Owner, ".", c.Name) == companionKey) : CompanionManager.companionModels.FirstOrDefault(c => String.Concat(c.Owner, ".", c.Name) == companionKey);
             if (companion is null)
             {
                 Monitor.Log($"An error has occured trying to spawn {companionKey}: Command failed!", LogLevel.Warn);
