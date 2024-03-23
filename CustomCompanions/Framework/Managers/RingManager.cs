@@ -13,7 +13,6 @@ namespace CustomCompanions.Framework.Managers
     internal static class RingManager
     {
         internal static List<RingModel> rings;
-        internal static IWearMoreRingsApi wearMoreRingsApi;
 
         internal static bool IsSummoningRing(Ring ring)
         {
@@ -30,15 +29,29 @@ namespace CustomCompanions.Framework.Managers
             return GetWornRings().Where(r => IsSummoningRing(r)).Any();
         }
 
-        internal static List<Ring> GetWornRings(bool filterVanillaRings = false)
+        internal static IEnumerable<Ring> GetWornRings(bool filterVanillaRings = false)
         {
-            List<Ring> wornRings = new List<Ring>() { Game1.player.leftRing.Value, Game1.player.rightRing.Value };
-            if (wearMoreRingsApi != null)
+            var stack = new Stack<Ring>();
+            stack.Push(Game1.player.leftRing.Value);
+            stack.Push(Game1.player.rightRing.Value);
+            while (stack.Count > 0) 
             {
-                wornRings = wearMoreRingsApi.GetAllRings(Game1.player).ToList();
+                var ring = stack.Pop();
+                if (ring is CombinedRing) 
+                {
+                    foreach (var cr in ((CombinedRing)ring).combinedRings) 
+                    {
+                        stack.Push(cr);
+                    }
+                }
+                else if (ring != null) 
+                {
+                    if (!filterVanillaRings || IsSummoningRing(ring)) 
+                    { 
+                        yield return ring;
+                    }
+                }
             }
-
-            return filterVanillaRings ? wornRings.Where(r => r != null && IsSummoningRing(r)).ToList() : wornRings;
         }
 
         internal static void LoadWornRings()

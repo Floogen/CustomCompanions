@@ -134,11 +134,6 @@ namespace CustomCompanions
                 _saveAnywhereApi.AfterLoad += this.OnCustomLoad;
             }
 
-            if (Helper.ModRegistry.IsLoaded("bcmpinc.WearMoreRings") && ApiManager.HookIntoIWMR(Helper))
-            {
-                RingManager.wearMoreRingsApi = ApiManager.GetIWMRApi();
-            }
-
             if (Helper.ModRegistry.IsLoaded("spacechase0.JsonAssets") && ApiManager.HookIntoJsonAssets(Helper))
             {
                 _jsonAssetsApi = ApiManager.GetJsonAssetsApi();
