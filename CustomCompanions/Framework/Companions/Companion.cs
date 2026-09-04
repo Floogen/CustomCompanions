@@ -821,27 +821,23 @@ namespace CustomCompanions.Framework.Companions
             var currentTile = this.Tile;
             for (int iteration = 0; iteration < attempts; iteration++)
             {
-                if (!String.IsNullOrEmpty(this.currentLocation.doesTileHaveProperty((int)currentTile.X, (int)currentTile.Y, "NPCBarrier", "Back")))
-                {
-                    base.Position = this.GetRandomAdjacentOpenTile(currentTile, this.currentLocation) * 64f;
-                }
-                else
-                {
-                    foreach (var character in this.currentLocation.characters.Where(c => c != this))
-                    {
-                        if (character.GetBoundingBox().Intersects(this.GetBoundingBox()))
-                        {
-                            base.Position = this.GetRandomAdjacentOpenTile(currentTile, this.currentLocation) * 64f;
-                        }
-                    }
-                }
+                var isBlocked = !String.IsNullOrEmpty(this.currentLocation.doesTileHaveProperty((int)currentTile.X, (int)currentTile.Y, "NPCBarrier", "Back"))
+                    || this.currentLocation.characters.Where(c => c != this).Any(c => c.GetBoundingBox().Intersects(this.GetBoundingBox()));
 
-
-                if (base.Position != Vector2.Zero)
+                if (!isBlocked)
                 {
                     break;
                 }
 
+                // Only move if an open tile was actually located. Staying in the same place and
+                // briefly overlapping another character is better than moving to an invalid tile
+                // that can strand a companion inside a wall or off the map
+                var openTile = this.GetRandomAdjacentOpenTile(currentTile, this.currentLocation);
+                if (openTile.HasValue)
+                {
+                    base.Position = openTile.Value * 64f;
+                    break;
+                }
 
                 // Select a random adjacent tile as our next checking point
                 var adjacentTiles = Utility.getAdjacentTileLocations(currentTile);
@@ -849,7 +845,7 @@ namespace CustomCompanions.Framework.Companions
             }
         }
 
-        internal Vector2 GetRandomAdjacentOpenTile(Vector2 tile, GameLocation location)
+        internal Vector2? GetRandomAdjacentOpenTile(Vector2 tile, GameLocation location)
         {
             // Using a mostly modified version of Utility.getRandomAdjacentOpenTile
             List<Vector2> i = Utility.getAdjacentTileLocations(tile);
@@ -868,7 +864,9 @@ namespace CustomCompanions.Framework.Companions
             }
             if (iter >= 4)
             {
-                return Vector2.Zero;
+                // Returning Vector2.Zero here (like vanilla does) would be read as "tile (0, 0) is free"
+                // and teleport the companion to the corner of the map. Using null instead to avoid this.
+                return null;
             }
 
             return v;

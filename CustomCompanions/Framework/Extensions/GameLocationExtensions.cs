@@ -17,7 +17,7 @@ namespace CustomCompanions.Framework.Extensions
     {
         public static bool isTileOccupiedForPlacement(this GameLocation location, Vector2 tileLocation, Object toPlace = null)
         {
-            return location.CanItemBePlacedHere(tileLocation, toPlace != null && toPlace.isPassable());
+            return !location.CanItemBePlacedHere(tileLocation, toPlace != null && toPlace.isPassable());
         }
 
         public static bool isTileOccupied(this GameLocation location, Vector2 tileLocation, string characterToIgnore = "", bool ignoreAllCharacters = false)

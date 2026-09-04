@@ -47,7 +47,10 @@ namespace CustomCompanions.Framework.Companions
                     break;
                 case "JUMPER":
                     this.behavior = Behavior.JUMPER;
-                    destinationTile = companion.targetTile.Value;
+                    // targetTile hasn't been set yet so it reads as Vector2.Zero
+                    // and will slowly send the companion to (0, 0). Starts from
+                    // where the companion actually is instead
+                    destinationTile = companion.Position;
                     break;
                 case "WALK_SQUARE":
                     this.behavior = Behavior.WALK_SQUARE;
@@ -172,7 +175,15 @@ namespace CustomCompanions.Framework.Companions
 
                     if (Game1.random.NextDouble() <= 0.5)
                     {
-                        this.destinationTile = Utility.getRandomAdjacentOpenTile(companion.Tile, companion.currentLocation) * 64f;
+                        // Vector2.Zero from vanilla reads as "tile (0, 0) is open" and sends the
+                        // companion towards the corner of the map. Skipping it instead, as a
+                        // companion standing next to a walkable (0, 0) is extremely unlikely
+                        // Review again if this is ever addressed in vanilla
+                        var openTile = Utility.getRandomAdjacentOpenTile(companion.Tile, companion.currentLocation);
+                        if (openTile != Vector2.Zero)
+                        {
+                            this.destinationTile = openTile * 64f;
+                        }
                     }
                 }
 
