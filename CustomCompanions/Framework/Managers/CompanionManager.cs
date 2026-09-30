@@ -159,7 +159,7 @@ namespace CustomCompanions.Framework.Managers
 
         internal static void RemoveSceneryCompanionsAtTile(GameLocation location, Vector2 tile)
         {
-            foreach (var sceneryCompanion in sceneryCompanions.Where(s => !(s.Location == location && s.Tile == tile)).ToList())
+            foreach (var sceneryCompanion in sceneryCompanions.Where(s => s.Location == location && s.Tile == tile).ToList())
             {
                 sceneryCompanions.Remove(sceneryCompanion);
             }
